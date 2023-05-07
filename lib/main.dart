@@ -63,8 +63,8 @@ class _MyHomePageState extends State<MyHomePage> {
               _counter++;
               // add a new note
               notes.add('note $_counter');
-              col3.scrollToNext();
             });
+            col3.scrollToNext();
           },
           tooltip: 'Increment',
           child: child,
@@ -83,8 +83,8 @@ class _MyHomePageState extends State<MyHomePage> {
               _counter--;
               // remove the last note
               notes.removeLast();
-              col3.scrollToPrev();
             });
+            col3.scrollToPrev();
           },
           tooltip: 'Decrement',
           child: child,
@@ -151,6 +151,10 @@ class _MyHomePageState extends State<MyHomePage> {
                 twos: twos,
                 threes: threes,
                 titles: titles,
+                stateOne: col1,
+                stateTwo: col2,
+                stateThree: col3,
+
                 resultChanged: (v1, v2, v3) =>
                     debugPrint('v1: $v1, v2: $v2, v3: $v3')),
           ],
