@@ -25,9 +25,9 @@ class SlatePicker extends StatefulWidget {
   final int initialTwoIndex;
   final int initialThreeIndex;
   // state for the three columns
-  final SlateColumnOne? stateOne;
-  final SlateColumnTwo? stateTwo;
-  final SlateColumnThree? stateThree;
+  SlateColumnOne? stateOne;
+  SlateColumnTwo? stateTwo;
+  SlateColumnThree? stateThree;
 
   // the visual pramters for the SlatePicker
   final double height;
@@ -59,8 +59,16 @@ class SlatePicker extends StatefulWidget {
     this.itemHeight = 40,
     this.itemBackgroundColor = const Color(0x0A0A4D),
     this.isLoop = true,
-  })  : assert(titles.length >= 3),
-        super(key: key);
+  }) : super(key: key) {
+    // 初始化 stateOne、stateTwo 和 stateThree
+    stateOne = stateOne ?? SlateColumnOne()
+      ..init(ones, initialOneIndex);
+    stateTwo = stateTwo ?? SlateColumnTwo()
+      ..init(twos, initialTwoIndex);
+    stateThree = stateThree ?? SlateColumnThree()
+      ..init(threes, initialThreeIndex);
+    assert(titles.length >= 3);
+  }
 
   @override
   State<SlatePicker> createState() => _SlatePickerState();
@@ -77,20 +85,21 @@ class _SlatePickerState extends State<SlatePicker> {
     widget.stateThree!.init(widget.threes, widget.initialThreeIndex);
     // callback the result to the main.dart
     WidgetsBinding.instance.endOfFrame.then((_) {
-      _resultChanged(widget.stateOne!.selected, widget.stateTwo!.selected, widget.stateThree!.selected);
+      _resultChanged(widget.stateOne!.selected, widget.stateTwo!.selected,
+          widget.stateThree!.selected);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: <Widget>[
         _buildPicker(
           widget.ones,
           widget.titles[0],
-          (value) => _resultChanged(value, widget.stateTwo!.selected, widget.stateThree!.selected),
+          (value) => _resultChanged(
+              value, widget.stateTwo!.selected, widget.stateThree!.selected),
           FixedExtentScrollController(initialItem: widget.initialOneIndex),
         ),
         Container(
@@ -101,7 +110,8 @@ class _SlatePickerState extends State<SlatePicker> {
         _buildPicker(
           widget.twos,
           widget.titles[1],
-          (value) => _resultChanged(widget.stateOne!.selected, value, widget.stateThree!.selected),
+          (value) => _resultChanged(
+              widget.stateOne!.selected, value, widget.stateThree!.selected),
           FixedExtentScrollController(initialItem: widget.initialTwoIndex),
         ),
         Container(
@@ -112,15 +122,16 @@ class _SlatePickerState extends State<SlatePicker> {
         _buildPicker(
           widget.threes,
           widget.titles[2],
-          (value) => _resultChanged(widget.stateOne!.selected, widget.stateTwo!.selected, value),
+          (value) => _resultChanged(
+              widget.stateOne!.selected, widget.stateTwo!.selected, value),
           widget.stateThree!.controller,
         ),
       ],
     );
   }
 
-  _buildPicker(
-      List data, String unit, ValueChanged valueChanged, FixedExtentScrollController controller) {
+  _buildPicker(List data, String unit, ValueChanged valueChanged,
+      FixedExtentScrollController controller) {
     return Container(
       height: widget.height,
       width: widget.width / 3,
@@ -162,10 +173,8 @@ class _SlatePickerState extends State<SlatePicker> {
     if (widget.resultChanged != null) {
       widget.resultChanged!(v1, v2, v3);
     }
-    setState(() {
-      widget.stateOne!.selected = v1;
-      widget.stateTwo!.selected = v2;
-      widget.stateThree!.selected = v3;
-    });
+    widget.stateOne!.selected = v1;
+    widget.stateTwo!.selected = v2;
+    widget.stateThree!.selected = v3;
   }
 }
