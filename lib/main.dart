@@ -1,30 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
 import 'widgets/slate_picker.dart';
+import 'models/slate_num_notifier.dart';
 
 void main() {
-  var ones = List.generate(8, (index) => index);
-  var twos = ['1A', '2', '6', '4', '5', '4', '7', '8', '9', '10'];
-  var threes = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
-  var titles = ['场', '镜', '次'];
-  final SlatePicker slatePicker = SlatePicker(
-    ones: ones,
-    twos: twos,
-    threes: threes,
-    titles: titles,
-    initialOneIndex: 0,
-    initialTwoIndex: 0,
-    initialThreeIndex: 0,
-    height: 200,
-    width: 200,
-    itemHeight: 40,
-    resultChanged: (v1, v2, v3) => 
-              debugPrint('v1: $v1, v2: $v2, v3: $v3')
-
-  );
-  runApp(SlatePickerInherited(
-    slatePicker: slatePicker,
-    child: const MyApp()
-    ));
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => SlateNumNotifier(),
+      child: const MyApp()
+      )
+);
 }
 
 class MyApp extends StatelessWidget {
@@ -66,14 +52,18 @@ class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
   var note = '';
   List notes = [];
+  var ones = List.generate(8, (index) => index);
+  var twos = ['1A', '2', '6', '4', '5', '4', '7', '8', '9', '10'];
+  var threes = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
+  var titles = ['场', '镜', '次'];
 
   void _incrementCounter() {
     setState(() {
       _counter++;
       notes.add(note);
     });
-    final slatePicker = SlatePickerInherited.of(context);
-    slatePicker.changeSelected3(true);
+    final model = Provider.of<SlateNumNotifier>(context, listen: false);
+    model.nextOrPre();
   }
   void _decrementcounter() {
     setState(() {
@@ -81,6 +71,8 @@ class _MyHomePageState extends State<MyHomePage> {
       // remove the last note
       notes.removeLast();
     });
+    final model = Provider.of<SlateNumNotifier>(context, listen: false);
+    model.nextOrPre(false);
   }
 
   @override
@@ -88,7 +80,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
     var screenWidth = MediaQuery.of(context).size.width;
     var screenHeight = MediaQuery.of(context).size.height;
-    final slatePicker = SlatePickerInherited.of(context);
     // This method is rerun every time setState is called, for instance as done
     // by the _incrementCounter method above.
     //
@@ -134,7 +125,15 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
               ),
             ),
-            slatePicker,
+            SlatePicker(
+              ones: ones,
+              twos: twos,
+              threes: threes,
+              titles: titles,
+              resultChanged: (v1, v2, v3) => 
+                        debugPrint('v1: $v1, v2: $v2, v3: $v3')
+
+            ),
           ],
         ),
         ),

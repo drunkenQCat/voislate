@@ -1,5 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../models/slate_num_notifier.dart';
 
 /// 自定义结果回调函数
 /// V1:第一列选中的值
@@ -7,66 +10,33 @@ import 'package:flutter/material.dart';
 /// V3:第三列选中的值
 typedef ResultChanged<V1, V2, V3> = Function(V1 v1, V2 v2, V3 v3);
 
-// an inherited widget to pass the SlatePicker instance to the main.dart
-class SlatePickerInherited extends InheritedWidget {
-  final SlatePicker slatePicker;
-
-  const SlatePickerInherited({
-    Key? key,
-    required this.slatePicker,
-    required Widget child,
-  }) : super(key: key, child: child);
-
-  @override
-  bool updateShouldNotify(SlatePickerInherited oldWidget) {
-    return slatePicker != oldWidget.slatePicker;
-  }
-  static SlatePicker of(BuildContext context) =>
-      context.dependOnInheritedWidgetOfExactType<SlatePickerInherited>()!.slatePicker;
-}
-
 // 轮盘选择器
 class SlatePicker extends StatefulWidget {
-  /// 第一列数据
+  // data for the three columns
   final List ones;
-
-  /// 第二列数据
   final List twos;
+  final List<String> threes;
 
-  /// 第三列数据
-  final List threes;
-
-  /// 列下方的标题
   final List<String> titles;
 
-  /// 第一列初始显示数据的index，默认从0开始.
+  // initial index for the three columns
   final int initialOneIndex;
-
-  /// 第二列初始显示数据的index，默认从0开始.
   final int initialTwoIndex;
-
-  /// 第三列初始显示数据的index，默认从0开始.
   final int initialThreeIndex;
 
-  /// 组件高度
+  // the visual pramters for the SlatePicker
   final double height;
-
-  /// 组件宽度
   final double width;
-
-  /// 中间数字的高度
   final double itemHeight;
-
-  /// 轮盘背景色
   final Color itemBackgroundColor;
 
-  /// 选中结果回调
+  // feed back the result to the main.dart
   final ResultChanged? resultChanged;
 
-  /// 轮盘是否循环，默认为true.
+  // whether the picker is loop
   final bool isLoop;
 
-  const SlatePicker({
+  SlatePicker({
     Key? key,
     required this.ones,
     required this.twos,
@@ -86,7 +56,6 @@ class SlatePicker extends StatefulWidget {
 
   @override
   State<SlatePicker> createState() => _SlatePickerState();
-  void changeSelected3(bool addOrSub) => _SlatePickerState().changeSelected3(addOrSub);
 }
 
 class _SlatePickerState extends State<SlatePicker> {
@@ -94,6 +63,11 @@ class _SlatePickerState extends State<SlatePicker> {
   var selected2;
   var selected3;
   final double padding = 58;
+  // the scroll controller for the third column
+  late FixedExtentScrollController _controller3;
+  // listen to changes of the third column
+
+
 
   @override
   void initState() {
@@ -101,6 +75,14 @@ class _SlatePickerState extends State<SlatePicker> {
     selected1 = widget.ones[widget.initialOneIndex];
     selected2 = widget.twos[widget.initialTwoIndex];
     selected3 = widget.threes[widget.initialThreeIndex];
+    // some bind to column3
+    _controller3 = FixedExtentScrollController(initialItem: widget.initialThreeIndex);
+    final notifier = Provider.of<SlateNumNotifier>(context, listen: false);
+    notifier.numList = widget.threes;
+    notifier.selected = selected3;
+
+
+    // callback the result to the main.dart
     WidgetsBinding.instance.endOfFrame.then((_) {
       _resultChanged(selected1, selected2, selected3);
     });
@@ -122,6 +104,12 @@ class _SlatePickerState extends State<SlatePicker> {
     return widget.threes.indexOf(selected3);
   }
 
+  // a function to scroll selected3 to the some value
+  void _scrollSelected3To(String value) {
+    var index = widget.threes.indexOf(value);
+    _controller3.animateToItem(index, duration: const Duration(milliseconds: 200), curve: Curves.easeIn);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -131,7 +119,7 @@ class _SlatePickerState extends State<SlatePicker> {
           widget.ones,
           widget.titles[0],
           (value) => _resultChanged(value, selected2, selected3),
-          widget.initialOneIndex,
+          FixedExtentScrollController(initialItem: widget.initialOneIndex),
         ),
         Container(
           color: Colors.black,
@@ -142,7 +130,7 @@ class _SlatePickerState extends State<SlatePicker> {
           widget.twos,
           widget.titles[1],
           (value) => _resultChanged(selected1, value, selected3),
-          widget.initialTwoIndex,
+          FixedExtentScrollController(initialItem: widget.initialTwoIndex),
         ),
         Container(
           color: Colors.black,
@@ -153,14 +141,14 @@ class _SlatePickerState extends State<SlatePicker> {
           widget.threes,
           widget.titles[2],
           (value) => _resultChanged(selected1, selected2, value),
-          widget.initialThreeIndex,
+          _controller3,
         ),
       ],
     );
   }
 
   _buildPicker(
-      List data, String unit, ValueChanged valueChanged, int initIndex) {
+      List data, String unit, ValueChanged valueChanged, FixedExtentScrollController controller) {
     return Container(
       height: widget.height,
       width: widget.width / 3,
@@ -170,8 +158,7 @@ class _SlatePickerState extends State<SlatePicker> {
             child: CupertinoPicker(
               magnification: 1.22,
               squeeze: 1.5,
-              scrollController:
-                  FixedExtentScrollController(initialItem: initIndex),
+              scrollController: controller,
               useMagnifier: true,
               itemExtent: widget.itemHeight,
               looping: widget.isLoop,
