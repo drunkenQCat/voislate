@@ -1,6 +1,5 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
 import '../models/slate_num_notifier.dart';
 
@@ -10,11 +9,13 @@ import '../models/slate_num_notifier.dart';
 /// V3:第三列选中的值
 typedef ResultChanged<V1, V2, V3> = Function(V1 v1, V2 v2, V3 v3);
 
+// notifier for every column
+
 // 轮盘选择器
 class SlatePicker extends StatefulWidget {
   // data for the three columns
-  final List ones;
-  final List twos;
+  final List<String> ones;
+  final List<String> twos;
   final List<String> threes;
 
   final List<String> titles;
@@ -23,6 +24,10 @@ class SlatePicker extends StatefulWidget {
   final int initialOneIndex;
   final int initialTwoIndex;
   final int initialThreeIndex;
+  // state for the three columns
+  final SlateColumnOne? stateOne;
+  final SlateColumnTwo? stateTwo;
+  final SlateColumnThree? stateThree;
 
   // the visual pramters for the SlatePicker
   final double height;
@@ -41,6 +46,9 @@ class SlatePicker extends StatefulWidget {
     required this.ones,
     required this.twos,
     required this.threes,
+    this.stateOne,
+    this.stateTwo,
+    this.stateThree,
     required this.titles,
     this.resultChanged,
     this.initialOneIndex = 0,
@@ -59,66 +67,30 @@ class SlatePicker extends StatefulWidget {
 }
 
 class _SlatePickerState extends State<SlatePicker> {
-  var selected1;
-  var selected2;
-  var selected3;
   final double padding = 58;
-  // the scroll controller for the third column
-  late FixedExtentScrollController _controller3;
-  // listen to changes of the third column
-
-
 
   @override
   void initState() {
     super.initState();
-    selected1 = widget.ones[widget.initialOneIndex];
-    selected2 = widget.twos[widget.initialTwoIndex];
-    selected3 = widget.threes[widget.initialThreeIndex];
-    // some bind to column3
-    _controller3 = FixedExtentScrollController(initialItem: widget.initialThreeIndex);
-    final notifier = Provider.of<SlateNumNotifier>(context, listen: false);
-    notifier.numList = widget.threes;
-    notifier.selected = selected3;
-
-
+    widget.stateOne!.init(widget.ones, widget.initialOneIndex);
+    widget.stateTwo!.init(widget.twos, widget.initialTwoIndex);
+    widget.stateThree!.init(widget.threes, widget.initialThreeIndex);
     // callback the result to the main.dart
     WidgetsBinding.instance.endOfFrame.then((_) {
-      _resultChanged(selected1, selected2, selected3);
+      _resultChanged(widget.stateOne!.selected, widget.stateTwo!.selected, widget.stateThree!.selected);
     });
-  }
-  // make an api to change the selected3 value
-  void changeSelected3(bool addOrSub) {
-      var index = _getSelected3Index();
-      if (addOrSub) {
-        index++;
-      } else {
-        index--;
-      }
-      var newthree = widget.threes[index];
-      _resultChanged(selected1, selected2, newthree);
-  }
-
-  // an function to get the index of selected value in the picker 
-  int _getSelected3Index() {
-    return widget.threes.indexOf(selected3);
-  }
-
-  // a function to scroll selected3 to the some value
-  void _scrollSelected3To(String value) {
-    var index = widget.threes.indexOf(value);
-    _controller3.animateToItem(index, duration: const Duration(milliseconds: 200), curve: Curves.easeIn);
   }
 
   @override
   Widget build(BuildContext context) {
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: <Widget>[
         _buildPicker(
           widget.ones,
           widget.titles[0],
-          (value) => _resultChanged(value, selected2, selected3),
+          (value) => _resultChanged(value, widget.stateTwo!.selected, widget.stateThree!.selected),
           FixedExtentScrollController(initialItem: widget.initialOneIndex),
         ),
         Container(
@@ -129,7 +101,7 @@ class _SlatePickerState extends State<SlatePicker> {
         _buildPicker(
           widget.twos,
           widget.titles[1],
-          (value) => _resultChanged(selected1, value, selected3),
+          (value) => _resultChanged(widget.stateOne!.selected, value, widget.stateThree!.selected),
           FixedExtentScrollController(initialItem: widget.initialTwoIndex),
         ),
         Container(
@@ -140,8 +112,8 @@ class _SlatePickerState extends State<SlatePicker> {
         _buildPicker(
           widget.threes,
           widget.titles[2],
-          (value) => _resultChanged(selected1, selected2, value),
-          _controller3,
+          (value) => _resultChanged(widget.stateOne!.selected, widget.stateTwo!.selected, value),
+          widget.stateThree!.controller,
         ),
       ],
     );
@@ -191,9 +163,9 @@ class _SlatePickerState extends State<SlatePicker> {
       widget.resultChanged!(v1, v2, v3);
     }
     setState(() {
-      selected1 = v1;
-      selected2 = v2;
-      selected3 = v3;
+      widget.stateOne!.selected = v1;
+      widget.stateTwo!.selected = v2;
+      widget.stateThree!.selected = v3;
     });
   }
 }
