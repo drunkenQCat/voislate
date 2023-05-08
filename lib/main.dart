@@ -3,13 +3,10 @@ import 'package:provider/provider.dart';
 
 import 'widgets/slate_picker.dart';
 import 'models/slate_num_notifier.dart';
+import 'widgets/add_remove_buttons.dart';
 
 void main() {
-  runApp(MultiProvider(providers: [
-    ChangeNotifierProvider(create: (context) => SlateColumnOne()),
-    ChangeNotifierProvider(create: (context) => SlateColumnTwo()),
-    ChangeNotifierProvider(create: (context) => SlateColumnThree()),
-  ], child: const MyApp()));
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -52,131 +49,169 @@ class _MyHomePageState extends State<MyHomePage> {
   var ones = List.generate(8, (index) => index.toString());
   var twos = ['1A', '2', '6', '4', '5', '4', '7', '8', '9', '10'];
   var threes = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
-  var titles = ['场', '镜', '次'];
+  var titles = ['Scene', 'Shot', 'Take'];
+  final col2 = SlateColumnTwo();
+  final col1 = SlateColumnOne();
+  final col3 = SlateColumnThree();
 
-  Widget _incrementCounter() {
-    return Consumer<SlateColumnThree>(
-      builder: (_, col3, child) {
-        return FloatingActionButton(
-          onPressed: () {
-            setState(() {
-              _counter++;
-              // add a new note
-              notes.add('note $_counter');
-            });
-            col3.scrollToNext();
-          },
-          tooltip: 'Increment',
-          child: child,
-        );
-      },
-      child: const Icon(Icons.add),
-    );
-  }
-
-  Widget _decrementCounter() {
-    return Consumer<SlateColumnThree>(
-      builder: (_, col3, child) {
-        return FloatingActionButton(
-          onPressed: () {
-            setState(() {
-              _counter--;
-              // remove the last note
-              notes.removeLast();
-            });
-            col3.scrollToPrev();
-          },
-          tooltip: 'Decrement',
-          child: child,
-        );
-      },
-      child: const Icon(Icons.remove),
-    );
-  }
-
+  // Widget _incrementCounter() {
+  //   return Consumer<SlateColumnThree>(
+  //     builder: (_, col3, child) {
+  //       return FloatingActionButton(
+  //         onPressed: () {
+  //           setState(() {
+  //             _counter++;
+  //             // add a new note, and
+  //             if (note.length == 0) {
+  //               notes.add('note $_counter');
+  //             } else {
+  //               notes.add(note);
+  //             }
+  //           });
+  //           col3.scrollToNext();
+  //         },
+  //         tooltip: 'Increment',
+  //         child: child,
+  //       );
+  //     },
+  //     child: const Icon(Icons.add),
+  //   );
+  // }
   @override
   Widget build(BuildContext context) {
-    final col1 = Provider.of<SlateColumnOne>(context);
-    final col2 = Provider.of<SlateColumnTwo>(context);
-    final col3 = Provider.of<SlateColumnThree>(context);
     var screenWidth = MediaQuery.of(context).size.width;
     var screenHeight = MediaQuery.of(context).size.height;
+    var horizonPadding = 30.0;
+
+    var col1IncBtn = IncrementCounterButton<SlateColumnOne>(onPressed: () =>{});
+    var col1DecBtn = DecrementCounterButton<SlateColumnOne>(onPressed: () =>{});
+    var col2IncBtn = IncrementCounterButton<SlateColumnTwo>(onPressed: () =>{});
+    var col2DecBtn = DecrementCounterButton<SlateColumnTwo>(onPressed: () =>{});
+    var col3IncBtn = IncrementCounterButton<SlateColumnThree>(
+        onPressed: () {
+          setState(() {
+            _counter++;
+            // add a new note, and
+            if (note.isEmpty) {
+              notes.add('note $_counter');
+            } else {
+              notes.add(note);
+            }
+          });
+        },
+      );
+
+    var col3DecBtn = DecrementCounterButton<SlateColumnThree>(
+        onPressed: () {
+          setState(() {
+            _counter--;
+            // remove the last note
+            notes.removeLast();
+          });
+        },
+      );
+
     // This method is rerun every time setState is called, for instance as done
     // by the _incrementCounter method above.
     //
     // The Flutter framework has been optimized to make rerunning build methods
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'Go Ahead pushed the button this many times:',
+    return MultiProvider(
+        providers: [
+          ChangeNotifierProvider.value(value: col1),
+          ChangeNotifierProvider.value(value: col2),
+          ChangeNotifierProvider.value(value: col3),
+        ],
+        builder: (context, child) {
+          return Scaffold(
+            appBar: AppBar(
+              // Here we take the value from the MyHomePage object that was created by
+              // the App.build method, and use it to set our appbar title.
+              title: Text(widget.title),
             ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            // add space between the text and the input box
-            const SizedBox(height: 20),
+            body: Center(
+              // Center is a layout widget. It takes a single child and positions it
+              // in the middle of the parent.
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: <Widget>[
+                  SlatePicker(
+                      ones: ones,
+                      twos: twos,
+                      threes: threes,
+                      titles: titles,
+                      stateOne: col1,
+                      stateTwo: col2,
+                      stateThree: col3,
+                      width: screenWidth - 2 * horizonPadding,
+                      height: screenHeight * 0.1,
+                      itemHeight: screenHeight * 0.1 - 40,
+                      resultChanged: (v1, v2, v3) =>
+                          debugPrint('v1: $v1, v2: $v2, v3: $v3')),
+                  // add an input box to have a note about the number
 
-            // add an input box to have a note about the number
-            // to constrain the width of the input box, wrap it in a container
+                  Container(
+                    width: screenWidth * 0.8,
+                    child: TextField(
+                      // bind the input to the note variable
+                      onChanged: (text) {
+                        note = text;
+                      },
+                      decoration: const InputDecoration(
+                        icon: Icon(Icons.record_voice_over),
+                        border: OutlineInputBorder(),
+                        hintText: 'Enter a note about the number',
+                      ),
+                    ),
+                  ),
 
-            Container(
-              width: screenWidth * 0.8,
-              child: TextField(
-                // bind the input to the note variable
-                onChanged: (text) {
-                  note = text;
-                },
-                decoration: const InputDecoration(
-                  icon: Icon(Icons.record_voice_over),
-                  border: OutlineInputBorder(),
-                  hintText: 'Enter a note about the number',
-                ),
+                  const Text(
+                    'Go Ahead pushed the button this many times:',
+                  ),
+                  Text(
+                    '$_counter',
+                    style: Theme.of(context).textTheme.headlineMedium,
+                  ),
+                ],
               ),
             ),
-            SlatePicker(
-                ones: ones,
-                twos: twos,
-                threes: threes,
-                titles: titles,
-                stateOne: col1,
-                stateTwo: col2,
-                stateThree: col3,
-
-                resultChanged: (v1, v2, v3) =>
-                    debugPrint('v1: $v1, v2: $v2, v3: $v3')),
-          ],
-        ),
-      ),
-      floatingActionButton: Column(
-        // make the children of the column align to the end
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          _incrementCounter(),
-
-          _decrementCounter(),
-          displayNotesButton(notes: notes),
-        ],
-      ), // This trailing comma makes auto-formatting nicer for build methods.
-    );
+            floatingActionButton: Column(
+              // make the children of the column align to the end
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    col1IncBtn,
+                    col2IncBtn,
+                    col3IncBtn,
+                  ],
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    col1DecBtn,
+                    col2DecBtn,
+                    col3DecBtn,
+                  ],
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    DisplayNotesButton(notes: notes),
+                  ],
+                ),
+              ],
+            ),
+          );
+        });
   }
 }
 
-class displayNotesButton extends StatelessWidget {
+class DisplayNotesButton extends StatelessWidget {
   // a button to show the notes in a list view
-  const displayNotesButton({
+  const DisplayNotesButton({
     super.key,
     required this.notes,
   });
