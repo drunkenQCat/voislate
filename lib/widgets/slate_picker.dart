@@ -61,12 +61,6 @@ class SlatePicker extends StatefulWidget {
     this.isLoop = true,
   }) : super(key: key) {
     // 初始化 stateOne、stateTwo 和 stateThree
-    stateOne = stateOne ?? SlateColumnOne()
-      ..init(ones, initialOneIndex);
-    stateTwo = stateTwo ?? SlateColumnTwo()
-      ..init(twos, initialTwoIndex);
-    stateThree = stateThree ?? SlateColumnThree()
-      ..init(threes, initialThreeIndex);
     assert(titles.length >= 3);
   }
 
@@ -80,9 +74,12 @@ class _SlatePickerState extends State<SlatePicker> {
   @override
   void initState() {
     super.initState();
-    widget.stateOne!.init(widget.ones, widget.initialOneIndex);
-    widget.stateTwo!.init(widget.twos, widget.initialTwoIndex);
-    widget.stateThree!.init(widget.threes, widget.initialThreeIndex);
+    widget.stateOne = widget.stateOne ?? SlateColumnOne()
+      ..init(widget.ones, widget.initialOneIndex);
+    widget.stateTwo = widget.stateTwo ?? SlateColumnTwo()
+      ..init(widget.twos, widget.initialTwoIndex);
+    widget.stateThree = widget.stateThree ?? SlateColumnThree()
+      ..init(widget.threes, widget.initialThreeIndex);
     // callback the result to the main.dart
     WidgetsBinding.instance.endOfFrame.then((_) {
       _resultChanged(widget.stateOne!.selected, widget.stateTwo!.selected,
