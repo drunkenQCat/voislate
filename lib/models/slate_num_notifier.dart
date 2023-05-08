@@ -1,14 +1,19 @@
 // change notifier model to change the numList value
 import 'package:flutter/material.dart';
 
-class SlatePickerState with ChangeNotifier {
+abstract class SlatePickerState with ChangeNotifier {
   late FixedExtentScrollController controller;
   var _selected;
-  var numList;
+  var _numList;
   // getter and setter to _selected
   get selected => _selected;
   set selected(value) {
     _selected = value;
+    notifyListeners();
+  }
+  get numList => _numList;
+  set numList(value) {
+    _numList = value;
     notifyListeners();
   }
 
@@ -50,43 +55,5 @@ class SlateColumnThree extends SlatePickerState {
   void init([ List<String> inputList = const ['1', '2', '3', '4', '5', '6', '7', '8'], int initialIndex = 0 ]) {
     super.init(inputList, initialIndex);
     debugPrint('SlateColumnThree init, inputList: $inputList, initialIndex: $initialIndex');
-  }
-}
-
-
-
-
-class SlateNumNotifier extends ChangeNotifier {
-  // selected is the value on the picker now, numList is the list of the picker
-  var selected;
-  var _numList = List.generate(8, (index) => index.toString());
-  String? scrollToValue;
-  // getter of the _numList
-  List<String> get numList => _numList;
-  set numList(List<String> value) {
-    _numList = value;
-    notifyListeners();
-  }
-
-  void removeItem(value){
-    _numList.remove(value);
-    notifyListeners();
-  }
-
-  // a function to change the selected value
-  void nextOrPre([ bool addOrSub = true ]) {
-    var index = _numList.indexOf(selected);
-    if (addOrSub) {
-      index++;
-    } else {
-      index--;
-    }
-    selected = _numList[index];
-    notifyListeners();
-  }
-
-  void scrollSelectedTo(String value) {
-    scrollToValue = value;
-    notifyListeners();
   }
 }

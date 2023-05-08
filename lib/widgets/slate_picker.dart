@@ -54,8 +54,8 @@ class SlatePicker extends StatefulWidget {
     this.initialOneIndex = 0,
     this.initialTwoIndex = 0,
     this.initialThreeIndex = 0,
-    this.height = 100,
-    this.width = 200,
+    this.height = 90,
+    this.width = 300,
     this.itemHeight = 40,
     this.itemBackgroundColor = const Color(0x0A0A4D),
     this.isLoop = true,
@@ -82,8 +82,10 @@ class _SlatePickerState extends State<SlatePicker> {
       ..init(widget.threes, widget.initialThreeIndex);
     // callback the result to the main.dart
     WidgetsBinding.instance.endOfFrame.then((_) {
-      _resultChanged(widget.stateOne!.selected, widget.stateTwo!.selected,
-          widget.stateThree!.selected);
+      _resultChanged(
+        widget.stateOne!.selected, 
+        widget.stateTwo!.selected,
+        widget.stateThree!.selected);
     });
   }
 
@@ -97,25 +99,17 @@ class _SlatePickerState extends State<SlatePicker> {
           widget.titles[0],
           (value) => _resultChanged(
               value, widget.stateTwo!.selected, widget.stateThree!.selected),
-          FixedExtentScrollController(initialItem: widget.initialOneIndex),
+          widget.stateOne!.controller,
         ),
-        Container(
-          color: Colors.black,
-          width: 1,
-          height: widget.height - padding,
-        ),
+        VerticalSeparator(widget: widget, padding: padding),
         _buildPicker(
           widget.twos,
           widget.titles[1],
           (value) => _resultChanged(
               widget.stateOne!.selected, value, widget.stateThree!.selected),
-          FixedExtentScrollController(initialItem: widget.initialTwoIndex),
+          widget.stateTwo!.controller,
         ),
-        Container(
-          color: Colors.black,
-          width: 1,
-          height: widget.height - padding,
-        ),
+        VerticalSeparator(widget: widget, padding: padding),
         _buildPicker(
           widget.threes,
           widget.titles[2],
@@ -130,8 +124,8 @@ class _SlatePickerState extends State<SlatePicker> {
   _buildPicker(List data, String unit, ValueChanged valueChanged,
       FixedExtentScrollController controller) {
     return Container(
-      height: widget.height,
-      width: widget.width / 3,
+      height: widget.height + 10,
+      width: widget.width / 3.4,
       child: Column(
         children: [
           Expanded(
@@ -159,7 +153,13 @@ class _SlatePickerState extends State<SlatePicker> {
                   .toList(),
             ),
           ),
-          Text(unit),
+          SizedBox(height: 7),
+          Text(
+            unit,
+            style: const TextStyle(
+              fontSize: 17,
+              color: Colors.black,
+              fontWeight: FontWeight.w400,)),
         ],
       ),
     );
@@ -173,5 +173,30 @@ class _SlatePickerState extends State<SlatePicker> {
     widget.stateOne!.selected = v1;
     widget.stateTwo!.selected = v2;
     widget.stateThree!.selected = v3;
+  }
+}
+
+class VerticalSeparator extends StatelessWidget {
+  const VerticalSeparator({
+    super.key,
+    required this.widget,
+    required this.padding,
+  });
+
+  final SlatePicker widget;
+  final double padding;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          color: Colors.black,
+          width: 1,
+          height: widget.height - padding,
+        ),
+        SizedBox(height: padding / 3),
+      ],
+    );
   }
 }
