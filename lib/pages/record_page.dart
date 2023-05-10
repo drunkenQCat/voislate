@@ -17,7 +17,7 @@ class SlateRecord extends StatefulWidget {
 }
 
 class _SlateRecordState extends State<SlateRecord> {
-  int _counterInit = 1;
+  final int _counterInit = 1;
   var note = '';
   List<MapEntry<String, String>> notes = [];
   var ones = List.generate(8, (index) => ( index + 1 ).toString());
@@ -34,16 +34,16 @@ class _SlateRecordState extends State<SlateRecord> {
     var screenWidth = MediaQuery.of(context).size.width;
     var screenHeight = MediaQuery.of(context).size.height;
     var horizonPadding = 30.0;
-    final TextEditingController _textEditingController = TextEditingController();
+    final TextEditingController textEditingController = TextEditingController();
 
     var col1IncBtn =
-        IncrementCounterButton<SlateColumnOne>(onPressed: () => {},textCon: _textEditingController,);
+        IncrementCounterButton<SlateColumnOne>(onPressed: () => {},textCon: textEditingController,);
     var col1DecBtn =
-        DecrementCounterButton<SlateColumnOne>(onPressed: () => {},textCon: _textEditingController,);
+        DecrementCounterButton<SlateColumnOne>(onPressed: () => {},textCon: textEditingController,);
     var col2IncBtn =
-        IncrementCounterButton<SlateColumnTwo>(onPressed: () => {},textCon: _textEditingController,);
+        IncrementCounterButton<SlateColumnTwo>(onPressed: () => {},textCon: textEditingController,);
     var col2DecBtn =
-        DecrementCounterButton<SlateColumnTwo>(onPressed: () => {},textCon: _textEditingController,);
+        DecrementCounterButton<SlateColumnTwo>(onPressed: () => {},textCon: textEditingController,);
     var col3IncBtn = IncrementCounterButton<SlateColumnThree>(
       onPressed: () {
         setState(() {
@@ -57,7 +57,7 @@ class _SlateRecordState extends State<SlateRecord> {
           note = '';
         });
       },
-      textCon: _textEditingController,
+      textCon: textEditingController,
     );
 
     var col3DecBtn = DecrementCounterButton<SlateColumnThree>(
@@ -72,7 +72,7 @@ class _SlateRecordState extends State<SlateRecord> {
         }
         );
       },
-      textCon: _textEditingController,
+      textCon: textEditingController,
     );
 
     // This method is rerun every time setState is called, for instance as done
@@ -110,11 +110,11 @@ class _SlateRecordState extends State<SlateRecord> {
                           debugPrint('v1: $v1, v2: $v2, v3: $v3')),
                   // add an input box to have a note about the number
 
-                  Container(
+                  SizedBox(
                     width: screenWidth * 0.8,
                     child: TextField(
                       // bind the input to the note variable
-                      controller: _textEditingController,
+                      controller: textEditingController,
                       onChanged: (text) {
                         note = text;
                       },
