@@ -7,6 +7,7 @@ import '../models/slate_num_notifier.dart';
 import '../widgets/add_remove_buttons.dart';
 import '../widgets/quick_view_log_dialog.dart';
 import '../widgets/file_counter.dart';
+import '../models/recorder_file_num.dart';
 
 class SlateRecord extends StatefulWidget {
   const SlateRecord({super.key});
@@ -16,55 +17,62 @@ class SlateRecord extends StatefulWidget {
 }
 
 class _SlateRecordState extends State<SlateRecord> {
-  int _counter = 0;
+  int _counterInit = 1;
   var note = '';
-  List notes = [];
-  var ones = List.generate(8, (index) => index.toString());
+  List<MapEntry<String, String>> notes = [];
+  var ones = List.generate(8, (index) => ( index + 1 ).toString());
   var twos = ['1A', '2', '6', '5', '4', '7', '8', '9', '10'];
-  var threes = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
+  var threes = List.generate(200, (index) => ( index + 1 ).toString());
   var titles = ['Scene', 'Shot', 'Take'];
   final col2 = SlateColumnTwo();
   final col1 = SlateColumnOne();
   final col3 = SlateColumnThree();
+  var num= RecordFileNum();
 
   @override
   Widget build(BuildContext context) {
     var screenWidth = MediaQuery.of(context).size.width;
     var screenHeight = MediaQuery.of(context).size.height;
     var horizonPadding = 30.0;
+    final TextEditingController _textEditingController = TextEditingController();
 
     var col1IncBtn =
-        IncrementCounterButton<SlateColumnOne>(onPressed: () => {});
+        IncrementCounterButton<SlateColumnOne>(onPressed: () => {},textCon: _textEditingController,);
     var col1DecBtn =
-        DecrementCounterButton<SlateColumnOne>(onPressed: () => {});
+        DecrementCounterButton<SlateColumnOne>(onPressed: () => {},textCon: _textEditingController,);
     var col2IncBtn =
-        IncrementCounterButton<SlateColumnTwo>(onPressed: () => {});
+        IncrementCounterButton<SlateColumnTwo>(onPressed: () => {},textCon: _textEditingController,);
     var col2DecBtn =
-        DecrementCounterButton<SlateColumnTwo>(onPressed: () => {});
+        DecrementCounterButton<SlateColumnTwo>(onPressed: () => {},textCon: _textEditingController,);
     var col3IncBtn = IncrementCounterButton<SlateColumnThree>(
       onPressed: () {
         setState(() {
-          _counter++;
-          // add a new note, and
+          var _ = num.fullName();
           if (note.isEmpty) {
-            notes.add('note $_counter');
+            notes.add(MapEntry(_ ,'note ${num.number}'));
           } else {
-            notes.add(note);
+            notes.add(MapEntry(_ , note));
           }
+          num.increment();
+          note = '';
         });
       },
+      textCon: _textEditingController,
     );
 
     var col3DecBtn = DecrementCounterButton<SlateColumnThree>(
       onPressed: () {
         setState(() {
-          _counter--;
+          num.decrement();
           // remove the last note
           if (notes.isNotEmpty) {
             notes.removeLast();
           }
-        });
+          note = '';
+        }
+        );
       },
+      textCon: _textEditingController,
     );
 
     // This method is rerun every time setState is called, for instance as done
@@ -106,6 +114,7 @@ class _SlateRecordState extends State<SlateRecord> {
                     width: screenWidth * 0.8,
                     child: TextField(
                       // bind the input to the note variable
+                      controller: _textEditingController,
                       onChanged: (text) {
                         note = text;
                       },
@@ -117,10 +126,57 @@ class _SlateRecordState extends State<SlateRecord> {
                     ),
                   ),
 
-                  FileCounter(counter: _counter),
-                  const Text(
-                    'Go Ahead pushed the button this many times:',
+                  FileCounter(init: _counterInit, num: num,),
+                  
+                  // a card with a title "备注信息"， and a text field to 
+                  // enter the note about the number and
+                  // a icon button to show snack bar "正在保存描述" when long pressed
+                  // the icon should be a waveform icon
+                  Card(
+                    child: Column(
+                      children: [
+                        ListTile(
+                          title: const Text('备注信息'),
+                          subtitle: Text(note),
+                        ),
+                        TextField(
+                          onChanged: (text) {},
+                          decoration: const InputDecoration(
+                            icon: Icon(Icons.record_voice_over),
+                            border: OutlineInputBorder(),
+                            hintText: 'Enter a note about the number',
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.waves),
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('正在保存描述'),
+                                duration: Duration(seconds: 1),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
                   ),
+
+                  // this is a button with title"声音可用", when pressed, 
+                  // it will show a little toast message
+                  ElevatedButton(
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('声音可用'),
+                          duration: Duration(seconds: 1),
+                        ),
+                      );
+                    },
+                    child: const Text('声音可用'),
+                  ),
+
+
                 ],
               ),
             ),
@@ -165,7 +221,7 @@ class DisplayNotesButton extends StatelessWidget {
     required this.notes,
   });
 
-  final List notes;
+  final List<MapEntry<String, String>> notes;
 
   @override
   Widget build(BuildContext context) {
