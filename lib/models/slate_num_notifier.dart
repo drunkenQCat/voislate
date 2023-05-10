@@ -14,6 +14,11 @@ abstract class SlatePickerState with ChangeNotifier {
   get numList => _numList;
   set numList(value) {
     _numList = value;
+    // 检测numlist里边有没有重复的元素
+    var set = Set<String>.from(value);
+    if (set.length != value.length) {
+      throw Exception('numList has duplicate elements');
+    }
     notifyListeners();
   }
 
@@ -31,6 +36,8 @@ abstract class SlatePickerState with ChangeNotifier {
   }
   
   void scrollToNext() {
+    if(selected == numList.last) return;
+
     var index = numList.indexOf(selected);
     index++;
     if (index >= numList.length) {
@@ -40,6 +47,8 @@ abstract class SlatePickerState with ChangeNotifier {
   }
 
   void scrollToPrev(){
+    if (selected == numList.first) return;
+
     var index = numList.indexOf(selected);
     index--;
     if (index < 0) {

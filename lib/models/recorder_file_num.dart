@@ -7,19 +7,29 @@ class RecordFileNum {
   Stream<int> get value => _valueController.stream;
 
   int _number = 1;
+  int get number => _number;
 
-  void increment() {
+  int increment() {
     _number++;
     _valueController.sink.add(_number);
+    return _number;
   }
 
-  void decrement() {
+  int decrement() {
+    // if the number is already 1, don't decrement
+    if(_number - 1 < 1) return _number;
+
     _number--;
     _valueController.sink.add(_number);
+    return _number;
   }
 
   void dispose() {
     _valueController.close();
+  }
+
+  String fullName() {
+    return '$prefix$devider$_number.wav';
   }
 
   RecordFileNum({
@@ -38,10 +48,3 @@ class RecordFileNum {
   }
 
 }
-
-var a = RecordFileNum();
-var x = a.prefix;
-var y = a.devider;
-var z = a.value;
-var b = a.increment;
-var c = a.decrement;

@@ -11,13 +11,13 @@ typedef ResultChanged<V1, V2, V3> = Function(V1 v1, V2 v2, V3 v3);
 
 // notifier for every column
 
-// 轮盘选择器
+// The Picker for the slate
 class SlatePicker extends StatefulWidget {
   // data for the three columns
   final List<String> ones;
   final List<String> twos;
   final List<String> threes;
-
+  // in fact, the tags for the three columns
   final List<String> titles;
 
   // initial index for the three columns
@@ -57,8 +57,8 @@ class SlatePicker extends StatefulWidget {
     this.height = 90,
     this.width = 300,
     this.itemHeight = 40,
-    this.itemBackgroundColor = const Color(0x0A0A4D),
-    this.isLoop = true,
+    this.itemBackgroundColor = const Color(0xFFD1C4E9),
+    this.isLoop = false,
   }) : super(key: key) {
     // 初始化 stateOne、stateTwo 和 stateThree
     assert(titles.length >= 3);
@@ -157,8 +157,8 @@ class _SlatePickerState extends State<SlatePicker> {
           Text(
             unit,
             style: const TextStyle(
-              fontSize: 17,
-              color: Colors.black,
+              fontSize: 18,
+              color: Color(0xFF212121),
               fontWeight: FontWeight.w400,)),
         ],
       ),
@@ -191,7 +191,7 @@ class VerticalSeparator extends StatelessWidget {
     return Column(
       children: [
         Container(
-          color: Colors.black,
+          color: const Color(0xffbdbdbd),
           width: 1,
           height: widget.height - padding,
         ),
