@@ -87,14 +87,3 @@ class ShotSchedule extends DataList{
     _data = inputList;
   }
 }
-// Dismissible(
-//   key: Key(item.id),
-//   onDismissed: (direction) {
-//     // 在滑动时执行操作
-//   },
-//   child: ListTile(
-//     title: Text(item.title),
-//     subtitle: Text(item.subtitle),
-//     leading: Icon(Icons.delete),
-//   ),
-// )

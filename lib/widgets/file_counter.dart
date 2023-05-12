@@ -42,6 +42,11 @@ class FileNameDisplayCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const TextStyle tagStyle = TextStyle(
+      fontSize: 16,
+      color: Colors.black45,
+      fontWeight: FontWeight.w100,
+    );
     return Padding(
       padding: const EdgeInsets.only(left: 25,right: 25),
       child: Card(
@@ -50,14 +55,39 @@ class FileNameDisplayCard extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(num.prefix,style: style,),
-            Text(num.devider,style: const TextStyle(
-              fontSize: 32,
-              color: Colors.black45,
-              fontWeight: FontWeight.w400,
-            ),),
-            SizedBox(width: 10,),
-            Text(snapshot.data.toString(),style: style,),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  num.prefix.contains(RegExp(r'^[0-9]+$')) 
+                ? 'Date'
+                : 'Custom',
+                style: tagStyle,),
+                Text(num.prefix,style: style,),
+              ],
+            ),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  'Devider',
+                style: tagStyle,),
+                Text(num.devider,style: const TextStyle(
+                  fontSize: 32,
+                  color: Colors.black45,
+                  fontWeight: FontWeight.w400,
+                ),),
+              ],
+            ),
+            const SizedBox(width: 10,),
+            Column(
+              children: [
+                const Text(
+                  'Num',
+                style: tagStyle,),
+                Text(snapshot.data.toString(),style: style,),
+              ],
+            ),
           ],
         ),
       ),
