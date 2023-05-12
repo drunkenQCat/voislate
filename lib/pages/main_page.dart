@@ -55,7 +55,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
               children: const [
                 Text('记录'),
                 SizedBox(width: 5),
-                Icon(Icons.format_list_bulleted_outlined),
+                Icon(Icons.record_voice_over_outlined),
               ],
             ),
             Row(
@@ -63,7 +63,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
               children: const [
                 Text('场记'),
                 SizedBox(width: 5),
-                Icon(Icons.record_voice_over_outlined),
+                Icon(Icons.format_list_bulleted_outlined),
               ],
             ),
           ],

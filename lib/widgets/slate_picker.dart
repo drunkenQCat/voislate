@@ -153,7 +153,7 @@ class _SlatePickerState extends State<SlatePicker> {
                   .toList(),
             ),
           ),
-          SizedBox(height: 7),
+          // SizedBox(height: 4),
           Text(
             unit,
             style: const TextStyle(

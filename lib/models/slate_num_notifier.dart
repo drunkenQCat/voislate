@@ -63,6 +63,5 @@ class SlateColumnThree extends SlatePickerState {
   @override
   void init([ List<String> inputList = const ['1', '2', '3', '4', '5', '6', '7', '8'], int initialIndex = 0 ]) {
     super.init(inputList, initialIndex);
-    debugPrint('SlateColumnThree init, inputList: $inputList, initialIndex: $initialIndex');
   }
 }
