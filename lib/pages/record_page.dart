@@ -3,9 +3,10 @@ import 'package:provider/provider.dart';
 
 import '../widgets/slate_picker.dart';
 import '../models/slate_num_notifier.dart';
-import '../widgets/add_remove_buttons.dart';
+import '../widgets/simple_scroll_control.dart';
 import '../widgets/quick_view_log_dialog.dart';
 import '../widgets/file_counter.dart';
+import '../widgets/vertical_joystick.dart';
 import '../models/recorder_file_num.dart';
 
 /* 
@@ -43,6 +44,38 @@ class _SlateRecordState extends State<SlateRecord> {
   final col3 = SlateColumnThree();
   final num = RecordFileNum();
   String previousFileNum = '';
+
+  void drawbackItem() {
+    setState(() {
+      num.decrement();
+      // remove the last note
+      if (notes.isNotEmpty) {
+        notes.removeLast();
+      }
+      note = '';
+    });
+  }
+
+  void addItem(String currentFileNum) {
+    setState(() {
+        if (notes.isEmpty){
+          notes.add(const MapEntry("File Name", "Note"));
+          notes.add(MapEntry(num.fullName(), 'Waiting for input...'));
+        } 
+        else
+        { 
+          note = note.isEmpty ? 'note ${num.number -1}' : note;
+          notes.last = MapEntry(
+            previousFileNum, // File Name
+            note,//Note
+            );
+          notes.add(MapEntry(num.fullName(), 'Waiting for input...'));
+        }
+        previousFileNum = currentFileNum;
+        num.increment();
+        note = '';
+      });
+  }
   
 
   @override
@@ -54,57 +87,13 @@ class _SlateRecordState extends State<SlateRecord> {
     var currentFileNum = num.fullName();
     final TextEditingController textEditingController = TextEditingController();
 
-    // var col1IncBtn = IncrementCounterButton<SlateColumnOne>(
-    //   onPressed: () => {},
-    //   textCon: textEditingController,
-    // );
-    // var col1DecBtn = DecrementCounterButton<SlateColumnOne>(
-    //   onPressed: () => {},
-    //   textCon: textEditingController,
-    // );
-    // var col2IncBtn = IncrementCounterButton<SlateColumnTwo>(
-    //   onPressed: () => {},
-    //   textCon: textEditingController,
-    // );
-    // var col2DecBtn = DecrementCounterButton<SlateColumnTwo>(
-    //   onPressed: () => {},
-    //   textCon: textEditingController,
-    // );
     var col3IncBtn = IncrementCounterButton<SlateColumnThree>(
-      onPressed: () {
-        setState(() {
-            if (notes.isEmpty){
-              notes.add(const MapEntry("File Name", "Note"));
-              notes.add(MapEntry(num.fullName(), 'Waiting for input...'));
-            } 
-            else
-            { 
-              note = note.isEmpty ? 'note ${num.number -1}' : note;
-              notes.last = MapEntry(
-                previousFileNum, // File Name
-                note,//Note
-                );
-              notes.add(MapEntry(num.fullName(), 'Waiting for input...'));
-            }
-            previousFileNum = currentFileNum;
-            num.increment();
-            note = '';
-          });
-        },
+      onPressed: () => addItem(currentFileNum),
       textCon: textEditingController,
     );
 
     var col3DecBtn = DecrementCounterButton<SlateColumnThree>(
-      onPressed: () {
-        setState(() {
-          num.decrement();
-          // remove the last note
-          if (notes.isNotEmpty) {
-            notes.removeLast();
-          }
-          note = '';
-        });
-      },
+      onPressed: () => drawbackItem(),
       textCon: textEditingController,
     );
 
@@ -121,6 +110,13 @@ class _SlateRecordState extends State<SlateRecord> {
           ChangeNotifierProvider.value(value: col3),
         ],
         builder: (context, child) {
+          var scrl3 = SliderValueController<SlateColumnThree>(
+            context: context,
+            textCon: textEditingController,
+            inc: () => addItem(currentFileNum),
+            dec: () => drawbackItem(),
+          );
+
           return Scaffold(
             body: CustomScrollView(
               scrollDirection: Axis.vertical,
@@ -229,14 +225,24 @@ class _SlateRecordState extends State<SlateRecord> {
                         child: const Text('声音可用'),
                       ),
                     ],
-                  ),
+          
                 ),
               ),
-            ]),
+            ),],),
             floatingActionButton: Column(
               // make the children of the column align to the end
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    VerticalJoystick(
+                      height: 190,
+                      onConfirmation: scrl3.valueInc,
+                      onCancel: scrl3.valueDec,
+                    ),
+                  ],
+                ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
@@ -264,6 +270,8 @@ class _SlateRecordState extends State<SlateRecord> {
           );
         });
   }
+
+
 }
 
 class DisplayNotesButton extends StatelessWidget {
