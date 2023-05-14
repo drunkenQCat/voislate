@@ -209,23 +209,25 @@ class VerticalJoystickState extends State<VerticalJoystick> {
                 ),
               ),
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: <Widget>[
-                Icon(
-                  Icons.cancel,
-                  size: 48,
-                  color: Colors.red[300],
-                ),
-                SizedBox(
-                  height: 5,
-                ),
-                Icon(
-                  Icons.add,
-                  size: 48,
-                  color: Colors.green[300],
-                ),
-              ],
+            Center(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: <Widget>[
+                  Icon(
+                    Icons.cancel,
+                    size: 48,
+                    color: Colors.red[300],
+                  ),
+                  SizedBox(
+                    height: 5,
+                  ),
+                  Icon(
+                    Icons.add,
+                    size: 48,
+                    color: Colors.green[300],
+                  ),
+                ],
+              ),
             ),
             AnimatedPositioned(
               duration: Duration(milliseconds: _duration),

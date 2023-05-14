@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_vibrate/flutter_vibrate.dart';
 
 import '../widgets/slate_picker.dart';
 import '../models/slate_num_notifier.dart';
@@ -21,7 +22,9 @@ import '../models/recorder_file_num.dart';
 8. "准备录音"不要那么高
 9. "本场内容"注意schedule的数据结构
 10. (备选方案)可以考虑加入急行军模式
-11. *记得修改按键布局保证交互操作可以正常使用.某种意义上说，就是要足够的大
+11x *记得修改按键布局保证交互操作可以正常使用.某种意义上说，就是要足够的大
+12. 增加振动交互
+13. *修一下减了之后再加的问题
 */
 class SlateRecord extends StatefulWidget {
   const SlateRecord({super.key});
@@ -44,6 +47,7 @@ class _SlateRecordState extends State<SlateRecord> {
   final col3 = SlateColumnThree();
   final num = RecordFileNum();
   String previousFileNum = '';
+  final inputNotice = 'Waiting for input...';
 
   void drawbackItem() {
     setState(() {
@@ -53,6 +57,8 @@ class _SlateRecordState extends State<SlateRecord> {
         notes.removeLast();
       }
       note = '';
+      if(_canVibrate){
+          Vibrate.feedback(FeedbackType.warning); }
     });
   }
 
@@ -60,7 +66,7 @@ class _SlateRecordState extends State<SlateRecord> {
     setState(() {
         if (notes.isEmpty){
           notes.add(const MapEntry("File Name", "Note"));
-          notes.add(MapEntry(num.fullName(), 'Waiting for input...'));
+          notes.add(MapEntry(num.fullName(),inputNotice));
         } 
         else
         { 
@@ -69,14 +75,35 @@ class _SlateRecordState extends State<SlateRecord> {
             previousFileNum, // File Name
             note,//Note
             );
-          notes.add(MapEntry(num.fullName(), 'Waiting for input...'));
+          notes.add(MapEntry(num.fullName(),inputNotice));
         }
         previousFileNum = currentFileNum;
         num.increment();
         note = '';
+        if(_canVibrate){
+          Vibrate.feedback(FeedbackType.heavy);}
       });
   }
   
+  // vibration feedback related
+  bool _canVibrate = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _initVibrate();
+  }
+  
+  Future<void> _initVibrate() async{
+    // init the vibration
+    bool canVibrate = await Vibrate.canVibrate;
+    setState(() {
+        _canVibrate = canVibrate;
+        _canVibrate
+            ? debugPrint('This device can vibrate')
+            : debugPrint('This device cannot vibrate');
+      });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -95,6 +122,79 @@ class _SlateRecordState extends State<SlateRecord> {
     var col3DecBtn = DecrementCounterButton<SlateColumnThree>(
       onPressed: () => drawbackItem(),
       textCon: textEditingController,
+    );
+    var nextTakeMonitor = Card(
+      child: Column(
+        children: [
+          ListTile(
+            visualDensity: const VisualDensity(vertical: -4),
+            leading: const Icon(Icons.radio_button_checked_outlined, color: Colors.red,),
+            title: const Text('准备录音:'),
+            trailing: IconButton(
+              icon: const Icon(Icons.list),
+              onPressed: () {
+              },
+            ),
+          ),
+          SlatePicker(
+              ones: ones,
+              twos: twos,
+              threes: threes,
+              titles: titles,
+              stateOne: col1,
+              stateTwo: col2,
+              stateThree: col3,
+              width: screenWidth - 2 * horizonPadding,
+              height: screenHeight * 0.17,
+              itemHeight: screenHeight * 0.13 - 48,
+              resultChanged: (v1, v2, v3) =>
+                  debugPrint('v1: $v1, v2: $v2, v3: $v3')),
+          // add an input box to have a note about the number
+                      
+          const SizedBox(height: 10,),
+          FileCounter(
+            init: _counterInit,
+            num: num,
+          ),
+        ],
+      ),
+    );
+
+    var prevTakeEditor = Card(
+      child: Column(
+        children: [
+          ListTile(
+            leading: const Icon(Icons.stop_circle),
+            title: Text('${num.prefix}${num.devider}${num.number < 2 ? '?' :(num.number - 1).toString()}备注信息:'),
+          ),
+          SizedBox(
+            width: screenWidth * 0.8,
+            child: TextField(
+              // bind the input to the note variable
+              controller: textEditingController,
+              onChanged: (text) {
+                note = text;
+              },
+              decoration: const InputDecoration(
+                icon: Icon(Icons.record_voice_over),
+                border: OutlineInputBorder(),
+                hintText: 'Enter a note about the previous',
+              ),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.waves),
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('正在保存描述'),
+                  duration: Duration(seconds: 1),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
     );
 
     // This method is rerun every time setState is called, for instance as done
@@ -129,88 +229,9 @@ class _SlateRecordState extends State<SlateRecord> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: <Widget>[
-
-                      // The information about next take
-                      Card(
-                        child: Column(
-                          children: [
-                            ListTile(
-                              visualDensity: const VisualDensity(vertical: -4),
-                              leading: const Icon(Icons.radio_button_checked_outlined, color: Colors.red,),
-                              title: const Text('准备录音:'),
-                              trailing: IconButton(
-                                icon: const Icon(Icons.list),
-                                onPressed: () {
-                                },
-                              ),
-                            ),
-                            SlatePicker(
-                                ones: ones,
-                                twos: twos,
-                                threes: threes,
-                                titles: titles,
-                                stateOne: col1,
-                                stateTwo: col2,
-                                stateThree: col3,
-                                width: screenWidth - 2 * horizonPadding,
-                                height: screenHeight * 0.17,
-                                itemHeight: screenHeight * 0.13 - 48,
-                                resultChanged: (v1, v2, v3) =>
-                                    debugPrint('v1: $v1, v2: $v2, v3: $v3')),
-                            // add an input box to have a note about the number
-                                        
-                            const SizedBox(height: 10,),
-                            FileCounter(
-                              init: _counterInit,
-                              num: num,
-                            ),
-                          ],
-                        ),
-                      ),
-                                  
+                      nextTakeMonitor,
                       Text('本场内容'),
-                      // a card with a title "备注信息"， and a text field to
-                      // enter the note about the number and
-                      // a icon button to show snack bar "正在保存描述" when long pressed
-                      // the icon should be a waveform icon
-                      // this card is designed to save the message of last record
-                      Card(
-                        child: Column(
-                          children: [
-                            ListTile(
-                              leading: const Icon(Icons.stop_circle),
-                              title: Text('${num.prefix}${num.devider}${num.number < 2 ? '?' :(num.number - 1).toString()}备注信息:'),
-                            ),
-                            SizedBox(
-                              width: screenWidth * 0.8,
-                              child: TextField(
-                                // bind the input to the note variable
-                                controller: textEditingController,
-                                onChanged: (text) {
-                                  note = text;
-                                },
-                                decoration: const InputDecoration(
-                                  icon: Icon(Icons.record_voice_over),
-                                  border: OutlineInputBorder(),
-                                  hintText: 'Enter a note about the previous',
-                                ),
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.waves),
-                              onPressed: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('正在保存描述'),
-                                    duration: Duration(seconds: 1),
-                                  ),
-                                );
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                                  
+                      prevTakeEditor,
                       // this is a button with title"声音可用", when pressed,
                       // it will show a little toast message
                       ElevatedButton(
@@ -236,10 +257,12 @@ class _SlateRecordState extends State<SlateRecord> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
+                    //joystick is rotated 90 degree, so the height is the width of the joystick
                     VerticalJoystick(
-                      height: 190,
+                      width: 190,
                       onConfirmation: scrl3.valueInc,
                       onCancel: scrl3.valueDec,
+                      onTapDown: () => Vibrate.feedback(FeedbackType.medium),
                     ),
                   ],
                 ),
@@ -273,6 +296,7 @@ class _SlateRecordState extends State<SlateRecord> {
 
 
 }
+
 
 class DisplayNotesButton extends StatelessWidget {
   // a button to show the notes in a list view
