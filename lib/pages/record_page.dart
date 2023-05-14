@@ -27,8 +27,8 @@ import '../models/recorder_file_num.dart';
 9. "本场内容"注意schedule的数据结构
 10. (备选方案)可以考虑加入急行军模式
 11x *记得修改按键布局保证交互操作可以正常使用.某种意义上说，就是要足够的大
-12. 增加振动交互
-13. *修一下减了之后再加的问题
+12x 增加振动交互
+13x *修一下减了之后再加的问题
 */
 class SlateRecord extends StatefulWidget {
   const SlateRecord({super.key});
