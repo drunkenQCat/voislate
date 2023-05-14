@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_vibrate/flutter_vibrate.dart';
+// import 'package:android_physical_buttons/android_physical_buttons.dart';
+import 'package:flutter_android_volume_keydown/flutter_android_volume_keydown.dart';
 
 import '../widgets/slate_picker.dart';
 import '../models/slate_num_notifier.dart';
@@ -38,6 +42,7 @@ class _SlateRecordState extends State<SlateRecord> {
   final int _counterInit = 1;
   var note = '';
   List<MapEntry<String, String>> notes = [];
+  List<MapEntry<String, String>> oldNotes = [];
   var ones = List.generate(8, (index) => (index + 1).toString());
   var twos = ['1A', '2', '6', '5', '4', '7', '8', '9', '10'];
   var threes = List.generate(200, (index) => (index + 1).toString());
@@ -46,15 +51,33 @@ class _SlateRecordState extends State<SlateRecord> {
   final col1 = SlateColumnOne();
   final col3 = SlateColumnThree();
   final num = RecordFileNum();
+  late SliderValueController<SlateColumnThree> scrl3; 
+  late String currentFileNum;
   String previousFileNum = '';
   final inputNotice = 'Waiting for input...';
+
+  // 手动跑一条录音
+  void fakeTake(){
+    setState(() {
+      previousFileNum = currentFileNum;
+      num.increment();
+      currentFileNum = num.fullName();
+      notes.last = MapEntry(notes.last.key,'fake take'); 
+    });
+  }
 
   void drawbackItem() {
     setState(() {
       num.decrement();
       // remove the last note
       if (notes.isNotEmpty) {
-        notes.removeLast();
+          notes = oldNotes;
+          if(oldNotes.isNotEmpty){
+            oldNotes.removeLast();
+            oldNotes.last = MapEntry(oldNotes.last.key, inputNotice);
+          }
+          oldNotes = (oldNotes.length == 1)? notes = [] : oldNotes;
+          previousFileNum = oldNotes.isEmpty? '':oldNotes.last.key;
       }
       note = '';
       if(_canVibrate){
@@ -64,6 +87,7 @@ class _SlateRecordState extends State<SlateRecord> {
 
   void addItem(String currentFileNum) {
     setState(() {
+        oldNotes = notes;
         if (notes.isEmpty){
           notes.add(const MapEntry("File Name", "Note"));
           notes.add(MapEntry(num.fullName(),inputNotice));
@@ -71,7 +95,9 @@ class _SlateRecordState extends State<SlateRecord> {
         else
         { 
           note = note.isEmpty ? 'note ${num.number -1}' : note;
-          notes.last = MapEntry(
+          notes.last = (notes.last.value == 'fake take')?
+            notes.last
+            :MapEntry(
             previousFileNum, // File Name
             note,//Note
             );
@@ -88,11 +114,6 @@ class _SlateRecordState extends State<SlateRecord> {
   // vibration feedback related
   bool _canVibrate = true;
 
-  @override
-  void initState() {
-    super.initState();
-    _initVibrate();
-  }
   
   Future<void> _initVibrate() async{
     // init the vibration
@@ -105,13 +126,46 @@ class _SlateRecordState extends State<SlateRecord> {
       });
   }
 
+  StreamSubscription<HardwareButton>? subscription;
+  void startListening() {
+    subscription = FlutterAndroidVolumeKeydown.stream.listen((event) {
+      if (event == HardwareButton.volume_down) {
+        // debugPrint("Volume down received");
+        scrl3.valueDec();
+      } else if (event == HardwareButton.volume_up) {
+        // debugPrint("Volume up received");
+        // drawbackItem();
+        scrl3.valueInc();
+      }
+    });
+  }
+
+  void stopListening() {
+    subscription?.cancel();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _initVibrate();
+    // AndroidPhysicalButtons.listen((key) { 
+    //   debugPrint(key.toString());
+    //   });
+    startListening();
+  }
+  @override
+  void dispose() {
+    super.dispose();
+    stopListening();
+  }
+
   @override
   Widget build(BuildContext context) {
     var screenWidth = MediaQuery.of(context).size.width;
     var screenHeight = MediaQuery.of(context).size.height;
     var horizonPadding = 30.0;
     // everytime setState, the build method will be called again
-    var currentFileNum = num.fullName();
+    currentFileNum = num.fullName();
     final TextEditingController textEditingController = TextEditingController();
 
     var col3IncBtn = IncrementCounterButton<SlateColumnThree>(
@@ -210,11 +264,12 @@ class _SlateRecordState extends State<SlateRecord> {
           ChangeNotifierProvider.value(value: col3),
         ],
         builder: (context, child) {
-          var scrl3 = SliderValueController<SlateColumnThree>(
+          scrl3 = SliderValueController<SlateColumnThree>(
             context: context,
             textCon: textEditingController,
             inc: () => addItem(currentFileNum),
             dec: () => drawbackItem(),
+            col: col3,
           );
 
           return Scaffold(
@@ -230,7 +285,7 @@ class _SlateRecordState extends State<SlateRecord> {
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: <Widget>[
                       nextTakeMonitor,
-                      Text('本场内容'),
+                      const Text('本场内容'),
                       prevTakeEditor,
                       // this is a button with title"声音可用", when pressed,
                       // it will show a little toast message
@@ -260,8 +315,8 @@ class _SlateRecordState extends State<SlateRecord> {
                     //joystick is rotated 90 degree, so the height is the width of the joystick
                     VerticalJoystick(
                       width: 190,
-                      onConfirmation: scrl3.valueInc,
-                      onCancel: scrl3.valueDec,
+                      onConfirmation: ()=>scrl3.valueInc(),
+                      onCancel: ()=>scrl3.valueDec(),
                       onTapDown: () => Vibrate.feedback(FeedbackType.medium),
                     ),
                   ],
