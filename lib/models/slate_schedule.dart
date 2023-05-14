@@ -87,3 +87,5 @@ class ShotSchedule extends DataList{
     _data = inputList;
   }
 }
+
+// make an instance of SceneSchedule

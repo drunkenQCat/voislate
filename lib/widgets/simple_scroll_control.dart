@@ -10,6 +10,7 @@ class SliderValueController<T extends SlatePickerState> {
   BuildContext context;
   VoidCallback? inc;
   VoidCallback? dec;
+  final T col;
 
 
   SliderValueController({
@@ -17,20 +18,19 @@ class SliderValueController<T extends SlatePickerState> {
     required this.textCon,
     this.inc,
     this.dec,
+    required this.col,
   });
 
   void valueInc(){
     inc?.call();
     textCon.clear();
-    var _ = Provider.of<T>(context,listen: false);
-    _.scrollToNext();
+    col.scrollToNext();
   }
 
   void valueDec(){
     dec?.call();
     textCon.clear();
-    var _ = Provider.of<T>(context,listen: false);
-    _.scrollToPrev();
+    col.scrollToPrev();
   }
 
 }
