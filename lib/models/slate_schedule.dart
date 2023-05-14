@@ -89,3 +89,19 @@ class ShotSchedule extends DataList{
 }
 
 // make an instance of SceneSchedule
+// create a list of ScheduleItem objects
+List<ScheduleItem> scheduleItems = [
+  ScheduleItem('1', 'fix1', Note(objects: ['object1', 'Hero', 'Crowd'], type: 'type1', append: 'append1')),
+  ScheduleItem('2', 'fix2', Note(objects: ['object2'], type: 'type2', append: 'append2')),
+  ScheduleItem('3', 'fix3', Note(objects: ['object3'], type: 'type3', append: 'append3')),
+];
+
+// create a list of ShotSchedule objects
+List<ShotSchedule> shotSchedules = [
+  ShotSchedule([ScheduleItem('4', 'fix4', Note(objects: ['object4'], type: 'type4', append: 'append4'))]),
+  ShotSchedule([ScheduleItem('5', 'fix5', Note(objects: ['object5'], type: 'type5', append: 'append5'))]),
+  ShotSchedule([ScheduleItem('6', 'fix6', Note(objects: ['object6'], type: 'type6', append: 'append6'))]),
+];
+
+// create a SceneSchedule object
+SceneSchedule sceneSchedule = SceneSchedule(list: scheduleItems, shots: shotSchedules);

@@ -520,3 +520,120 @@ class SlatePicker extends StatelessWidget {
   }
 }
 ```
+
+# NewListView
+```dart
+
+import 'package:flutter/material.dart';
+import '../models/slate_schedule.dart';
+
+class SceneSchedule extends StatefulWidget {
+  @override
+  _SceneScheduleState createState() => _SceneScheduleState();
+}
+
+class _SceneScheduleState extends State<SceneSchedule> {
+  int _selectedIndex = 0;
+
+  final SceneSchedule sceneSchedule = SceneSchedule(
+    list: [
+      ScheduleItem('1', 'Fix 1', Note(objects: ['Object 1'], type: 'Type 1', append: 'Append 1')),
+      ScheduleItem('2', 'Fix 2', Note(objects: ['Object 2'], type: 'Type 2', append: 'Append 2')),
+      ScheduleItem('3', 'Fix 3', Note(objects: ['Object 3'], type: 'Type 3', append: 'Append 3')),
+    ],
+    shots: [
+      ShotSchedule([ScheduleItem('1', 'Fix 1', Note(objects: ['Object 1'], type: 'Type 1', append: 'Append 1'))]),
+      ShotSchedule([ScheduleItem('2', 'Fix 2', Note(objects: ['Object 2'], type: 'Type 2', append: 'Append 2'))]),
+      ShotSchedule([ScheduleItem('3', 'Fix 3', Note(objects: ['Object 3'], type: 'Type 3', append: 'Append 3'))]),
+    ],
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: ListView.builder(
+            itemCount: sceneSchedule.data.length,
+            itemBuilder: (BuildContext context, int index) {
+              return ListTile(
+                title: Text(sceneSchedule.data[index].fix),
+                selected: index == _selectedIndex,
+                onTap: () {
+                  setState(() {
+                    _selectedIndex = index;
+                  });
+                },
+              );
+            },
+          ),
+        ),
+        Expanded(
+          flex: 2,
+          child: Container(
+            color: Colors.grey[200],
+            child: ListView.builder(
+              itemCount: sceneSchedule.shotScheduleMap[sceneSchedule.data[_selectedIndex].key]!.data.length,
+              itemBuilder: (BuildContext context, int index) {
+                return ListTile(
+                  title: Text(sceneSchedule.shotScheduleMap[sceneSchedule.data[_selectedIndex].key]!.data[index].fix),
+                );
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+```
+# Longpress and shortpress
+```dart
+class HardwareButtonPlugin extends FlutterPlugin implements MethodCallHandler {
+  static const MethodChannel _channel = MethodChannel('hardware_button');
+
+  static Stream<HardwareButton> stream = _channel
+      .receiveBroadcastStream()
+      .cast<int>() // 将数据类型转换为整型
+      .map((event) {
+    switch (event) {
+      case 1:
+        return HardwareButton.volume_down;
+      case 0:
+        return HardwareButton.volume_up;
+      case 2:
+        return HardwareButton.power;
+      default:
+        return null;
+    }
+  });
+
+  Timer _timer;
+  bool _isVolumeDownPressed = false;
+
+  @override
+  void onMethodCall(MethodCall call, Result result) {
+    if (call.method == 'start') {
+      _timer?.cancel();
+      _isVolumeDownPressed = true;
+      _timer = Timer(Duration(milliseconds: 500), () {
+        if (_isVolumeDownPressed) {
+          // 音量减键长按
+          streamController.add(HardwareButton.volume_down_long_press);
+        }
+      });
+    } else if (call.method == 'end') {
+      _timer?.cancel();
+      if (_isVolumeDownPressed) {
+        // 音量减键短按
+        streamController.add(HardwareButton.volume_down_short_press);
+      }
+      _isVolumeDownPressed = false;
+    } else {
+      result.notImplemented();
+    }
+  }
+}
+
+```
