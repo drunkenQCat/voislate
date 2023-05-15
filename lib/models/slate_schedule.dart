@@ -26,6 +26,11 @@ abstract class DataList with ChangeNotifier{
     refresh();
   }
 
+  ScheduleItem operator [](int index) => _data[index];
+
+  get length {
+    return _data.length;}
+
   void add(ScheduleItem item){
     _data.add(item);
     refresh();
@@ -33,6 +38,11 @@ abstract class DataList with ChangeNotifier{
 
   void remove(ScheduleItem item){
     _data.remove(item);
+    refresh();
+  }
+
+  void removeAt(int index){
+    _data.removeAt(index);
     refresh();
   }
 

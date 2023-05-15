@@ -73,7 +73,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
         controller: _tabController,
         physics: const NeverScrollableScrollPhysics(),
         children: [
-          SceneSchedule(),
+          SceneSchedulePage(),
           const SlateRecord(),
           SlateLog(),
         ],
