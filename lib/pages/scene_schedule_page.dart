@@ -78,16 +78,36 @@ class _SceneSchedulePageState extends State<SceneSchedulePage> {
       children: [
         Flexible(
           flex: 1,
-          child: ListView.separated(
+          child: ReorderableListView.builder(
+            // 左边的列表
             itemCount: scenes.length,
-            separatorBuilder: (context, index) {
-              return const Divider(
-                height: 1,
-                color: Colors.grey,
-              );
+            onReorder: (int oldIndex, int newIndex) {
+              setState(() {
+                var shots = scenes[oldIndex];
+                if (newIndex > oldIndex) {
+                  newIndex -= 1;
+                }
+                final item = scenes.removeAt(oldIndex);
+                // int index = newIndex > oldIndex ? newIndex - 1 : newIndex;
+                scenes.insert(newIndex, item, shots);
+                // make the selected item to be the dragged item
+              });
+              _selectedIndex = newIndex;
+
             },
             itemBuilder: (BuildContext context, int index) {
-              return leftList(index, context);
+              return ReorderableDragStartListener(
+                key: ValueKey(scenes.data[index].name),
+                index: index,
+                child: leftList(index, context)
+                );
+            },
+            proxyDecorator: (child, index, animation) {
+              return Material(
+                color: Colors.transparent,
+                child: child,
+                elevation: 10.0,
+              );
             },
           ),
         ),
