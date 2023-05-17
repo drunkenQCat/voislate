@@ -226,37 +226,42 @@ class _SlateRecordState extends State<SlateRecord> {
           ListTileTheme(
             minLeadingWidth: 5,
             child: ListTile(
-              leading: const Icon(Icons.stop_circle),
-              title: Text(
-                  '${num.prefix}${num.devider}${num.number < 2 ? '?' : (num.number - 1).toString()}'),
-            ),
-          ),
-          SizedBox(
-            width: screenWidth * 0.4,
-            child: TextField(
-              // bind the input to the note variable
-              maxLines: null,
-              controller: textEditingController,
-              onChanged: (text) {
-                note = text;
-              },
-              decoration: const InputDecoration(
-                contentPadding: EdgeInsets.symmetric(vertical: 60),
-                border: OutlineInputBorder(),
-                hintText: 'Note',
+              leading: IconButton(
+                icon: const Icon(Icons.mic),
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('正在保存描述'),
+                      duration: Duration(seconds: 1),
+                    ),
+                  );
+                },
               ),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.mic),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('正在保存描述'),
-                  duration: Duration(seconds: 1),
+              title: Row(
+                children: [
+                  const Icon(Icons.stop_circle),
+                  Text(
+                      '${num.prefix}${num.devider}${num.number < 2 ? '?' : (num.number - 1).toString()}'),
+                ],
+              ),
+              subtitle: 
+                SizedBox(
+                  width: screenWidth * 0.4,
+                  child: TextField(
+                    // bind the input to the note variable
+                    maxLines: null,
+                    controller: textEditingController,
+                    onChanged: (text) {
+                      note = text;
+                    },
+                    decoration: const InputDecoration(
+                      contentPadding: EdgeInsets.symmetric(vertical: 60),
+                      border: OutlineInputBorder(),
+                      hintText: 'Note',
+                    ),
+                  ),
                 ),
-              );
-            },
+            ),
           ),
         ],
       ),
@@ -296,12 +301,14 @@ class _SlateRecordState extends State<SlateRecord> {
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: <Widget>[
                         nextTakeMonitor,
+                        col3IncBtn,
                         Row(
                           children: [
                             prevTakeEditor,
-                            Text('当前文件: ')
+                            Text('当前镜头: ')
                           ],
                         ),
+                        col3DecBtn,
                       ],
                     ),
                   ),
@@ -312,36 +319,8 @@ class _SlateRecordState extends State<SlateRecord> {
               // make the children of the column align to the end
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                // Row(
-                //   mainAxisAlignment: MainAxisAlignment.end,
-                //   children: [
-                //     //joystick is rotated 90 degree, so the height is the width of the joystick
-                //     VerticalJoystick(
-                //       width: 190,
-                //       onConfirmation: ()=>scrl3.valueInc(),
-                //       onCancel: ()=>scrl3.valueDec(),
-                //       onTapDown: () => Vibrate.feedback(FeedbackType.medium),
-                //     ),
-                //   ],
-                // ),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // col1IncBtn,
-                    // col2IncBtn,
-                    col3IncBtn,
-                  ],
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // col1DecBtn,
-                    // col2DecBtn,
-                    col3DecBtn,
-                  ],
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     DisplayNotesButton(notes: notes),
                     FloatingActionButton(
