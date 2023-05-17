@@ -3,10 +3,10 @@
 import 'package:flutter/material.dart';
 
 class ScheduleItem{
-  final String key;
-  final String fix;
-  final String name;
-  final Note note;
+  String key;
+  String fix;
+  String name;
+  Note note;
   // constructor
   ScheduleItem(this.key, this.fix, this.note):name = key + fix;
 }

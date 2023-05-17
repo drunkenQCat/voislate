@@ -49,7 +49,7 @@ class IncrementCounterButton<T extends SlatePickerState> extends StatelessWidget
   Widget build(BuildContext context) {
     return Consumer<T>(
       builder: (_, col, child) {
-        return FloatingActionButton.small(
+        return FloatingActionButton.large(
           onPressed: () {
             onPressed();
             textCon.clear();
@@ -77,7 +77,7 @@ class DecrementCounterButton <T extends SlatePickerState> extends StatelessWidge
   Widget build(BuildContext context) {
     return Consumer<T>(
       builder: (_, col, child) {
-        return FloatingActionButton.small(
+        return FloatingActionButton.large(
           onPressed: () {
             onPressed();
             textCon.clear();
