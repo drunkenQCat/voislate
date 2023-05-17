@@ -5,6 +5,8 @@ import 'record_page.dart';
 import 'slate_log_page.dart';
 
 class VoiSlate extends StatelessWidget {
+  const VoiSlate({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -71,7 +73,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
       ),
       body: TabBarView(
         controller: _tabController,
-        physics: const NeverScrollableScrollPhysics(),
+        // physics: const NeverScrollableScrollPhysics(),
         children: [
           SceneSchedulePage(),
           const SlateRecord(),

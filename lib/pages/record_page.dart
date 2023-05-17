@@ -11,7 +11,7 @@ import '../models/slate_num_notifier.dart';
 import '../widgets/simple_scroll_control.dart';
 import '../widgets/quick_view_log_dialog.dart';
 import '../widgets/file_counter.dart';
-import '../widgets/vertical_joystick.dart';
+// import '../widgets/vertical_joystick.dart';
 import '../models/recorder_file_num.dart';
 
 /* 
@@ -29,6 +29,7 @@ import '../models/recorder_file_num.dart';
 11x *记得修改按键布局保证交互操作可以正常使用.某种意义上说，就是要足够的大
 12x 增加振动交互
 13x *修一下减了之后再加的问题
+14. 把加减号改成方形的
 */
 class SlateRecord extends StatefulWidget {
   const SlateRecord({super.key});
@@ -51,18 +52,18 @@ class _SlateRecordState extends State<SlateRecord> {
   final col1 = SlateColumnOne();
   final col3 = SlateColumnThree();
   final num = RecordFileNum();
-  late SliderValueController<SlateColumnThree> scrl3; 
+  late SliderValueController<SlateColumnThree> scrl3;
   late String currentFileNum;
   String previousFileNum = '';
   final inputNotice = 'Waiting for input...';
 
   // 手动跑一条录音
-  void fakeTake(){
+  void fakeTake() {
     setState(() {
       previousFileNum = currentFileNum;
       num.increment();
       currentFileNum = num.fullName();
-      notes.last = MapEntry(notes.last.key,'fake take'); 
+      notes.last = MapEntry(notes.last.key, 'fake take');
     });
   }
 
@@ -71,59 +72,58 @@ class _SlateRecordState extends State<SlateRecord> {
       num.decrement();
       // remove the last note
       if (notes.isNotEmpty) {
-          notes = oldNotes;
-          if(oldNotes.isNotEmpty){
-            oldNotes.removeLast();
-            oldNotes.last = MapEntry(oldNotes.last.key, inputNotice);
-          }
-          oldNotes = (oldNotes.length == 1)? notes = [] : oldNotes;
-          previousFileNum = oldNotes.isEmpty? '':oldNotes.last.key;
+        notes = oldNotes;
+        if (oldNotes.isNotEmpty) {
+          oldNotes.removeLast();
+          oldNotes.last = MapEntry(oldNotes.last.key, inputNotice);
+        }
+        oldNotes = (oldNotes.length == 1) ? notes = [] : oldNotes;
+        previousFileNum = oldNotes.isEmpty ? '' : oldNotes.last.key;
       }
       note = '';
-      if(_canVibrate){
-          Vibrate.feedback(FeedbackType.warning); }
+      if (_canVibrate) {
+        Vibrate.feedback(FeedbackType.warning);
+      }
     });
   }
 
   void addItem(String currentFileNum) {
     setState(() {
-        oldNotes = notes;
-        if (notes.isEmpty){
-          notes.add(const MapEntry("File Name", "Note"));
-          notes.add(MapEntry(num.fullName(),inputNotice));
-        } 
-        else
-        { 
-          note = note.isEmpty ? 'note ${num.number -1}' : note;
-          notes.last = (notes.last.value == 'fake take')?
-            notes.last
-            :MapEntry(
-            previousFileNum, // File Name
-            note,//Note
-            );
-          notes.add(MapEntry(num.fullName(),inputNotice));
-        }
-        previousFileNum = currentFileNum;
-        num.increment();
-        note = '';
-        if(_canVibrate){
-          Vibrate.feedback(FeedbackType.heavy);}
-      });
+      oldNotes = notes;
+      if (notes.isEmpty) {
+        notes.add(const MapEntry("File Name", "Note"));
+        notes.add(MapEntry(num.fullName(), inputNotice));
+      } else {
+        note = note.isEmpty ? 'note ${num.number - 1}' : note;
+        notes.last = (notes.last.value == 'fake take')
+            ? notes.last
+            : MapEntry(
+                previousFileNum, // File Name
+                note, //Note
+              );
+        notes.add(MapEntry(num.fullName(), inputNotice));
+      }
+      previousFileNum = currentFileNum;
+      num.increment();
+      note = '';
+      if (_canVibrate) {
+        Vibrate.feedback(FeedbackType.heavy);
+      }
+    });
   }
-  
+
   // vibration feedback related
   bool _canVibrate = true;
 
-  
-  Future<void> _initVibrate() async{
+  Future<void> _initVibrate() async {
     // init the vibration
     bool canVibrate = await Vibrate.canVibrate;
     setState(() {
-        _canVibrate = canVibrate;
-        _canVibrate
-            ? debugPrint('This device can vibrate')
-            : debugPrint('This device cannot vibrate');
-      });
+      _canVibrate = canVibrate;
+      _canVibrate
+          ? debugPrint('This device can vibrate')
+          : debugPrint('This device cannot vibrate');
+    });
   }
 
   StreamSubscription<HardwareButton>? subscription;
@@ -148,11 +148,12 @@ class _SlateRecordState extends State<SlateRecord> {
   void initState() {
     super.initState();
     _initVibrate();
-    // AndroidPhysicalButtons.listen((key) { 
+    // AndroidPhysicalButtons.listen((key) {
     //   debugPrint(key.toString());
     //   });
     startListening();
   }
+
   @override
   void dispose() {
     super.dispose();
@@ -180,15 +181,18 @@ class _SlateRecordState extends State<SlateRecord> {
     var nextTakeMonitor = Card(
       child: Column(
         children: [
-          ListTile(
-            visualDensity: const VisualDensity(vertical: -4),
-            leading: const Icon(Icons.radio_button_checked_outlined, color: Colors.red,),
-            title: const Text('准备录音:'),
-            trailing: IconButton(
-              icon: const Icon(Icons.list),
-              onPressed: () {
-              },
+          const ListTile(
+            visualDensity: VisualDensity(vertical: -4),
+            leading: Icon(
+              Icons.radio_button_checked_outlined,
+              color: Colors.red,
             ),
+            title: Text('准备录音:'),
+            // trailing: IconButton(
+            //   icon: const Icon(Icons.list),
+            //   onPressed: () {
+            //   },
+            // ),
           ),
           SlatePicker(
               ones: ones,
@@ -204,8 +208,10 @@ class _SlateRecordState extends State<SlateRecord> {
               resultChanged: (v1, v2, v3) =>
                   debugPrint('v1: $v1, v2: $v2, v3: $v3')),
           // add an input box to have a note about the number
-                      
-          const SizedBox(height: 10,),
+
+          const SizedBox(
+            height: 10,
+          ),
           FileCounter(
             init: _counterInit,
             num: num,
@@ -214,30 +220,35 @@ class _SlateRecordState extends State<SlateRecord> {
       ),
     );
 
-    var prevTakeEditor = Card(
+    var prevTakeEditor = Flexible(
       child: Column(
         children: [
-          ListTile(
-            leading: const Icon(Icons.stop_circle),
-            title: Text('${num.prefix}${num.devider}${num.number < 2 ? '?' :(num.number - 1).toString()}备注信息:'),
+          ListTileTheme(
+            minLeadingWidth: 5,
+            child: ListTile(
+              leading: const Icon(Icons.stop_circle),
+              title: Text(
+                  '${num.prefix}${num.devider}${num.number < 2 ? '?' : (num.number - 1).toString()}'),
+            ),
           ),
           SizedBox(
-            width: screenWidth * 0.8,
+            width: screenWidth * 0.4,
             child: TextField(
               // bind the input to the note variable
+              maxLines: null,
               controller: textEditingController,
               onChanged: (text) {
                 note = text;
               },
               decoration: const InputDecoration(
-                icon: Icon(Icons.record_voice_over),
+                contentPadding: EdgeInsets.symmetric(vertical: 60),
                 border: OutlineInputBorder(),
-                hintText: 'Enter a note about the previous',
+                hintText: 'Note',
               ),
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.waves),
+            icon: const Icon(Icons.mic),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
@@ -276,53 +287,45 @@ class _SlateRecordState extends State<SlateRecord> {
             body: CustomScrollView(
               scrollDirection: Axis.vertical,
               slivers: [
-              SliverToBoxAdapter(
-                child: SizedBox(
-                  // because of the Title of scaffold,
-                  // the width of the card is 80% of the screen height
-                  height: screenHeight * 0.85,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: <Widget>[
-                      nextTakeMonitor,
-                      const Text('本场内容'),
-                      prevTakeEditor,
-                      // this is a button with title"声音可用", when pressed,
-                      // it will show a little toast message
-                      ElevatedButton(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('声音可用'),
-                              duration: Duration(seconds: 1),
-                            ),
-                          );
-                        },
-                        child: const Text('声音可用'),
-                      ),
-                    ],
-          
+                SliverToBoxAdapter(
+                  child: SizedBox(
+                    // because of the Title of scaffold,
+                    // the width of the card is 80% of the screen height
+                    height: screenHeight * 0.85,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: <Widget>[
+                        nextTakeMonitor,
+                        Row(
+                          children: [
+                            prevTakeEditor,
+                            Text('当前文件: ')
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-            ),],),
+              ],
+            ),
             floatingActionButton: Column(
               // make the children of the column align to the end
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
+                // Row(
+                //   mainAxisAlignment: MainAxisAlignment.end,
+                //   children: [
+                //     //joystick is rotated 90 degree, so the height is the width of the joystick
+                //     VerticalJoystick(
+                //       width: 190,
+                //       onConfirmation: ()=>scrl3.valueInc(),
+                //       onCancel: ()=>scrl3.valueDec(),
+                //       onTapDown: () => Vibrate.feedback(FeedbackType.medium),
+                //     ),
+                //   ],
+                // ),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    //joystick is rotated 90 degree, so the height is the width of the joystick
-                    VerticalJoystick(
-                      width: 190,
-                      onConfirmation: ()=>scrl3.valueInc(),
-                      onCancel: ()=>scrl3.valueDec(),
-                      onTapDown: () => Vibrate.feedback(FeedbackType.medium),
-                    ),
-                  ],
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     // col1IncBtn,
                     // col2IncBtn,
@@ -330,7 +333,7 @@ class _SlateRecordState extends State<SlateRecord> {
                   ],
                 ),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     // col1DecBtn,
                     // col2DecBtn,
@@ -338,9 +341,20 @@ class _SlateRecordState extends State<SlateRecord> {
                   ],
                 ),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     DisplayNotesButton(notes: notes),
+                    FloatingActionButton(
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('声音可用'),
+                            duration: Duration(seconds: 1),
+                          ),
+                        );
+                      },
+                      child: const Text('OK'),
+                    ),
                   ],
                 ),
               ],
@@ -348,10 +362,7 @@ class _SlateRecordState extends State<SlateRecord> {
           );
         });
   }
-
-
 }
-
 
 class DisplayNotesButton extends StatelessWidget {
   // a button to show the notes in a list view
