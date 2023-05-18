@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter_vibrate/flutter_vibrate.dart';
 // import 'package:android_physical_buttons/android_physical_buttons.dart';
 import 'package:flutter_android_volume_keydown/flutter_android_volume_keydown.dart';
+import 'package:simple_speed_dial/simple_speed_dial.dart';
 
 import '../widgets/slate_picker.dart';
 import '../models/slate_num_notifier.dart';
@@ -30,6 +31,7 @@ import '../models/recorder_file_num.dart';
 12x 增加振动交互
 13x *修一下减了之后再加的问题
 14. 把加减号改成方形的
+15. *把currentScn改成prevScene
 */
 class SlateRecord extends StatefulWidget {
   const SlateRecord({super.key});
@@ -48,6 +50,9 @@ class _SlateRecordState extends State<SlateRecord> {
   var twos = ['1A', '2', '6', '5', '4', '7', '8', '9', '10'];
   var threes = List.generate(200, (index) => (index + 1).toString());
   var titles = ['Scene', 'Shot', 'Take'];
+  late String currentScn ;
+  late String currentSht ;
+  late String currentTk ;
   final col2 = SlateColumnTwo();
   final col1 = SlateColumnOne();
   final col3 = SlateColumnThree();
@@ -152,6 +157,9 @@ class _SlateRecordState extends State<SlateRecord> {
     //   debugPrint(key.toString());
     //   });
     startListening();
+    currentScn = '1';
+    currentSht = '1';
+    currentTk = '1';
   }
 
   @override
@@ -178,6 +186,19 @@ class _SlateRecordState extends State<SlateRecord> {
       onPressed: () => drawbackItem(),
       textCon: textEditingController,
     );
+    
+    void pickerNumSync() {
+      setState(() {
+        currentScn = col1.selected;
+        currentSht = col2.selected;
+        currentTk = col3.selected;
+        currentFileNum = num.fullName();
+        if (notes.isNotEmpty) {
+          notes.last = MapEntry(currentFileNum, inputNotice);
+        }
+      });
+    }
+
     var nextTakeMonitor = Card(
       child: Column(
         children: [
@@ -205,8 +226,11 @@ class _SlateRecordState extends State<SlateRecord> {
               width: screenWidth - 2 * horizonPadding,
               height: screenHeight * 0.17,
               itemHeight: screenHeight * 0.13 - 48,
-              resultChanged: (v1, v2, v3) =>
-                  debugPrint('v1: $v1, v2: $v2, v3: $v3')),
+              resultChanged: (v1, v2, v3) {
+                pickerNumSync();
+                debugPrint('v1: $v1, v2: $v2, v3: $v3');
+              },
+          ),
           // add an input box to have a note about the number
 
           const SizedBox(
@@ -221,52 +245,85 @@ class _SlateRecordState extends State<SlateRecord> {
     );
 
     var prevTakeEditor = Flexible(
-      child: Column(
-        children: [
-          ListTileTheme(
-            minLeadingWidth: 5,
-            child: ListTile(
-              leading: IconButton(
-                icon: const Icon(Icons.mic),
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('正在保存描述'),
-                      duration: Duration(seconds: 1),
-                    ),
-                  );
-                },
-              ),
-              title: Row(
-                children: [
-                  const Icon(Icons.stop_circle),
-                  Text(
-                      '${num.prefix}${num.devider}${num.number < 2 ? '?' : (num.number - 1).toString()}'),
-                ],
-              ),
-              subtitle: 
-                SizedBox(
-                  width: screenWidth * 0.4,
-                  child: TextField(
-                    // bind the input to the note variable
-                    maxLines: null,
-                    controller: textEditingController,
-                    onChanged: (text) {
-                      note = text;
-                    },
-                    decoration: const InputDecoration(
-                      contentPadding: EdgeInsets.symmetric(vertical: 60),
-                      border: OutlineInputBorder(),
-                      hintText: 'Note',
-                    ),
-                  ),
-                ),
-            ),
+      child: ListTileTheme(
+        minLeadingWidth: 5,
+        child: ListTile(
+          title: Row(
+            children: [
+              const Icon(Icons.stop_circle),
+              Text(
+                  '${num.prefix}${num.devider}${num.number < 2 ? '?' : (num.number - 1).toString()}'),
+            ],
           ),
-        ],
+          subtitle: 
+            SizedBox(
+              // width: screenWidth * 0.3,
+              child: TextField(
+                // bind the input to the note variable
+                maxLines: 3,
+                controller: textEditingController,
+                onChanged: (text) {
+                  note = text;
+                },
+                decoration: const InputDecoration(
+                  // contentPadding: EdgeInsets.symmetric(vertical: 20),
+                  border: OutlineInputBorder(),
+                  hintText: 'Note',
+                ),
+              ),
+            ), 
+        ), 
       ),
     );
 
+    var prevShotNote = Flexible(
+      child: ListTileTheme(
+        minLeadingWidth: 5,
+        child: ListTile(
+          title: Row(
+            children: [
+              const Icon(Icons.stop_circle),
+              Text(
+                  'S$currentScn Sh$currentSht Tk${int.parse(currentTk) < 2 ? '?' : (int.parse(currentTk) - 1).toString()}'),
+            ],
+          ),
+          subtitle: 
+            SizedBox(
+              // width: screenWidth * 0.3,
+              child: TextField(
+                // bind the input to the note variable
+                maxLines: 3,
+                controller: textEditingController,
+                onChanged: (text) {
+                  note = text;
+                },
+                decoration: const InputDecoration(
+                  // contentPadding: EdgeInsets.symmetric(vertical: 20),
+                  border: OutlineInputBorder(),
+                  hintText: 'Note',
+                ),
+              ),
+            ),
+            // trailing: Container(
+            //   width: 1,
+            //   height: 10,
+            //   padding: const EdgeInsets.symmetric(vertical: 16),
+            //   alignment: Alignment.center,
+            //   child: IconButton(
+            //     icon: const Icon(Icons.mic),
+            //     onPressed: () {
+            //       ScaffoldMessenger.of(context).showSnackBar(
+            //         const SnackBar(
+            //           content: Text('正在保存描述'),
+            //           duration: Duration(seconds: 1),
+            //         ),
+            //       );
+            //     },
+            //           ),
+            // ),
+        ), 
+      ),
+    );
     // This method is rerun every time setState is called, for instance as done
     // by the _incrementCounter method above.
     //
@@ -298,17 +355,39 @@ class _SlateRecordState extends State<SlateRecord> {
                     // the width of the card is 80% of the screen height
                     height: screenHeight * 0.85,
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: <Widget>[
                         nextTakeMonitor,
-                        col3IncBtn,
                         Row(
                           children: [
-                            prevTakeEditor,
-                            Text('当前镜头: ')
+                            Expanded(
+                              child: col3IncBtn,
+                              ),
                           ],
                         ),
-                        col3DecBtn,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            prevTakeEditor,
+                            IconButton(
+                              icon: const Icon(Icons.mic),
+                              onPressed: () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('正在保存描述'),
+                                    duration: Duration(seconds: 1),
+                                  ),
+                                );
+                              },
+                            ),
+                            prevShotNote,
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            Expanded(child: col3DecBtn),
+                          ],
+                        ),
                       ],
                     ),
                   ),
@@ -316,30 +395,46 @@ class _SlateRecordState extends State<SlateRecord> {
               ],
             ),
             floatingActionButton: Column(
-              // make the children of the column align to the end
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    DisplayNotesButton(notes: notes),
-                    FloatingActionButton(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('声音可用'),
-                            duration: Duration(seconds: 1),
-                          ),
-                        );
-                      },
-                      child: const Text('OK'),
-                    ),
-                  ],
-                ),
+                okFloatingDial(context),
+                DisplayNotesButton(notes: notes),
               ],
             ),
           );
         });
+  }
+
+  SpeedDial okFloatingDial(BuildContext context) {
+    return SpeedDial(
+      child: const Text('OK'),
+      speedDialChildren: <SpeedDialChild>[
+        SpeedDialChild(
+          onPressed: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('声音可用'),
+                duration: Duration(seconds: 1),
+              ),
+            );
+          },
+          label: '声音可用',
+          child: const Icon(Icons.gpp_good),
+          ),
+        SpeedDialChild(
+          onPressed: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('声音弃用'),
+                duration: Duration(seconds: 1),
+              ),
+            );
+          },
+          label: '声音弃用',
+          child: const Icon(Icons.gpp_bad),
+          ),
+        ],
+      );
   }
 }
 

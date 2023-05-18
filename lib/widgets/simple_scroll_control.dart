@@ -55,7 +55,10 @@ class IncrementCounterButton<T extends SlatePickerState> extends StatelessWidget
             textCon.clear();
             col.scrollToNext();
           },
-          child: child,
+          style: ElevatedButton.styleFrom(
+            minimumSize: const Size(70, 60)
+          ),
+          child: child
         );
       },
       child: const Icon(Icons.add, ),
@@ -82,6 +85,9 @@ class DecrementCounterButton <T extends SlatePickerState> extends StatelessWidge
             textCon.clear();
             col.scrollToPrev();
           },
+          style: ElevatedButton.styleFrom(
+            minimumSize: const Size(70, 60)
+          ),
           child: child,
         );
       },
