@@ -13,7 +13,7 @@ final SceneSchedule defaultScenes = SceneSchedule(
   shots: [
     ShotSchedule([
       ScheduleItem('1', 'A',
-          Note(objects: ['男主'], type: '近景', append: '在鳖上发电')),
+          Note(objects: ['男主'], type: '近景', append: '在会议室开会')),
       ScheduleItem('2', 'A',
           Note(objects: ['Object 2'], type: 'Type 2', append: 'Append 2')),
       ScheduleItem('3', 'A',
