@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 
-class VerticalJoystick extends StatefulWidget {
+class MonoDirectionJoystick extends StatefulWidget {
   /// Height of the slider. Defaults to 70.
   final double height;
 
@@ -58,7 +58,7 @@ class VerticalJoystick extends StatefulWidget {
   /// Stick the slider to the end
   final bool stickToEnd;
 
-  const VerticalJoystick({
+  const MonoDirectionJoystick({
     Key? key,
     this.height = 70,
     this.width = 300,
@@ -89,11 +89,11 @@ class VerticalJoystick extends StatefulWidget {
 
   @override
   State<StatefulWidget> createState() {
-    return VerticalJoystickState();
+    return MonoDirectionJoystickState();
   }
 }
 
-class VerticalJoystickState extends State<VerticalJoystick> {
+class MonoDirectionJoystickState extends State<MonoDirectionJoystick> {
   late double _position = widget.initValue;
   int _duration = 0;
 
@@ -181,82 +181,79 @@ class VerticalJoystickState extends State<VerticalJoystick> {
       style = widget.textStyle!;
     }
 
-    return RotatedBox(
-      quarterTurns: -1,
-      child: AnimatedContainer(
-        duration: Duration(milliseconds: _duration),
-        curve: Curves.easeInExpo,
-        height: widget.height,
-        width: widget.width,
-        padding: const EdgeInsets.all(5),
-        decoration: BoxDecoration(
-          borderRadius: widget.backgroundShape ?? BorderRadius.all(Radius.circular(widget.height)),
-          color: widget.backgroundColorEnd != null ? this.calculateBackground() : widget.backgroundColor,
-          boxShadow: <BoxShadow>[shadow],
-        ),
-        child: Stack(
-          children: <Widget>[
-            Positioned(
-              left: widget.height / 2,
-              child: AnimatedContainer(
-                height: widget.height - 10,
-                width: getPosition(),
-                duration: Duration(milliseconds: _duration),
-                curve: Curves.ease,
-                decoration: BoxDecoration(
-                  borderRadius: widget.backgroundShape ?? BorderRadius.all(Radius.circular(widget.height)),
-                  color: widget.backgroundColorEnd != null ? this.calculateBackground() : widget.backgroundColor,
-                ),
-              ),
-            ),
-            Center(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: <Widget>[
-                  Icon(
-                    Icons.cancel,
-                    size: 48,
-                    color: Colors.red[300],
-                  ),
-                  SizedBox(
-                    height: 5,
-                  ),
-                  Icon(
-                    Icons.add,
-                    size: 48,
-                    color: Colors.green[300],
-                  ),
-                ],
-              ),
-            ),
-            AnimatedPositioned(
+    return AnimatedContainer(
+      duration: Duration(milliseconds: _duration),
+      curve: Curves.easeInExpo,
+      height: widget.height,
+      width: widget.width,
+      padding: const EdgeInsets.all(5),
+      decoration: BoxDecoration(
+        borderRadius: widget.backgroundShape ?? BorderRadius.all(Radius.circular(widget.height)),
+        color: widget.backgroundColorEnd != null ? this.calculateBackground() : widget.backgroundColor,
+        boxShadow: <BoxShadow>[shadow],
+      ),
+      child: Stack(
+        children: <Widget>[
+          Positioned(
+            left: widget.height / 2,
+            child: AnimatedContainer(
+              height: widget.height - 10,
+              width: getPosition(),
               duration: Duration(milliseconds: _duration),
-              curve: Curves.easeInExpo,
-              left: getPosition(),
-              top: 0,
-              child: GestureDetector(
-                onTapDown: (_) => widget.onTapDown != null ? widget.onTapDown!() : null,
-                onTapUp: (_) => widget.onTapUp != null ? widget.onTapUp!() : null,
-                onPanUpdate: (details) {
-                  updatePosition(details);
-                },
-                onPanEnd: (details) {
-                  if (widget.onTapUp != null) widget.onTapUp!();
-                  sliderReleased(details);
-                },
-                child: Container(
-                  height: widget.height - 10,
-                  width: widget.height - 10,
-                  decoration: BoxDecoration(
-                    borderRadius: widget.foregroundShape ?? BorderRadius.all(Radius.circular(widget.height / 2)),
-                    color: widget.foregroundColor,
-                  ),
-                  child: RotatedBox(quarterTurns: 1, child: widget.sliderButtonContent),
-                ),
+              curve: Curves.ease,
+              decoration: BoxDecoration(
+                borderRadius: widget.backgroundShape ?? BorderRadius.all(Radius.circular(widget.height)),
+                color: widget.backgroundColorEnd != null ? this.calculateBackground() : widget.backgroundColor,
               ),
             ),
-          ],
-        ),
+          ),
+          Center(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: <Widget>[
+                Icon(
+                  Icons.cancel,
+                  size: 48,
+                  color: Colors.red[300],
+                ),
+                SizedBox(
+                  height: 5,
+                ),
+                Icon(
+                  Icons.add,
+                  size: 48,
+                  color: Colors.green[300],
+                ),
+              ],
+            ),
+          ),
+          AnimatedPositioned(
+            duration: Duration(milliseconds: _duration),
+            curve: Curves.easeInExpo,
+            left: getPosition(),
+            top: 0,
+            child: GestureDetector(
+              onTapDown: (_) => widget.onTapDown != null ? widget.onTapDown!() : null,
+              onTapUp: (_) => widget.onTapUp != null ? widget.onTapUp!() : null,
+              onPanUpdate: (details) {
+                updatePosition(details);
+              },
+              onPanEnd: (details) {
+                if (widget.onTapUp != null) widget.onTapUp!();
+                sliderReleased(details);
+              },
+              child: Container(
+                height: widget.height - 10,
+                width: widget.height - 10,
+                decoration: BoxDecoration(
+                  borderRadius: widget.foregroundShape ?? BorderRadius.all(Radius.circular(widget.height / 2)),
+                  color: widget.foregroundColor,
+                ),
+                child: RotatedBox(quarterTurns: 1, child: widget.sliderButtonContent),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -12,7 +12,7 @@ import '../models/slate_num_notifier.dart';
 import '../widgets/simple_scroll_control.dart';
 import '../widgets/quick_view_log_dialog.dart';
 import '../widgets/file_counter.dart';
-// import '../widgets/vertical_joystick.dart';
+// import '../widgets/mono_direction_joystick.dart';
 import '../models/recorder_file_num.dart';
 
 /* 

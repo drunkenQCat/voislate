@@ -1,6 +1,7 @@
 
 // the template of the schedule items
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 class ScheduleItem{
   String key;
