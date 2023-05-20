@@ -2,19 +2,29 @@
 // the template of the schedule items
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+part 'slate_schedule.g.dart';
 
+@HiveType(typeId: 0)
 class ScheduleItem{
+  @HiveField(0)
   String key;
+  @HiveField(1)
   String fix;
+  @HiveField(2)
   String name;
+  @HiveField(3)
   Note note;
   // constructor
   ScheduleItem(this.key, this.fix, this.note):name = key + fix;
 }
 
+@HiveType(typeId: 1)
 class Note {
+  @HiveField(0)
   late List<String> objects;
+  @HiveField(1)
   late String type;
+  @HiveField(2)
   final String append;
   //constructor
   Note({ required this.objects, required this.type, required this.append });
@@ -26,20 +36,25 @@ class Note {
   }
 }
 // this abstract class is used to store the data of the schedule, literally a list of schedule items
-class DataList extends ChangeNotifier{
-  late List<ScheduleItem> _data;
+@HiveType(typeId: 2)
+class DataList extends HiveObject with ChangeNotifier{
+  @HiveField(0)
+  List<ScheduleItem> _data = [];
   List<ScheduleItem> get data => _data;
-  set data(List<ScheduleItem> data){
+  set data(List<ScheduleItem> newData){
+    _listDupDetect(newData);
+    _data = newData;
+    refresh();
+  }
+
+  DataList(List<ScheduleItem>? shots,[ScheduleItem? info]){
     // detect that if the _data has duplicate items
     // if it does, throw an error
-    var set = <String>{};
-    for (var item in data) {
-      if (set.contains(item.name)) {
-        throw Exception('Duplicate items in the list');
-      }
-      set.add(item.name);
+    if (shots == null) {
+      _data = [];
+      return;
     }
-    _data = data;
+    _listDupDetect(shots);
     refresh();
   }
 
@@ -47,7 +62,30 @@ class DataList extends ChangeNotifier{
     return _data.length;}
 
 
-  void add(ScheduleItem item, [ ShotSchedule? shots ]){
+
+  void _listDupDetect(List<ScheduleItem> shots){
+    var set = <String>{};
+    // if empty list, it is running in the constructor
+    // if not, it is running in the setter
+    var toBeDetected = _data == [] ? _data + shots : shots ;
+    for (var item in toBeDetected) {
+      if (set.contains(item.name)) {
+        throw DuplicateItemException('Duplicate items in the list');
+      }
+      set.add(item.name);
+    }
+    _data = toBeDetected;
+  }
+
+  void _dupDetect(ScheduleItem shot){
+    for (var item in _data) {
+      if (shot.name == item.name) {
+        throw DuplicateItemException('Duplicate items in the list');
+      }
+    }
+  }
+  void add(ScheduleItem item){
+    _dupDetect(item);
     _data.add(item);
     refresh();
   }
@@ -63,7 +101,7 @@ class DataList extends ChangeNotifier{
     return removed;
   }
 
-  void insert(int index, ScheduleItem item, [ ShotSchedule? shots ]){
+  void insert(int index, ScheduleItem item){
     _data.insert(index, item);
     refresh();
   }
@@ -79,63 +117,18 @@ class DataList extends ChangeNotifier{
   }
 }
 
-class ShotSchedule extends DataList{
-  ScheduleItem operator [](int index) => data[index];
-  ShotSchedule(List<ScheduleItem> inputList){
-    data = inputList;
-  }
-
-}
-
+@HiveType(typeId: 3)
 class SceneSchedule extends DataList{
-  Map<String, ShotSchedule> shotScheduleMap = {};
+  @HiveField(1)
+  ScheduleItem info;
+  SceneSchedule(inputShots, this.info):super(inputShots, info);
 
-  ShotSchedule operator [](int index){
-    return shotScheduleMap[_data[index].name]!;
-  }
-
-  SceneSchedule({ required List<ScheduleItem> list, required List<ShotSchedule> shots }){
-    data = list;
-    assert(shots.length == list.length);
-    var _ = shots;
-    // map data to _
-    for (var item in data) {
-      // just pop the data out 
-      var currentScene = _.removeAt(0);
-      shotScheduleMap[item.name] = currentScene;
-    }
-  }
-  @override
-  void add(ScheduleItem item, [ShotSchedule? shots]) {
-    shotScheduleMap[item.name] = shots!;
-    super.add(item);
-  }
-
-  @override
-  void remove(ScheduleItem item) {
-    shotScheduleMap.remove(item.name);
-    super.remove(item);
-  }
-
-  @override
-  ScheduleItem removeAt(int index){
-    var removed = super.removeAt(index);
-    shotScheduleMap.remove(removed);
-    return removed;
-
-  }
-
-  @override
-  void insert(int index, ScheduleItem item, [ ShotSchedule? shots ]){
-    shotScheduleMap[item.name] = shots!;
-    super.insert(index, item);
-  }
-
-  @override
-  void update(ScheduleItem oldItem, ScheduleItem newItem,[ ShotSchedule? shots ]) {
-    shotScheduleMap[newItem.name] = shots!;
-    shotScheduleMap.remove(oldItem.name);
-    super.update(oldItem, newItem);
-  }
+  ScheduleItem operator [](int index) => data[index];
 }
 
+class DuplicateItemException implements Exception {
+  final String message;
+  DuplicateItemException(this.message);
+  @override
+  String toString() => message;
+}
