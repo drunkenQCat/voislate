@@ -43,10 +43,10 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
       appBar: AppBar(
         title: TabBar(
           controller: _tabController,
-          tabs: [
+          tabs: const [
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
+              children: [
                 Text('计划'),
                 SizedBox(width: 5),
                 Icon(Icons.edit_calendar_outlined),
@@ -54,7 +54,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
+              children: [
                 Text('记录'),
                 SizedBox(width: 5),
                 Icon(Icons.record_voice_over_outlined),
@@ -62,7 +62,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
+              children: [
                 Text('场记'),
                 SizedBox(width: 5),
                 Icon(Icons.format_list_bulleted_outlined),
