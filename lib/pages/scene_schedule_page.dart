@@ -316,7 +316,28 @@ class _SceneSchedulePageState extends State<SceneSchedulePage> {
               });
             }
 
-            void _saveChanges() {
+            void addItem(bool after) {
+              setState(() {
+                var newNote = Note(
+                  objects: editedObjects,
+                  type: editedType,
+                  append: editedAppend,
+                );
+                var newInfo = ScheduleItem(editedKey, editedFix, newNote);
+                var newShot = ScheduleItem('1', '',
+                    Note(objects: editedObjects, type: '近景', append: ''));
+                var plusIndex = after ? 1 : 0;
+
+                if (shotIndex == null) {
+                  scenes.insert(index + plusIndex, SceneSchedule([newShot], newInfo));
+                } else {
+                  scenes[index].insert(shotIndex + plusIndex, newInfo);
+                }
+              });
+              Navigator.of(context).pop();
+            }
+
+            void saveChanges() {
               setState(() {
                 var newNote = Note(
                   objects: editedObjects,
@@ -360,10 +381,10 @@ class _SceneSchedulePageState extends State<SceneSchedulePage> {
                                   editedKey = newValue!;
                                 });
                               },
-                              items:
-                                  List.generate(50, (index) => index.toString())
-                                      .map<DropdownMenuItem<String>>(
-                                          (String value) {
+                              items: List.generate(
+                                      200, (index) => (index + 1).toString())
+                                  .map<DropdownMenuItem<String>>(
+                                      (String value) {
                                 return DropdownMenuItem<String>(
                                   value: value,
                                   child: Text(value),
@@ -428,15 +449,15 @@ class _SceneSchedulePageState extends State<SceneSchedulePage> {
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
                             ElevatedButton(
-                              onPressed: _saveChanges,
+                              onPressed: () => addItem(false),
                               child: const Text('向前添加'),
                             ),
                             ElevatedButton(
-                              onPressed: _saveChanges,
+                              onPressed: saveChanges,
                               child: const Text('保存'),
                             ),
                             ElevatedButton(
-                              onPressed: _saveChanges,
+                              onPressed: () => addItem(true),
                               child: const Text('向后添加'),
                             ),
                           ],
