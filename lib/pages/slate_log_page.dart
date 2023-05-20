@@ -62,7 +62,6 @@ class _SlateLogState extends State<SlateLog> {
       itemBuilder: (BuildContext context, int index) {
         SlateLogItem item = slateLogItems[index];
         bool isFolded = foldedScenes.contains(item.scn);
-        bool isSelected = false; // Add the logic for selecting a list item
 
         return Column(
           children: [
@@ -77,7 +76,6 @@ class _SlateLogState extends State<SlateLog> {
                   }
                 });
               },
-              tileColor: isSelected ? Colors.blue.shade200 : null,
               leading: CircleAvatar(
                 child: Text(item.tk.toString()),
               ),

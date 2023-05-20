@@ -1,61 +1,90 @@
 import '../models/slate_schedule.dart';
 
-
-final SceneSchedule defaultScenes = SceneSchedule(
-  list: [
-    ScheduleItem('1', 'A',
-        Note(objects: ['男主角', '女主角', '猫猫'], type: '会议室', append: '开会场景')),
-    ScheduleItem('2', 'A',
-        Note(objects: ['Object 2'], type: 'Type 2', append: 'Append 2')),
-    ScheduleItem('3', 'A',
-        Note(objects: ['Object 3'], type: 'Type 3', append: 'Append 3')),
-  ],
-  shots: [
-    ShotSchedule([
-      ScheduleItem('1', 'A',
-          Note(objects: ['男主'], type: '近景', append: '在会议室开会')),
-      ScheduleItem('2', 'A',
-          Note(objects: ['Object 2'], type: 'Type 2', append: 'Append 2')),
-      ScheduleItem('3', 'A',
-          Note(objects: ['Object 3'], type: 'Type 3', append: 'Append 3')),
-      ScheduleItem('4', 'A',
-          Note(objects: ['Object 4'], type: 'Type 4', append: 'Append 4')),
-      ScheduleItem('5', 'A',
-          Note(objects: ['Object 5'], type: 'Type 5', append: 'Append 5')),
-    ]),
-    ShotSchedule([
-      ScheduleItem('2', 'A',
-          Note(objects: ['Object 2'], type: 'Type 2', append: 'Append 2')),
-      ScheduleItem('6', 'A',
-          Note(objects: ['Object 6'], type: 'Type 6', append: 'Append 6')),
-      ScheduleItem('7', 'A',
-          Note(objects: ['Object 7'], type: 'Type 7', append: 'Append 7')),
-      ScheduleItem('8', 'A',
-          Note(objects: ['Object 8'], type: 'Type 8', append: 'Append 8')),
-      ScheduleItem('9', 'A',
-          Note(objects: ['Object 9'], type: 'Type 9', append: 'Append 9')),
-    ]),
-    ShotSchedule([
-      ScheduleItem('3', 'A',
-          Note(objects: ['Object 3'], type: 'Type 3', append: 'Append 3')),
-      ScheduleItem('10', 'A',
-          Note(objects: ['Object 10'], type: 'Type 10', append: 'Append 10')),
-      ScheduleItem('11', 'A',
-          Note(objects: ['Object 11'], type: 'Type 11', append: 'Append 11')),
-      ScheduleItem('12', 'A',
-          Note(objects: ['Object 12'], type: 'Type 12', append: 'Append 12')),
-      ScheduleItem('13', 'A',
-          Note(objects: ['Object 13'], type: 'Type 13', append: 'Append 13')),
-      ScheduleItem('14', 'A',
-          Note(objects: ['Object 14'], type: 'Type 14', append: 'Append 14')),
-    ]),
-  ],
+ScheduleItem sceneInfo1A = ScheduleItem(
+  '1',
+  'A',
+  Note(
+    objects: ['缪尔赛斯', '塞雷娅', '克里斯滕'],
+    type: '万星园',
+    append: '三人会面，缪尔赛斯提出了她的计划，塞雷娅和克里斯滕都表示了支持。',
+  ),
 );
 
-List<String> scnNums = [];
-List<String> shtNums = [];
-List<int> tkNums = [];
+ScheduleItem shotInfo1A = ScheduleItem(
+  '1',
+  'A',
+  Note(
+    objects: ['缪尔赛斯', '塞雷娅'],
+    type: '近景',
+    append: '小插曲',
+  ),
+);
 
-int defaultScnIdx = 0;
-int defaultShtIdx = 0;
-int defaultTkIdx = 0;
+ScheduleItem shotInfo2B = ScheduleItem(
+  '2',
+  'B',
+  Note(
+    objects: ['克里斯滕', '塞雷娅'],
+    type: '特写',
+    append: '两人对峙',
+  ),
+);
+
+ScheduleItem shotInfo3C = ScheduleItem(
+  '3',
+  'C',
+  Note(
+    objects: ['缪尔赛斯', '塞雷娅'],
+    type: '中景',
+    append: '缪尔赛斯向塞雷娅介绍生态园',
+  ),
+);
+
+ScheduleItem sceneInfo2A = ScheduleItem(
+  '2',
+  'A',
+  Note(
+    objects: ['Dr', '凯尔希', '迷迭香'],
+    type: '洛肯实验室',
+    append: '三人准备准备会面洛肯',
+  ),
+);
+
+ScheduleItem twoAshotInfo1A = ScheduleItem(
+  '1',
+  'A',
+  Note(
+    objects: ['缪尔赛斯', '塞雷娅'],
+    type: '近景',
+    append: '小插曲',
+  ),
+);
+
+ScheduleItem twoAshotInfo2B = ScheduleItem(
+  '2',
+  'B',
+  Note(
+    objects: ['克里斯滕', '塞雷娅'],
+    type: '特写',
+    append: '两人对峙',
+  ),
+);
+
+ScheduleItem twoAshotInfo3C = ScheduleItem(
+  '3',
+  'C',
+  Note(
+    objects: ['缪尔赛斯', '塞雷娅'],
+    type: '中景',
+    append: '缪尔赛斯向塞雷娅介绍生态园',
+  ),
+);
+
+SceneSchedule sceneSchedule = SceneSchedule(
+  [shotInfo1A, shotInfo2B, shotInfo3C],
+  sceneInfo1A,
+);
+SceneSchedule scene2ASchedule = SceneSchedule(
+  [twoAshotInfo1A, shotInfo2B, shotInfo3C],
+  sceneInfo1A,
+);

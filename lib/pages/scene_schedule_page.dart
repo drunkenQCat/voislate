@@ -1,8 +1,11 @@
+
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+
 import '../models/slate_schedule.dart';
-import '../data/dummy_scenes.dart';
 
 class SceneSchedulePage extends StatefulWidget {
+
   @override
   _SceneSchedulePageState createState() => _SceneSchedulePageState();
 }
@@ -26,46 +29,45 @@ class SceneSchedulePage extends StatefulWidget {
 class _SceneSchedulePageState extends State<SceneSchedulePage> {
   int _selectedIndex = 0;
   int _selectedShotIndex = 0;
-
-  var scenes = defaultScenes;
-  
+ 
+  List<SceneSchedule> scenes = [];
 
   @override
+  void initState() {
+    super.initState();
+    var sBox = Hive.box('scenes_box');
+    scenes = sBox.values.toList().cast<SceneSchedule>();
+  }
+  
+  @override
   Widget build(BuildContext context) {
-    scenes.data[0].note;
     return Row(
       children: [
         Flexible(
           flex: 1,
           child: ReorderableListView.builder(
-            // 左边的列表
-            itemCount: scenes.length,
-            onReorder: (int oldIndex, int newIndex) {
-              setState(() {
-                var shots = scenes[oldIndex];
-                if (newIndex > oldIndex) {
-                  newIndex -= 1;
-                }
-                final item = scenes.removeAt(oldIndex);
-                // int index = newIndex > oldIndex ? newIndex - 1 : newIndex;
-                scenes.insert(newIndex, item, shots);
-                // make the selected item to be the dragged item
-              });
-              _selectedIndex = newIndex;
-            },
-            itemBuilder: (BuildContext context, int index) {
-              return ReorderableDelayedDragStartListener(
-                  key: ValueKey(scenes.data[index].name),
-                  index: index,
-                  child: leftList(index, context));
-            },
-            proxyDecorator: (child, index, animation) {
-              return Material(
-                color: Colors.transparent,
-                child: child,
-                elevation: 10.0,
-              );
-            },
+          // 左边的列表
+          itemCount: scenes.length,
+          // itemCount: 2,
+          onReorder: (int oldIndex, int newIndex) {
+            setState(() {
+              var shots = scenes[oldIndex];
+              if (newIndex > oldIndex) {
+                newIndex -= 1;
+              }
+              scenes.removeAt(oldIndex);
+              // int index = newIndex > oldIndex ? newIndex - 1 : newIndex;
+              scenes.insert(newIndex, shots);
+              // make the selected item to be the dragged item
+            });
+            _selectedIndex = newIndex;
+          },
+          itemBuilder: (BuildContext context, int index) {
+            return ReorderableDelayedDragStartListener(
+                key: ValueKey('Scene$index'),
+                index: index,
+                child: leftList(index, context));
+          },
           ),
         ),
         Flexible(
@@ -76,7 +78,7 @@ class _SceneSchedulePageState extends State<SceneSchedulePage> {
                 // 用来显示场的基本信息，作为接下来创建的镜的计划
                 tileColor: Colors.purple[50],
                 title: Text(scenes[_selectedIndex][_selectedShotIndex].name),
-                subtitle: Text(scenes[_selectedIndex][_selectedShotIndex].fix),
+                subtitle: Text(scenes[_selectedIndex][_selectedShotIndex].note.type),
               ),
               Expanded(
                 child: ReorderableListView.builder(
@@ -117,12 +119,11 @@ class _SceneSchedulePageState extends State<SceneSchedulePage> {
   }
 
   Dismissible leftList(int index, BuildContext context) {
-    var item = scenes[index];
     return Dismissible(
-      key: Key(scenes.data[index].name),
+      key: Key(scenes[index].info.name),
       onDismissed: (direction) => setState(() {
         if (direction == DismissDirection.endToStart) {
-          removeItem(index, context, item);
+          removeItem(context, index);
         }
       }),
       confirmDismiss: (direction) async {
@@ -151,11 +152,11 @@ class _SceneSchedulePageState extends State<SceneSchedulePage> {
             children: [
               CircleAvatar(
                 child: Text(
-                  scenes.data[index].name,
+                  scenes[index].info.name,
                 ),
               ),
               Text(
-                scenes.data[index].note.type,
+                scenes[index].info.note.type,
                 style: const TextStyle(fontSize: 10),
               ),
             ],
@@ -179,7 +180,7 @@ class _SceneSchedulePageState extends State<SceneSchedulePage> {
       key: Key(item.name),
       onDismissed: (direction) => setState(() {
         if (direction == DismissDirection.endToStart) {
-          removeItem(index, context);
+          removeItem(context, _selectedIndex, index);
         }
       }),
       confirmDismiss: (direction) async {
@@ -218,35 +219,38 @@ class _SceneSchedulePageState extends State<SceneSchedulePage> {
     );
   }
 
-  void removeItem(int index, BuildContext context, [ShotSchedule? item]) {
+  void removeItem(BuildContext context, int sceneIndex, [int? shotIndex]) {
     // if modify shot schedule, item is null
-    if (item != null) {
-      var removed = scenes.removeAt(index);
-      _selectedIndex = (index - 1 < 0) ? 0 : index - 1;
+    if (shotIndex == null) {
+      var removed = scenes.removeAt(sceneIndex);
+      _selectedIndex = (sceneIndex - 1 < 0) ? 0 : sceneIndex - 1;
       _selectedShotIndex = 0;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('${removed.name} dismissed'),
+          content: Text('${removed.info.name} dismissed'),
           action: SnackBarAction(
               label: 'UNDO',
               onPressed: () {
-                scenes.insert(index, removed, item);
+                scenes.insert(sceneIndex, removed);
               })));
-    } else {
-      var removed = scenes[_selectedIndex].removeAt(index);
+    }else{
+      var removed = scenes[_selectedIndex].removeAt(shotIndex);
       // if remove the last item, _selectedShotIndex will be -1
-      _selectedShotIndex = (index - 1 < 0) ? 0 : index - 1;
+      _selectedShotIndex = (shotIndex - 1 < 0) ? 0 : shotIndex - 1;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('${removed.name} dismissed'),
           action: SnackBarAction(
               label: 'UNDO',
               onPressed: () {
-                scenes[_selectedShotIndex].insert(index, removed);
+                scenes[_selectedShotIndex].insert(shotIndex, removed);
               })));
     }
   }
+
   void _editNote(BuildContext context, int index, [int? shotIndex]) async {
     // if shotIndex is null, edit scene note
-    Note note = (shotIndex == null) ? scenes.data[index].note : scenes[index].data[shotIndex].note;
+    Note note = (shotIndex == null) ? 
+                scenes[index].info.note : 
+                scenes[index][shotIndex].note;
     List<String> editedObjects = List.from(note.objects);
     String editedType = note.type;
     String editedAppend = note.append;
@@ -276,7 +280,7 @@ class _SceneSchedulePageState extends State<SceneSchedulePage> {
 
             void _saveChanges() {
               setState(() {
-                (shotIndex == null) ? scenes.data[index].note : scenes[index].data[shotIndex].note = Note(
+                (shotIndex == null) ? scenes[index].info.note : scenes[index][shotIndex].note = Note(
                   objects: editedObjects,
                   type: editedType,
                   append: editedAppend,
@@ -326,9 +330,21 @@ class _SceneSchedulePageState extends State<SceneSchedulePage> {
                     controller: TextEditingController(text: editedAppend),
                   ),
                   const SizedBox(height: 16.0),
-                  ElevatedButton(
-                    onPressed: _saveChanges,
-                    child: const Text('Save Changes'),
+                  Row(
+                    children: [
+                      ElevatedButton(
+                        onPressed: _saveChanges,
+                        child: const Text('向前添加'),
+                      ),
+                      ElevatedButton(
+                        onPressed: _saveChanges,
+                        child: const Text('保存'),
+                      ),
+                      ElevatedButton(
+                        onPressed: _saveChanges,
+                        child: const Text('向后添加'),
+                      ),
+                    ],
                   ),
                 ],
               ),
