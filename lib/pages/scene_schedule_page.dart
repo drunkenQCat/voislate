@@ -1,11 +1,9 @@
-
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../models/slate_schedule.dart';
 
 class SceneSchedulePage extends StatefulWidget {
-
   @override
   _SceneSchedulePageState createState() => _SceneSchedulePageState();
 }
@@ -29,98 +27,125 @@ class SceneSchedulePage extends StatefulWidget {
 class _SceneSchedulePageState extends State<SceneSchedulePage> {
   int _selectedIndex = 0;
   int _selectedShotIndex = 0;
- 
   List<SceneSchedule> scenes = [];
 
-  @override
-  void initState() {
-    super.initState();
-    var sBox = Hive.box('scenes_box');
-    scenes = sBox.values.toList().cast<SceneSchedule>();
+  Future<void> _saveBox() async {
+    var box = Hive.box('scenes_box');
+    await box.clear();
+    await box.addAll(scenes);
   }
-  
+
+  Future<void> _openBox() async {
+    var sBox = await Hive.openBox('scenes_box');
+    scenes = sBox.values.toList().cast();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Flexible(
-          flex: 1,
-          child: ReorderableListView.builder(
-          // 左边的列表
-          itemCount: scenes.length,
-          // itemCount: 2,
-          onReorder: (int oldIndex, int newIndex) {
-            setState(() {
-              var shots = scenes[oldIndex];
-              if (newIndex > oldIndex) {
-                newIndex -= 1;
-              }
-              scenes.removeAt(oldIndex);
-              // int index = newIndex > oldIndex ? newIndex - 1 : newIndex;
-              scenes.insert(newIndex, shots);
-              // make the selected item to be the dragged item
-            });
-            _selectedIndex = newIndex;
-          },
-          itemBuilder: (BuildContext context, int index) {
-            return ReorderableDelayedDragStartListener(
-                key: ValueKey('Scene$index'),
-                index: index,
-                child: leftList(index, context));
-          },
-          ),
-        ),
-        Flexible(
-          flex: 3,
-          child: Column(
+    return FutureBuilder(
+      future: _openBox(),
+      builder: (BuildContext context, AsyncSnapshot<void> snapshot) {
+        if (snapshot.connectionState == ConnectionState.done) {
+          return Row(
             children: [
-              ListTile(
-                // 用来显示场的基本信息，作为接下来创建的镜的计划
-                tileColor: Colors.purple[50],
-                title: Text(scenes[_selectedIndex][_selectedShotIndex].name),
-                subtitle: Text(scenes[_selectedIndex][_selectedShotIndex].note.type),
-              ),
-              Expanded(
+              Flexible(
+                flex: 1,
                 child: ReorderableListView.builder(
-                  // 右边的列表
-                  itemCount: scenes[_selectedIndex].length,
+                  // 左边的列表
+                  itemCount: scenes.length,
                   onReorder: (int oldIndex, int newIndex) {
                     setState(() {
+                      var shots = scenes[oldIndex];
                       if (newIndex > oldIndex) {
                         newIndex -= 1;
                       }
-                      final item = scenes[_selectedIndex].removeAt(oldIndex);
+                      scenes.removeAt(oldIndex);
                       // int index = newIndex > oldIndex ? newIndex - 1 : newIndex;
-                      scenes[_selectedIndex].insert(newIndex, item);
+                      scenes.insert(newIndex, shots);
                       // make the selected item to be the dragged item
+                      _saveBox();
                     });
-                    _selectedShotIndex = newIndex;
+                    _selectedIndex = newIndex;
                   },
-                  itemBuilder: (BuildContext context, int index2) {
+                  itemBuilder: (BuildContext context, int index) {
                     return ReorderableDelayedDragStartListener(
-                        key: ValueKey(scenes[_selectedIndex][index2].name),
-                        index: index2,
-                        child: rightList(index2, context));
+                      key: ValueKey(scenes[index].info.name + index.toString()),
+                      index: index,
+                      child: leftList(index, context),
+                    );
                   },
                   proxyDecorator: (child, index, animation) {
                     return Material(
                       color: Colors.transparent,
-                      child: child,
                       elevation: 10.0,
+                      child: child,
                     );
                   },
                 ),
               ),
+              Flexible(
+                flex: 3,
+                child: Column(
+                  children: [
+                    ListTile(
+                      // 用来显示场的基本信息，作为接下来创建的镜的计划
+                      tileColor: Colors.purple[50],
+                      title: Text(
+                          '${scenes[_selectedIndex].info.name}场，地点：${scenes[_selectedIndex].info.note.type}'),
+                      subtitle: Text(scenes[_selectedIndex].info.note.append),
+                    ),
+                    Expanded(
+                      child: ReorderableListView.builder(
+                        // 右边的列表
+                        itemCount: scenes[_selectedIndex].length,
+                        onReorder: (int oldIndex, int newIndex) {
+                          setState(() {
+                            if (newIndex > oldIndex) {
+                              newIndex -= 1;
+                            }
+                            final item =
+                                scenes[_selectedIndex].removeAt(oldIndex);
+                            // int index = newIndex > oldIndex ? newIndex - 1 : newIndex;
+                            scenes[_selectedIndex].insert(newIndex, item);
+                            // make the selected item to be the dragged item
+                          });
+                          _selectedShotIndex = newIndex;
+                          _saveBox();
+                        },
+                        itemBuilder: (BuildContext context, int index2) {
+                          return ReorderableDelayedDragStartListener(
+                            key: ValueKey(scenes[_selectedIndex][index2].name +
+                                index2.toString()),
+                            index: index2,
+                            child: rightList(index2, context),
+                          );
+                        },
+                        proxyDecorator: (child, index, animation) {
+                          return Material(
+                            color: Colors.transparent,
+                            elevation: 10.0,
+                            child: child,
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
-          ),
-        ),
-      ],
+          );
+        } else {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        }
+      },
     );
   }
 
   Dismissible leftList(int index, BuildContext context) {
     return Dismissible(
-      key: Key(scenes[index].info.name),
+      key: Key(scenes[index].info.name + index.toString()),
       onDismissed: (direction) => setState(() {
         if (direction == DismissDirection.endToStart) {
           removeItem(context, index);
@@ -177,7 +202,7 @@ class _SceneSchedulePageState extends State<SceneSchedulePage> {
     var item = itemGroup[index];
 
     return Dismissible(
-      key: Key(item.name),
+      key: Key(item.name + index.toString()),
       onDismissed: (direction) => setState(() {
         if (direction == DismissDirection.endToStart) {
           removeItem(context, _selectedIndex, index);
@@ -230,9 +255,9 @@ class _SceneSchedulePageState extends State<SceneSchedulePage> {
           action: SnackBarAction(
               label: 'UNDO',
               onPressed: () {
-                scenes.insert(sceneIndex, removed);
+                setState() => scenes.insert(sceneIndex, removed);
               })));
-    }else{
+    } else {
       var removed = scenes[_selectedIndex].removeAt(shotIndex);
       // if remove the last item, _selectedShotIndex will be -1
       _selectedShotIndex = (shotIndex - 1 < 0) ? 0 : shotIndex - 1;
@@ -241,16 +266,29 @@ class _SceneSchedulePageState extends State<SceneSchedulePage> {
           action: SnackBarAction(
               label: 'UNDO',
               onPressed: () {
-                scenes[_selectedShotIndex].insert(shotIndex, removed);
+                setState() =>
+                    scenes[_selectedShotIndex].insert(shotIndex, removed);
               })));
     }
+    _saveBox();
   }
 
   void _editNote(BuildContext context, int index, [int? shotIndex]) async {
     // if shotIndex is null, edit scene note
-    Note note = (shotIndex == null) ? 
-                scenes[index].info.note : 
-                scenes[index][shotIndex].note;
+    Note note = (shotIndex == null)
+        ? scenes[index].info.note
+        : scenes[index][shotIndex].note;
+    String editedKey = (shotIndex == null)
+        ? scenes[index].info.key
+        : scenes[index][shotIndex].key;
+    String editedFix = (shotIndex == null)
+        ? scenes[index].info.fix
+        : scenes[index][shotIndex].fix;
+
+    List<String> fixs =
+        List.generate(26, (index) => String.fromCharCode(index + 65));
+    fixs = [''] + fixs;
+
     List<String> editedObjects = List.from(note.objects);
     String editedType = note.type;
     String editedAppend = note.append;
@@ -280,169 +318,229 @@ class _SceneSchedulePageState extends State<SceneSchedulePage> {
 
             void _saveChanges() {
               setState(() {
-                (shotIndex == null) ? scenes[index].info.note : scenes[index][shotIndex].note = Note(
+                var newNote = Note(
                   objects: editedObjects,
                   type: editedType,
                   append: editedAppend,
                 );
+                var newInfo = ScheduleItem(editedKey, editedFix, newNote);
+
+                if (shotIndex == null) {
+                  scenes[index].info = newInfo;
+                } else {
+                  scenes[index][shotIndex] = newInfo;
+                }
               });
               Navigator.of(context).pop();
             }
 
-            return Container(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Text(
-                    'Edit Note',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            return CustomScrollView(
+              scrollDirection: Axis.vertical,
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Container(
+                    height: MediaQuery.of(context).size.height * 1.2,
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Text(
+                          'Edit Note',
+                          style: TextStyle(
+                              fontSize: 20, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 16.0),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            DropdownButton<String>(
+                              value: editedKey,
+                              onChanged: (String? newValue) {
+                                setState(() {
+                                  editedKey = newValue!;
+                                });
+                              },
+                              items:
+                                  List.generate(50, (index) => index.toString())
+                                      .map<DropdownMenuItem<String>>(
+                                          (String value) {
+                                return DropdownMenuItem<String>(
+                                  value: value,
+                                  child: Text(value),
+                                );
+                              }).toList(),
+                            ),
+                            DropdownButton<String>(
+                              value: editedFix,
+                              onChanged: (String? newValue) {
+                                setState(() {
+                                  editedFix = newValue!;
+                                });
+                              },
+                              items: fixs.map<DropdownMenuItem<String>>(
+                                  (String value) {
+                                return DropdownMenuItem<String>(
+                                  value: value,
+                                  child: Text(value),
+                                );
+                              }).toList(),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16.0),
+                        const Text(
+                          'Objects:',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: tagChips(
+                                editedObjects, context, _updateObjects),
+                          ),
+                        ),
+                        const SizedBox(height: 16.0),
+                        const Text(
+                          'Type:',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        TextField(
+                          scrollPadding: const EdgeInsets.only(bottom: 40),
+                          onChanged: (value) {
+                            _updateType(value);
+                          },
+                          controller: TextEditingController(text: editedType),
+                        ),
+                        const SizedBox(height: 16.0),
+                        const Text(
+                          'Append:',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        TextField(
+                          scrollPadding: const EdgeInsets.only(bottom: 40),
+                          onChanged: (value) {
+                            _updateAppend(value);
+                          },
+                          controller: TextEditingController(text: editedAppend),
+                        ),
+                        const SizedBox(height: 16.0),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            ElevatedButton(
+                              onPressed: _saveChanges,
+                              child: const Text('向前添加'),
+                            ),
+                            ElevatedButton(
+                              onPressed: _saveChanges,
+                              child: const Text('保存'),
+                            ),
+                            ElevatedButton(
+                              onPressed: _saveChanges,
+                              child: const Text('向后添加'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 16.0),
-                  const Text(
-                    'Objects:',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  Wrap(
-                    spacing: 8.0,
-                    children: tagChips(editedObjects, context, _updateObjects),
-                  ),
-                  const SizedBox(height: 16.0),
-                  const Text(
-                    'Type:',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  TextField(
-                    onChanged: (value) {
-                      _updateType(value);
-                    },
-                    controller: TextEditingController(text: editedType),
-                  ),
-                  const SizedBox(height: 16.0),
-                  const Text(
-                    'Append:',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  TextField(
-                    onChanged: (value) {
-                      _updateAppend(value);
-                    },
-                    controller: TextEditingController(text: editedAppend),
-                  ),
-                  const SizedBox(height: 16.0),
-                  Row(
-                    children: [
-                      ElevatedButton(
-                        onPressed: _saveChanges,
-                        child: const Text('向前添加'),
-                      ),
-                      ElevatedButton(
-                        onPressed: _saveChanges,
-                        child: const Text('保存'),
-                      ),
-                      ElevatedButton(
-                        onPressed: _saveChanges,
-                        child: const Text('向后添加'),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                )
+              ],
             );
           },
         );
       },
     );
+    _saveBox();
     setState(() {});
   }
 
   List<Chip> tagChips(List<String> editedObjects, BuildContext context,
-    void Function(List<String> newObjects) updateObjects) {
+      void Function(List<String> newObjects) updateObjects) {
     var chipList = List<Chip>.empty(growable: true);
-    for(int index = 0; index < editedObjects.length; index++){
+    for (int index = 0; index < editedObjects.length; index++) {
       String object = editedObjects[index];
-      chipList.add(
-        Chip(
-          label: TextButton(
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    String newObject = '';
-                    return AlertDialog(
-                      title: const Text('Edit Object'),
-                      content: TextField(
-                        onChanged: (value) {
-                          newObject = value;
+      chipList.add(Chip(
+        label: TextButton(
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  String newObject = '';
+                  return AlertDialog(
+                    title: const Text('Edit Object'),
+                    content: TextField(
+                      onChanged: (value) {
+                        newObject = value;
+                      },
+                    ),
+                    actions: [
+                      TextButton(
+                        child: const Text('Cancel'),
+                        onPressed: () {
+                          Navigator.of(context).pop();
                         },
                       ),
-                      actions: [
-                        TextButton(
-                          child: const Text('Cancel'),
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          },
-                        ),
-                        TextButton(
-                          child: const Text('Edit'),
-                          onPressed: () {
-                            editedObjects[index] = newObject;
-                            updateObjects(editedObjects);
-                            Navigator.of(context).pop();
-                          },
-                        ),
-                      ],
-                    );
-                  },
-                );
-              },
-              child: Text(object)),
-          onDeleted: () {
-            updateObjects(editedObjects..remove(object));
-          },
-        )
-        // TextField(
-        //   onChanged: (value) {
-        //     object = value;
-        //   },
-        //   controller:
-        //       TextEditingController(text: object),
-        // );
-      );
+                      TextButton(
+                        child: const Text('Edit'),
+                        onPressed: () {
+                          editedObjects[index] = newObject;
+                          updateObjects(editedObjects);
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
+            child: Text(object)),
+        onDeleted: () {
+          updateObjects(editedObjects..remove(object));
+        },
+      )
+          // TextField(
+          //   onChanged: (value) {
+          //     object = value;
+          //   },
+          //   controller:
+          //       TextEditingController(text: object),
+          // );
+          );
     }
     chipList.add(Chip(
         label: TextButton(
-        onPressed: () {
-          showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              String newObject = '';
-              return AlertDialog(
-                title: const Text('Add Object'),
-                content: TextField(
-                  onChanged: (value) {
-                    newObject = value;
+      onPressed: () {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            String newObject = '';
+            return AlertDialog(
+              title: const Text('Add Object'),
+              content: TextField(
+                onChanged: (value) {
+                  newObject = value;
+                },
+              ),
+              actions: [
+                TextButton(
+                  child: const Text('Cancel'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
                   },
                 ),
-                actions: [
-                  TextButton(
-                    child: const Text('Cancel'),
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                  ),
-                  TextButton(
-                    child: const Text('Add'),
-                    onPressed: () {
-                      updateObjects(editedObjects..add(newObject));
-                      Navigator.of(context).pop();
-                    },
-                  ),
-                ],
-              );
-            },
-          );
-        },
+                TextButton(
+                  child: const Text('Add'),
+                  onPressed: () {
+                    updateObjects(editedObjects..add(newObject));
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      },
       child: const Icon(Icons.add),
     )));
     return chipList;

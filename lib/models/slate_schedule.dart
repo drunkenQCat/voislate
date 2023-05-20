@@ -106,9 +106,8 @@ class DataList extends HiveObject with ChangeNotifier{
     refresh();
   }
 
-  void update(ScheduleItem oldItem, ScheduleItem newItem){
-    int index = _data.indexWhere((element) => element.key == oldItem.key);
-    _data[index] = newItem;
+  void update(int oldIdex, ScheduleItem newItem){
+    _data[oldIdex] = newItem;
     refresh();
   }
 
@@ -124,6 +123,7 @@ class SceneSchedule extends DataList{
   SceneSchedule(inputShots, this.info):super(inputShots, info);
 
   ScheduleItem operator [](int index) => data[index];
+  void operator []=(int index, ScheduleItem item) => data[index] = item;
 }
 
 class DuplicateItemException implements Exception {
