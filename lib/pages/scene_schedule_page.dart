@@ -36,8 +36,14 @@ class _SceneSchedulePageState extends State<SceneSchedulePage> {
   }
 
   Future<void> _openBox() async {
-    var sBox = await Hive.openBox('scenes_box');
-    scenes = sBox.values.toList().cast();
+    await Hive.openBox('scenes_box');
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    scenes = Hive.box('scenes_box').values.toList().cast();
+    super.initState();
   }
 
   @override
@@ -45,100 +51,100 @@ class _SceneSchedulePageState extends State<SceneSchedulePage> {
     return FutureBuilder(
       future: _openBox(),
       builder: (BuildContext context, AsyncSnapshot<void> snapshot) {
-        if (snapshot.connectionState == ConnectionState.done) {
-          return Row(
-            children: [
-              Flexible(
-                flex: 1,
-                child: ReorderableListView.builder(
-                  // 左边的列表
-                  itemCount: scenes.length,
-                  onReorder: (int oldIndex, int newIndex) {
-                    setState(() {
-                      var shots = scenes[oldIndex];
-                      if (newIndex > oldIndex) {
-                        newIndex -= 1;
-                      }
-                      scenes.removeAt(oldIndex);
-                      // int index = newIndex > oldIndex ? newIndex - 1 : newIndex;
-                      scenes.insert(newIndex, shots);
-                      // make the selected item to be the dragged item
-                      _saveBox();
-                    });
-                    _selectedIndex = newIndex;
-                  },
-                  itemBuilder: (BuildContext context, int index) {
-                    return ReorderableDelayedDragStartListener(
-                      key: ValueKey(scenes[index].info.name + index.toString()),
-                      index: index,
-                      child: leftList(index, context),
-                    );
-                  },
-                  proxyDecorator: (child, index, animation) {
-                    return Material(
-                      color: Colors.transparent,
-                      elevation: 10.0,
-                      child: child,
-                    );
-                  },
-                ),
+        // if (snapshot.connectionState == ConnectionState.done) {
+        return Row(
+          children: [
+            Flexible(
+              flex: 1,
+              child: ReorderableListView.builder(
+                // 左边的列表
+                itemCount: scenes.length,
+                onReorder: (int oldIndex, int newIndex) {
+                  setState(() {
+                    var shots = scenes[oldIndex];
+                    if (newIndex > oldIndex) {
+                      newIndex -= 1;
+                    }
+                    scenes.removeAt(oldIndex);
+                    // int index = newIndex > oldIndex ? newIndex - 1 : newIndex;
+                    scenes.insert(newIndex, shots);
+                    // make the selected item to be the dragged item
+                    _saveBox();
+                  });
+                  _selectedIndex = newIndex;
+                },
+                itemBuilder: (BuildContext context, int index) {
+                  return ReorderableDelayedDragStartListener(
+                    key: ValueKey(scenes[index].info.name + index.toString()),
+                    index: index,
+                    child: leftList(index, context),
+                  );
+                },
+                proxyDecorator: (child, index, animation) {
+                  return Material(
+                    color: Colors.transparent,
+                    elevation: 10.0,
+                    child: child,
+                  );
+                },
               ),
-              Flexible(
-                flex: 3,
-                child: Column(
-                  children: [
-                    ListTile(
-                      // 用来显示场的基本信息，作为接下来创建的镜的计划
-                      tileColor: Colors.purple[50],
-                      title: Text(
-                          '${scenes[_selectedIndex].info.name}场，地点：${scenes[_selectedIndex].info.note.type}'),
-                      subtitle: Text(scenes[_selectedIndex].info.note.append),
+            ),
+            Flexible(
+              flex: 3,
+              child: Column(
+                children: [
+                  ListTile(
+                    // 用来显示场的基本信息，作为接下来创建的镜的计划
+                    tileColor: Colors.purple[50],
+                    title: Text(
+                        '${scenes[_selectedIndex].info.name}场，地点：${scenes[_selectedIndex].info.note.type}'),
+                    subtitle: Text(scenes[_selectedIndex].info.note.append),
+                  ),
+                  Expanded(
+                    child: ReorderableListView.builder(
+                      // 右边的列表
+                      itemCount: scenes[_selectedIndex].length,
+                      onReorder: (int oldIndex, int newIndex) {
+                        setState(() {
+                          if (newIndex > oldIndex) {
+                            newIndex -= 1;
+                          }
+                          final item =
+                              scenes[_selectedIndex].removeAt(oldIndex);
+                          // int index = newIndex > oldIndex ? newIndex - 1 : newIndex;
+                          scenes[_selectedIndex].insert(newIndex, item);
+                          // make the selected item to be the dragged item
+                        });
+                        _selectedShotIndex = newIndex;
+                        _saveBox();
+                      },
+                      itemBuilder: (BuildContext context, int index2) {
+                        return ReorderableDelayedDragStartListener(
+                          key: ValueKey(scenes[_selectedIndex][index2].name +
+                              index2.toString()),
+                          index: index2,
+                          child: rightList(index2, context),
+                        );
+                      },
+                      proxyDecorator: (child, index, animation) {
+                        return Material(
+                          color: Colors.transparent,
+                          elevation: 10.0,
+                          child: child,
+                        );
+                      },
                     ),
-                    Expanded(
-                      child: ReorderableListView.builder(
-                        // 右边的列表
-                        itemCount: scenes[_selectedIndex].length,
-                        onReorder: (int oldIndex, int newIndex) {
-                          setState(() {
-                            if (newIndex > oldIndex) {
-                              newIndex -= 1;
-                            }
-                            final item =
-                                scenes[_selectedIndex].removeAt(oldIndex);
-                            // int index = newIndex > oldIndex ? newIndex - 1 : newIndex;
-                            scenes[_selectedIndex].insert(newIndex, item);
-                            // make the selected item to be the dragged item
-                          });
-                          _selectedShotIndex = newIndex;
-                          _saveBox();
-                        },
-                        itemBuilder: (BuildContext context, int index2) {
-                          return ReorderableDelayedDragStartListener(
-                            key: ValueKey(scenes[_selectedIndex][index2].name +
-                                index2.toString()),
-                            index: index2,
-                            child: rightList(index2, context),
-                          );
-                        },
-                        proxyDecorator: (child, index, animation) {
-                          return Material(
-                            color: Colors.transparent,
-                            elevation: 10.0,
-                            child: child,
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          );
-        } else {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
-        }
+            ),
+          ],
+        );
+        // } else {
+        //   return const Center(
+        //     child: CircularProgressIndicator(),
+        //   );
+        // }
       },
     );
   }
@@ -148,12 +154,23 @@ class _SceneSchedulePageState extends State<SceneSchedulePage> {
       key: Key(scenes[index].info.name + index.toString()),
       onDismissed: (direction) => setState(() {
         if (direction == DismissDirection.endToStart) {
-          removeItem(context, index);
+          if (scenes.length > 1) {
+            removeItem(context, index);
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('至少保留一个场'),
+              ),
+            );
+          }
         }
       }),
       confirmDismiss: (direction) async {
         if (direction == DismissDirection.endToStart) {
-          return true;
+          if (scenes.length > 1) {
+            return true;
+          }
+          return false;
         } else if (direction == DismissDirection.startToEnd) {
           _editNote(context, index);
           return false;
@@ -205,12 +222,23 @@ class _SceneSchedulePageState extends State<SceneSchedulePage> {
       key: Key(item.name + index.toString()),
       onDismissed: (direction) => setState(() {
         if (direction == DismissDirection.endToStart) {
-          removeItem(context, _selectedIndex, index);
+          if (scenes[_selectedIndex].length > 1) {
+            removeItem(context, _selectedIndex, index);
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('至少保留一个镜'),
+              ),
+            );
+          }
         }
       }),
       confirmDismiss: (direction) async {
         if (direction == DismissDirection.endToStart) {
-          return true;
+          if (scenes[_selectedIndex].length > 1) {
+            return true;
+          }
+          return false;
         } else if (direction == DismissDirection.startToEnd) {
           _editNote(context, _selectedIndex, index);
           return false;
@@ -230,9 +258,35 @@ class _SceneSchedulePageState extends State<SceneSchedulePage> {
         selectedTileColor: const Color(0xFFE0E0E0),
         child: ListTile(
           leading: CircleAvatar(child: Text(item.name)),
-          title: Text(
-              '${item.note.type},${item.note.objects},${item.note.append}'),
-          subtitle: Text(item.note.objects.toString()),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: item.note.objects
+                      .map((object) => Container(
+                            margin: EdgeInsets.only(right: 5),
+                            padding: EdgeInsets.all(3),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(20),
+                              color: Colors.purple[300],
+                            ),
+                            child: Text(
+                              object,
+                              style: TextStyle(fontSize: 14),
+                            ),
+                          ))
+                      .toList(),
+                ),
+              ),
+              Text(
+                '${item.note.type},',
+                style: TextStyle(fontSize: 13),
+              ),
+            ],
+          ),
+          subtitle: Text('${item.note.append}'),
           selected: index == _selectedShotIndex,
           onTap: () {
             setState(() {
@@ -246,44 +300,56 @@ class _SceneSchedulePageState extends State<SceneSchedulePage> {
 
   void removeItem(BuildContext context, int sceneIndex, [int? shotIndex]) {
     // if modify shot schedule, item is null
-    if (shotIndex == null) {
+    bool isScene = shotIndex == null;
+    if (isScene) {
       var removed = scenes.removeAt(sceneIndex);
       _selectedIndex = (sceneIndex - 1 < 0) ? 0 : sceneIndex - 1;
       _selectedShotIndex = 0;
+      _saveBox();
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('${removed.info.name} dismissed'),
+          content: Text('第${removed.info.name} 场已撤回'),
           action: SnackBarAction(
-              label: 'UNDO',
-              onPressed: () {
-                setState() => scenes.insert(sceneIndex, removed);
-              })));
+            label: '恢复',
+            onPressed: () {
+              setState(() => scenes.insert(sceneIndex, removed));
+              _saveBox();
+            },
+          )));
     } else {
       var removed = scenes[_selectedIndex].removeAt(shotIndex);
       // if remove the last item, _selectedShotIndex will be -1
       _selectedShotIndex = (shotIndex - 1 < 0) ? 0 : shotIndex - 1;
+      _saveBox();
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('${removed.name} dismissed'),
+          content: Text('第${removed.name} 镜已删除'),
           action: SnackBarAction(
-              label: 'UNDO',
-              onPressed: () {
-                setState() =>
-                    scenes[_selectedShotIndex].insert(shotIndex, removed);
-              })));
+            label: '恢复',
+            onPressed: () {
+              setState(() => scenes[sceneIndex].insert(shotIndex, removed));
+              _saveBox();
+            },
+          )));
     }
-    _saveBox();
+  }
+
+  void _dupSceneDetect(SceneSchedule newScene) {
+    var detectorList = scenes.map((scene) => scene.info.name).toList();
+    for (var name in detectorList) {
+      if (newScene.info.name == name) {
+        throw DuplicateItemException('本场号已存在');
+      }
+    }
   }
 
   void _editNote(BuildContext context, int index, [int? shotIndex]) async {
     // if shotIndex is null, edit scene note
-    Note note = (shotIndex == null)
-        ? scenes[index].info.note
-        : scenes[index][shotIndex].note;
-    String editedKey = (shotIndex == null)
-        ? scenes[index].info.key
-        : scenes[index][shotIndex].key;
-    String editedFix = (shotIndex == null)
-        ? scenes[index].info.fix
-        : scenes[index][shotIndex].fix;
+    bool isScene = shotIndex == null;
+    Note note =
+        (isScene) ? scenes[index].info.note : scenes[index][shotIndex].note;
+    String editedKey =
+        (isScene) ? scenes[index].info.key : scenes[index][shotIndex].key;
+    String editedFix =
+        (isScene) ? scenes[index].info.fix : scenes[index][shotIndex].fix;
 
     List<String> fixs =
         List.generate(26, (index) => String.fromCharCode(index + 65));
@@ -291,7 +357,20 @@ class _SceneSchedulePageState extends State<SceneSchedulePage> {
 
     List<String> editedObjects = List.from(note.objects);
     String editedType = note.type;
+    // to make the cursor at the end
+    TextEditingController typeControlller =
+        TextEditingController(text: editedType);
+    typeControlller.selection = TextSelection.fromPosition(
+        TextPosition(offset: typeControlller.text.length));
+
     String editedAppend = note.append;
+    TextEditingController appendControlller =
+        TextEditingController(text: editedAppend);
+    appendControlller.selection = TextSelection.fromPosition(
+        TextPosition(offset: appendControlller.text.length));
+    // text to change
+    var typeText = isScene ? '场地:' : '镜头类型:';
+    var appendText = isScene ? '概要' : '内容';
 
     await showModalBottomSheet(
       context: context,
@@ -301,18 +380,6 @@ class _SceneSchedulePageState extends State<SceneSchedulePage> {
             void _updateObjects(List<String> newObjects) {
               setState(() {
                 editedObjects = newObjects;
-              });
-            }
-
-            void _updateType(String newType) {
-              setState(() {
-                editedType = newType;
-              });
-            }
-
-            void _updateAppend(String newAppend) {
-              setState(() {
-                editedAppend = newAppend;
               });
             }
 
@@ -328,10 +395,58 @@ class _SceneSchedulePageState extends State<SceneSchedulePage> {
                     Note(objects: editedObjects, type: '近景', append: ''));
                 var plusIndex = after ? 1 : 0;
 
-                if (shotIndex == null) {
-                  scenes.insert(index + plusIndex, SceneSchedule([newShot], newInfo));
+                if (isScene) {
+                  try {
+                    var newScene = SceneSchedule([newShot], newInfo);
+                    _dupSceneDetect(newScene);
+                    if (index == scenes.length - 1) {
+                      scenes.add(newScene);
+                      return;
+                    }
+                    scenes.insert(index + plusIndex, newScene);
+                  } on DuplicateItemException {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: Text('该场景序号已存在'),
+                          actions: [
+                            TextButton(
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                              child: Text('OK'),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  }
                 } else {
-                  scenes[index].insert(shotIndex + plusIndex, newInfo);
+                  try {
+                    if (shotIndex == scenes[index].length - 1) {
+                      scenes[index].add(newInfo);
+                      return;
+                    }
+                    scenes[index].insert(shotIndex + plusIndex, newInfo);
+                  } on DuplicateItemException {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: Text('该镜头序号已存在'),
+                          actions: [
+                            TextButton(
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                              child: Text('OK'),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  }
                 }
               });
               Navigator.of(context).pop();
@@ -346,7 +461,7 @@ class _SceneSchedulePageState extends State<SceneSchedulePage> {
                 );
                 var newInfo = ScheduleItem(editedKey, editedFix, newNote);
 
-                if (shotIndex == null) {
+                if (isScene) {
                   scenes[index].info = newInfo;
                 } else {
                   scenes[index][shotIndex] = newInfo;
@@ -365,14 +480,17 @@ class _SceneSchedulePageState extends State<SceneSchedulePage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Text(
-                          'Edit Note',
-                          style: TextStyle(
+                        const SizedBox(
+                          height: 3,
+                        ),
+                        Text(
+                          '${isScene ? '场次' : '镜头'}信息修改',
+                          style: const TextStyle(
                               fontSize: 20, fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 16.0),
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             DropdownButton<String>(
                               value: editedKey,
@@ -391,6 +509,9 @@ class _SceneSchedulePageState extends State<SceneSchedulePage> {
                                 );
                               }).toList(),
                             ),
+                            const SizedBox(
+                              width: 5,
+                            ),
                             DropdownButton<String>(
                               value: editedFix,
                               onChanged: (String? newValue) {
@@ -406,43 +527,88 @@ class _SceneSchedulePageState extends State<SceneSchedulePage> {
                                 );
                               }).toList(),
                             ),
+                            Text(isScene ? '场' : '镜')
                           ],
                         ),
                         const SizedBox(height: 16.0),
                         const Text(
-                          'Objects:',
+                          '拍摄对象:',
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                         SingleChildScrollView(
                           scrollDirection: Axis.horizontal,
                           child: Row(
-                            children: tagChips(
-                                editedObjects, context, _updateObjects),
+                            children:
+                                tagChips(editedObjects, context, _updateObjects)
+                                    .map((chip) =>
+                                        Transform.scale(scale: 1, child: chip))
+                                    .toList(),
                           ),
                         ),
                         const SizedBox(height: 16.0),
-                        const Text(
-                          'Type:',
+                        Text(
+                          typeText,
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
-                        TextField(
-                          scrollPadding: const EdgeInsets.only(bottom: 40),
-                          onChanged: (value) {
-                            _updateType(value);
-                          },
-                          controller: TextEditingController(text: editedType),
-                        ),
+                        if (isScene)
+                          TextField(
+                            // 输入框自动滚动解决方案
+                            scrollPadding: EdgeInsets.only(
+                                bottom:
+                                    MediaQuery.of(context).viewInsets.bottom +
+                                        20),
+                            onChanged: (value) => editedType = value,
+                            controller: typeControlller,
+                          )
+                        else
+                          ToggleButtons(
+                            isSelected: [
+                              editedType == '特写',
+                              editedType == '近景',
+                              editedType == '中景',
+                              editedType == '全景',
+                              editedType == '远景',
+                            ],
+                            onPressed: (index) {
+                              setState(() {
+                                switch (index) {
+                                  case 0:
+                                    editedType = '特写';
+                                    break;
+                                  case 1:
+                                    editedType = '近景';
+                                    break;
+                                  case 2:
+                                    editedType = '中景';
+                                    break;
+                                  case 3:
+                                    editedType = '全景';
+                                    break;
+                                  case 4:
+                                    editedType = '远景';
+                                    break;
+                                }
+                              });
+                            },
+                            children: const [
+                              Text('特写'),
+                              Text('近景'),
+                              Text('中景'),
+                              Text('全景'),
+                              Text('远景'),
+                            ],
+                          ),
                         const SizedBox(height: 16.0),
-                        const Text(
-                          'Append:',
+                        Text(
+                          appendText,
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                         TextField(
-                          scrollPadding: const EdgeInsets.only(bottom: 40),
-                          onChanged: (value) {
-                            _updateAppend(value);
-                          },
-                          controller: TextEditingController(text: editedAppend),
+                          scrollPadding: EdgeInsets.only(
+                              bottom: MediaQuery.of(context).viewInsets.bottom +
+                                  20),
+                          onChanged: (value) => editedAppend = value,
+                          controller: appendControlller,
                         ),
                         const SizedBox(height: 16.0),
                         Row(
@@ -482,6 +648,7 @@ class _SceneSchedulePageState extends State<SceneSchedulePage> {
     for (int index = 0; index < editedObjects.length; index++) {
       String object = editedObjects[index];
       chipList.add(Chip(
+        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
         label: TextButton(
             onPressed: () {
               showDialog(
@@ -515,55 +682,57 @@ class _SceneSchedulePageState extends State<SceneSchedulePage> {
                 },
               );
             },
-            child: Text(object)),
+            child: Text(
+              object,
+              style: TextStyle(
+                fontSize: 14,
+              ),
+            )),
         onDeleted: () {
           updateObjects(editedObjects..remove(object));
         },
-      )
-          // TextField(
-          //   onChanged: (value) {
-          //     object = value;
-          //   },
-          //   controller:
-          //       TextEditingController(text: object),
-          // );
-          );
+      ));
     }
     chipList.add(Chip(
+        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
         label: TextButton(
-      onPressed: () {
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            String newObject = '';
-            return AlertDialog(
-              title: const Text('Add Object'),
-              content: TextField(
-                onChanged: (value) {
-                  newObject = value;
-                },
-              ),
-              actions: [
-                TextButton(
-                  child: const Text('Cancel'),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                ),
-                TextButton(
-                  child: const Text('Add'),
-                  onPressed: () {
-                    updateObjects(editedObjects..add(newObject));
-                    Navigator.of(context).pop();
-                  },
-                ),
-              ],
+          onPressed: () {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                String newObject = '';
+                return AlertDialog(
+                  title: const Text('Add Object'),
+                  content: TextField(
+                    onChanged: (value) {
+                      newObject = value;
+                    },
+                  ),
+                  actions: [
+                    TextButton(
+                      child: const Text('Cancel'),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                    TextButton(
+                      child: const Text('Add'),
+                      onPressed: () {
+                        updateObjects(editedObjects..add(newObject));
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                  ],
+                );
+              },
             );
           },
-        );
-      },
-      child: const Icon(Icons.add),
-    )));
+          child: const Icon(
+            Icons.add,
+            size: 30,
+          ),
+        )));
+
     return chipList;
   }
 }
