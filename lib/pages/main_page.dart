@@ -28,7 +28,8 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateMixin {
+class _MyHomePageState extends State<MyHomePage>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   @override
@@ -41,35 +42,29 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text('计划'),
-                SizedBox(width: 5),
-                Icon(Icons.edit_calendar_outlined),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text('记录'),
-                SizedBox(width: 5),
-                Icon(Icons.record_voice_over_outlined),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text('场记'),
-                SizedBox(width: 5),
-                Icon(Icons.format_list_bulleted_outlined),
-              ],
-            ),
-          ],
-        ),
+        title: Text('VoiSlate'),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _tabController.index,
+        onTap: (index) {
+          setState(() {
+            _tabController.index = index;
+          });
+        },
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.edit_calendar_outlined),
+            label: '计划',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.record_voice_over_outlined),
+            label: '记录',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.format_list_bulleted_outlined),
+            label: '场记',
+          ),
+        ],
       ),
       body: TabBarView(
         controller: _tabController,

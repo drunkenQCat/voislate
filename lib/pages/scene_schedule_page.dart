@@ -405,22 +405,12 @@ class _SceneSchedulePageState extends State<SceneSchedulePage> {
                     }
                     scenes.insert(index + plusIndex, newScene);
                   } on DuplicateItemException {
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                          title: Text('该场景序号已存在'),
-                          actions: [
-                            TextButton(
-                              onPressed: () {
-                                Navigator.of(context).pop();
-                              },
-                              child: Text('OK'),
-                            ),
-                          ],
-                        );
-                      },
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('该场景序号已存在'),
+                      ),
                     );
+
                   }
                 } else {
                   try {
@@ -430,22 +420,11 @@ class _SceneSchedulePageState extends State<SceneSchedulePage> {
                     }
                     scenes[index].insert(shotIndex + plusIndex, newInfo);
                   } on DuplicateItemException {
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                          title: Text('该镜头序号已存在'),
-                          actions: [
-                            TextButton(
-                              onPressed: () {
-                                Navigator.of(context).pop();
-                              },
-                              child: Text('OK'),
-                            ),
-                          ],
-                        );
-                      },
-                    );
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                      content: Text('该镜头序号已存在'),
+                    ));
+
                   }
                 }
               });

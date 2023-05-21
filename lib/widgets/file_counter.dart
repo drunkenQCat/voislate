@@ -21,7 +21,7 @@ class FileCounter extends StatelessWidget {
       builder: (context, snapshot) {
         return Center(
           child: FileNameDisplayCard(
-            num: num, snapshot: snapshot, style: textStyle),
+              num: num, snapshot: snapshot, style: textStyle),
         );
       },
     );
@@ -48,7 +48,7 @@ class FileNameDisplayCard extends StatelessWidget {
       fontWeight: FontWeight.w100,
     );
     return Padding(
-      padding: const EdgeInsets.only(left: 25,right: 25),
+      padding: const EdgeInsets.only(left: 25, right: 25),
       child: Card(
         color: Colors.blueGrey[100],
         margin: EdgeInsets.fromLTRB(21, 5, 16, 5),
@@ -59,11 +59,13 @@ class FileNameDisplayCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  num.prefix.contains(RegExp(r'^[0-9]+$')) 
-                ? 'Date'
-                : 'Custom',
-                style: tagStyle,),
-                Text(num.prefix,style: style,),
+                  num.prefix.contains(RegExp(r'^[0-9]+$')) ? 'Date' : 'Custom',
+                  style: tagStyle,
+                ),
+                Text(
+                  num.prefix,
+                  style: style,
+                ),
               ],
             ),
             Column(
@@ -71,21 +73,78 @@ class FileNameDisplayCard extends StatelessWidget {
               children: [
                 const Text(
                   'Devider',
-                style: tagStyle,),
-                Text(num.devider,style: const TextStyle(
-                  fontSize: 32,
-                  color: Colors.black45,
-                  fontWeight: FontWeight.w400,
-                ),),
+                  style: tagStyle,
+                ),
+                GestureDetector(
+                  onLongPress: () {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        String value = num.devider;
+                        return AlertDialog(
+                          title: const Text('Edit Devider'),
+                          content: TextField(
+                            onChanged: (newValue) {
+                              value = newValue;
+                            },
+                            onSubmitted: (newValue) {
+                              num.devider = newValue;
+                              Navigator.of(context).pop();
+                            },
+                            controller: TextEditingController(text: value),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                  child: Text(
+                    num.devider,
+                    style: const TextStyle(
+                      fontSize: 32,
+                      color: Colors.black45,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ),
               ],
             ),
-            const SizedBox(width: 10,),
+            const SizedBox(
+              width: 10,
+            ),
             Column(
               children: [
                 const Text(
                   'Num',
-                style: tagStyle,),
-                Text(snapshot.data.toString(),style: style,),
+                  style: tagStyle,
+                ),
+                GestureDetector(
+                  onLongPress: () {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        String value = snapshot.data.toString();
+                        return AlertDialog(
+                          title: const Text('Edit Num'),
+                          content: TextField(
+                            keyboardType: TextInputType.number,
+                            onChanged: (newValue) {
+                              value = newValue;
+                            },
+                            onSubmitted: (newValue) {
+                              num.setValue(int.parse(newValue));
+                              Navigator.of(context).pop();
+                            },
+                            controller: TextEditingController(text: value),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                  child: Text(
+                    snapshot.data.toString(),
+                    style: style,
+                  ),
+                ),
               ],
             ),
           ],
