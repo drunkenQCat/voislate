@@ -1,5 +1,5 @@
 import '../models/slate_schedule.dart';
-
+// the default data for the scene schedule
 ScheduleItem sceneInfo1A = ScheduleItem(
   '1',
   'A',
@@ -88,3 +88,4 @@ SceneSchedule scene2ASchedule = SceneSchedule(
   [twoAshotInfo1A, shotInfo2B, shotInfo3C],
   sceneInfo1A,
 );
+

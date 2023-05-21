@@ -6,15 +6,17 @@ import 'package:provider/provider.dart';
 import 'package:flutter_vibrate/flutter_vibrate.dart';
 // import 'package:android_physical_buttons/android_physical_buttons.dart';
 import 'package:flutter_android_volume_keydown/flutter_android_volume_keydown.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:simple_speed_dial/simple_speed_dial.dart';
 
 import '../widgets/slate_picker.dart';
 import '../models/slate_num_notifier.dart';
-import '../widgets/simple_scroll_control.dart';
+import '../models/value_scroll_control.dart';
 import '../widgets/quick_view_log_dialog.dart';
 import '../widgets/file_counter.dart';
 // import '../widgets/mono_direction_joystick.dart';
 import '../models/recorder_file_num.dart';
+import '../models/slate_status_notifier.dart';
 
 /* 
 这一页要做的事：
@@ -33,6 +35,7 @@ import '../models/recorder_file_num.dart';
 13x *修一下减了之后再加的问题
 14. 把加减号改成方形的
 15. *把currentScn改成prevScene
+16. 保存配置的功能
 */
 class SlateRecord extends StatefulWidget {
   const SlateRecord({super.key});
@@ -41,8 +44,11 @@ class SlateRecord extends StatefulWidget {
   State<SlateRecord> createState() => _SlateRecordState();
 }
 
-class _SlateRecordState extends State<SlateRecord> {
+class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
   // Some variables don't need to be in the state
+  late Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
+
+  bool isLinked = true;
   final int _counterInit = 1;
   var note = '';
   List<MapEntry<String, String>> notes = [];
@@ -54,14 +60,16 @@ class _SlateRecordState extends State<SlateRecord> {
   late String currentScn;
   late String currentSht;
   late String currentTk;
-  final col2 = SlateColumnTwo();
   final col1 = SlateColumnOne();
+  final col2 = SlateColumnTwo();
   final col3 = SlateColumnThree();
   final num = RecordFileNum();
   late SliderValueController<SlateColumnThree> scrl3;
   late String currentFileNum;
   String previousFileNum = '';
   final inputNotice = 'Waiting for input...';
+
+  late Future<int> col3InitIdx;
 
   // 手动跑一条录音
   void fakeTake() {
@@ -137,11 +145,11 @@ class _SlateRecordState extends State<SlateRecord> {
     subscription = FlutterAndroidVolumeKeydown.stream.listen((event) {
       if (event == HardwareButton.volume_down) {
         // debugPrint("Volume down received");
-        scrl3.valueDec();
+        scrl3.valueDec(isLinked);
       } else if (event == HardwareButton.volume_up) {
         // debugPrint("Volume up received");
         // drawbackItem();
-        scrl3.valueInc();
+        scrl3.valueInc(isLinked);
       }
     });
   }
@@ -150,10 +158,27 @@ class _SlateRecordState extends State<SlateRecord> {
     subscription?.cancel();
   }
 
+  void loadSettings() async {
+    var prefs = await _prefs;
+  }
+
+  void saveSettings() async {
+    // save settings here
+    var prefs = await _prefs;
+    prefs.setInt('currentSceneIndex', col1.selectedIndex);
+    prefs.setInt('currentShotIndex', col2.selectedIndex);
+    prefs.setInt('currentTakeIndex', col3.selectedIndex);
+    prefs.setBool('isLinked', isLinked);
+  }
+
   @override
   void initState() {
+    WidgetsBinding.instance.addObserver(this);
     super.initState();
     _initVibrate();
+    col3InitIdx = _prefs.then((SharedPreferences prefs) {
+      return prefs.getInt('currentTakeIndex') ?? 0;
+    });
     // AndroidPhysicalButtons.listen((key) {
     //   debugPrint(key.toString());
     //   });
@@ -169,8 +194,20 @@ class _SlateRecordState extends State<SlateRecord> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
     stopListening();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) async {
+    if (state == AppLifecycleState.resumed) {
+      loadSettings();
+      // retrieve data here
+    } else if (state == AppLifecycleState.paused) {
+      saveSettings();
+      // save data here
+    }
   }
 
   @override
@@ -180,16 +217,26 @@ class _SlateRecordState extends State<SlateRecord> {
     var horizonPadding = 30.0;
     // everytime setState, the build method will be called again
     currentFileNum = num.fullName();
-    final TextEditingController textEditingController = TextEditingController();
+    final TextEditingController descEditingController = TextEditingController();
+    final TextEditingController noteEditingController = TextEditingController();
 
-    var col3IncBtn = IncrementCounterButton<SlateColumnThree>(
-      onPressed: () => addItem(currentFileNum),
-      textCon: textEditingController,
-    );
+    var col3IncBtn = ElevatedButton(
+        onPressed: () {
+          addItem(currentFileNum);
+          descEditingController.clear();
+          col3.scrollToNext(isLinked);
+        },
+        style: ElevatedButton.styleFrom(minimumSize: const Size(70, 60)),
+        child: const Icon(Icons.add));
 
-    var col3DecBtn = DecrementCounterButton<SlateColumnThree>(
-      onPressed: () => drawbackItem(),
-      textCon: textEditingController,
+    var col3DecBtn = ElevatedButton(
+      onPressed: () {
+        drawbackItem();
+        descEditingController.clear();
+        col3.scrollToPrev(isLinked);
+      },
+      style: ElevatedButton.styleFrom(minimumSize: const Size(70, 60)),
+      child: const Icon(Icons.remove),
     );
 
     void pickerNumSync() {
@@ -204,49 +251,66 @@ class _SlateRecordState extends State<SlateRecord> {
       });
     }
 
-    var nextTakeMonitor = Card(
-      child: Column(
-        children: [
-          const ListTile(
-            visualDensity: VisualDensity(vertical: -4),
-            leading: Icon(
-              Icons.radio_button_checked_outlined,
-              color: Colors.red,
-            ),
-            title: Text('准备录音:'),
-            // trailing: IconButton(
-            //   icon: const Icon(Icons.list),
-            //   onPressed: () {
-            //   },
-            // ),
-          ),
-          SlatePicker(
-            ones: ones,
-            twos: twos,
-            threes: threes,
-            titles: titles,
-            stateOne: col1,
-            stateTwo: col2,
-            stateThree: col3,
-            width: screenWidth - 2 * horizonPadding,
-            height: screenHeight * 0.17,
-            itemHeight: screenHeight * 0.13 - 48,
-            resultChanged: (v1, v2, v3) {
-              pickerNumSync();
-              debugPrint('v1: $v1, v2: $v2, v3: $v3');
-            },
-          ),
-          // add an input box to have a note about the number
+    var nextTakeMonitor = Stack(
+      alignment: AlignmentDirectional.centerStart,
+      children: [
+        Card(
+          child: Column(
+            children: [
+              const ListTile(
+                visualDensity: VisualDensity(vertical: -4),
+                leading: Icon(
+                  Icons.radio_button_checked_outlined,
+                  color: Colors.red,
+                ),
+                title: Text('准备录音:'),
+                // trailing: IconButton(
+                //   icon: const Icon(Icons.list),
+                //   onPressed: () {
+                //   },
+                // ),
+              ),
+              SlatePicker(
+                ones: ones,
+                twos: twos,
+                threes: threes,
+                titles: titles,
+                stateOne: col1,
+                stateTwo: col2,
+                stateThree: col3,
+                width: screenWidth - 2 * horizonPadding,
+                height: screenHeight * 0.17,
+                itemHeight: screenHeight * 0.13 - 48,
+                resultChanged: (v1, v2, v3) {
+                  pickerNumSync();
+                  debugPrint('v1: $v1, v2: $v2, v3: $v3');
+                },
+              ),
+              // add an input box to have a note about the number
 
-          const SizedBox(
-            height: 10,
+              const SizedBox(
+                height: 10,
+              ),
+              FileCounter(
+                init: _counterInit,
+                num: num,
+              ),
+            ],
           ),
-          FileCounter(
-            init: _counterInit,
-            num: num,
+        ),
+        Transform.rotate(
+          angle: 1.5708,
+          child: IconButton(
+            onPressed: () {
+              setState(() {
+                isLinked = !isLinked;
+              });
+            },
+            icon: Icon(isLinked ? Icons.link : Icons.link_off),
+            tooltip: '链接场次与录音编号',
           ),
-        ],
-      ),
+        ),
+      ],
     );
 
     var prevTakeEditor = Flexible(
@@ -265,14 +329,14 @@ class _SlateRecordState extends State<SlateRecord> {
             child: TextField(
               // bind the input to the note variable
               maxLines: 3,
-              controller: textEditingController,
+              controller: descEditingController,
               onChanged: (text) {
                 note = text;
               },
               decoration: const InputDecoration(
                 // contentPadding: EdgeInsets.symmetric(vertical: 20),
                 border: OutlineInputBorder(),
-                hintText: 'Note',
+                hintText: 'Description',
               ),
             ),
           ),
@@ -296,14 +360,14 @@ class _SlateRecordState extends State<SlateRecord> {
             child: TextField(
               // bind the input to the note variable
               maxLines: 3,
-              controller: textEditingController,
+              controller: noteEditingController,
               onChanged: (text) {
                 note = text;
               },
               decoration: const InputDecoration(
                 // contentPadding: EdgeInsets.symmetric(vertical: 20),
                 border: OutlineInputBorder(),
-                hintText: 'Note',
+                hintText: 'Shot Note',
               ),
             ),
           ),
@@ -342,7 +406,7 @@ class _SlateRecordState extends State<SlateRecord> {
         builder: (context, child) {
           scrl3 = SliderValueController<SlateColumnThree>(
             context: context,
-            textCon: textEditingController,
+            textCon: descEditingController,
             inc: () => addItem(currentFileNum),
             dec: () => drawbackItem(),
             col: col3,
@@ -368,10 +432,16 @@ class _SlateRecordState extends State<SlateRecord> {
                             ),
                           ],
                         ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                        Stack(
+                          alignment: AlignmentDirectional.center,
                           children: [
-                            prevTakeEditor,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                prevTakeEditor,
+                                prevShotNote,
+                              ],
+                            ),
                             IconButton(
                               icon: const Icon(Icons.mic),
                               onPressed: () {
@@ -383,7 +453,6 @@ class _SlateRecordState extends State<SlateRecord> {
                                 );
                               },
                             ),
-                            prevShotNote,
                           ],
                         ),
                         Row(
@@ -397,10 +466,13 @@ class _SlateRecordState extends State<SlateRecord> {
                 ),
               ],
             ),
-            floatingActionButton: Column(
-              mainAxisAlignment: MainAxisAlignment.end,
+            floatingActionButton: Stack(
+              alignment: AlignmentDirectional.bottomEnd,
               children: [
-                okFloatingDial(context),
+                Positioned(
+                  top: 10,
+                  child: okFloatingDial(context)
+                  ),
                 DisplayNotesButton(notes: notes),
               ],
             ),

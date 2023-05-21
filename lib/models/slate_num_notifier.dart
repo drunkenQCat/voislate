@@ -5,6 +5,7 @@ abstract class SlatePickerState with ChangeNotifier {
   late FixedExtentScrollController controller;
   var _selected;
   var _numList;
+  get selectedIndex => numList.indexOf(selected);
   // getter and setter to _selected
   get selected => _selected;
   set selected(value) {
@@ -35,7 +36,7 @@ abstract class SlatePickerState with ChangeNotifier {
     notifyListeners();
   }
   
-  void scrollToNext() {
+  void scrollToNext(bool isLink) {
     if(selected == numList.last) return;
 
     var index = numList.indexOf(selected);
@@ -43,10 +44,10 @@ abstract class SlatePickerState with ChangeNotifier {
     if (index >= numList.length) {
       index = 0;
     }
-    scrollSelectedTo(numList[index]);
+    if (isLink) scrollSelectedTo(numList[index]);
   }
 
-  void scrollToPrev(){
+  void scrollToPrev(bool isLink){
     if (selected == numList.first) return;
 
     var index = numList.indexOf(selected);
@@ -54,7 +55,7 @@ abstract class SlatePickerState with ChangeNotifier {
     if (index < 0) {
       index = numList.length - 1;
     }
-    scrollSelectedTo(numList[index]);
+    if (isLink) scrollSelectedTo(numList[index]);
   }
 }
 class SlateColumnOne extends SlatePickerState {}
