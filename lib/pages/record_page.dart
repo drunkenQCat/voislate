@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_vibrate/flutter_vibrate.dart';
 // import 'package:android_physical_buttons/android_physical_buttons.dart';
@@ -50,9 +51,9 @@ class _SlateRecordState extends State<SlateRecord> {
   var twos = ['1A', '2', '6', '5', '4', '7', '8', '9', '10'];
   var threes = List.generate(200, (index) => (index + 1).toString());
   var titles = ['Scene', 'Shot', 'Take'];
-  late String currentScn ;
-  late String currentSht ;
-  late String currentTk ;
+  late String currentScn;
+  late String currentSht;
+  late String currentTk;
   final col2 = SlateColumnTwo();
   final col1 = SlateColumnOne();
   final col3 = SlateColumnThree();
@@ -157,6 +158,10 @@ class _SlateRecordState extends State<SlateRecord> {
     //   debugPrint(key.toString());
     //   });
     startListening();
+    var box = Hive.box('scenes_box');
+    var scenes = box.values.toList().cast();
+    ones = scenes.map((e) => e.info.name.toString()).toList();
+
     currentScn = '1';
     currentSht = '1';
     currentTk = '1';
@@ -186,7 +191,7 @@ class _SlateRecordState extends State<SlateRecord> {
       onPressed: () => drawbackItem(),
       textCon: textEditingController,
     );
-    
+
     void pickerNumSync() {
       setState(() {
         currentScn = col1.selected;
@@ -216,20 +221,20 @@ class _SlateRecordState extends State<SlateRecord> {
             // ),
           ),
           SlatePicker(
-              ones: ones,
-              twos: twos,
-              threes: threes,
-              titles: titles,
-              stateOne: col1,
-              stateTwo: col2,
-              stateThree: col3,
-              width: screenWidth - 2 * horizonPadding,
-              height: screenHeight * 0.17,
-              itemHeight: screenHeight * 0.13 - 48,
-              resultChanged: (v1, v2, v3) {
-                pickerNumSync();
-                debugPrint('v1: $v1, v2: $v2, v3: $v3');
-              },
+            ones: ones,
+            twos: twos,
+            threes: threes,
+            titles: titles,
+            stateOne: col1,
+            stateTwo: col2,
+            stateThree: col3,
+            width: screenWidth - 2 * horizonPadding,
+            height: screenHeight * 0.17,
+            itemHeight: screenHeight * 0.13 - 48,
+            resultChanged: (v1, v2, v3) {
+              pickerNumSync();
+              debugPrint('v1: $v1, v2: $v2, v3: $v3');
+            },
           ),
           // add an input box to have a note about the number
 
@@ -255,24 +260,23 @@ class _SlateRecordState extends State<SlateRecord> {
                   '${num.prefix}${num.devider}${num.number < 2 ? '?' : (num.number - 1).toString()}'),
             ],
           ),
-          subtitle: 
-            SizedBox(
-              // width: screenWidth * 0.3,
-              child: TextField(
-                // bind the input to the note variable
-                maxLines: 3,
-                controller: textEditingController,
-                onChanged: (text) {
-                  note = text;
-                },
-                decoration: const InputDecoration(
-                  // contentPadding: EdgeInsets.symmetric(vertical: 20),
-                  border: OutlineInputBorder(),
-                  hintText: 'Note',
-                ),
+          subtitle: SizedBox(
+            // width: screenWidth * 0.3,
+            child: TextField(
+              // bind the input to the note variable
+              maxLines: 3,
+              controller: textEditingController,
+              onChanged: (text) {
+                note = text;
+              },
+              decoration: const InputDecoration(
+                // contentPadding: EdgeInsets.symmetric(vertical: 20),
+                border: OutlineInputBorder(),
+                hintText: 'Note',
               ),
-            ), 
-        ), 
+            ),
+          ),
+        ),
       ),
     );
 
@@ -287,41 +291,40 @@ class _SlateRecordState extends State<SlateRecord> {
                   'S$currentScn Sh$currentSht Tk${int.parse(currentTk) < 2 ? '?' : (int.parse(currentTk) - 1).toString()}'),
             ],
           ),
-          subtitle: 
-            SizedBox(
-              // width: screenWidth * 0.3,
-              child: TextField(
-                // bind the input to the note variable
-                maxLines: 3,
-                controller: textEditingController,
-                onChanged: (text) {
-                  note = text;
-                },
-                decoration: const InputDecoration(
-                  // contentPadding: EdgeInsets.symmetric(vertical: 20),
-                  border: OutlineInputBorder(),
-                  hintText: 'Note',
-                ),
+          subtitle: SizedBox(
+            // width: screenWidth * 0.3,
+            child: TextField(
+              // bind the input to the note variable
+              maxLines: 3,
+              controller: textEditingController,
+              onChanged: (text) {
+                note = text;
+              },
+              decoration: const InputDecoration(
+                // contentPadding: EdgeInsets.symmetric(vertical: 20),
+                border: OutlineInputBorder(),
+                hintText: 'Note',
               ),
             ),
-            // trailing: Container(
-            //   width: 1,
-            //   height: 10,
-            //   padding: const EdgeInsets.symmetric(vertical: 16),
-            //   alignment: Alignment.center,
-            //   child: IconButton(
-            //     icon: const Icon(Icons.mic),
-            //     onPressed: () {
-            //       ScaffoldMessenger.of(context).showSnackBar(
-            //         const SnackBar(
-            //           content: Text('正在保存描述'),
-            //           duration: Duration(seconds: 1),
-            //         ),
-            //       );
-            //     },
-            //           ),
-            // ),
-        ), 
+          ),
+          // trailing: Container(
+          //   width: 1,
+          //   height: 10,
+          //   padding: const EdgeInsets.symmetric(vertical: 16),
+          //   alignment: Alignment.center,
+          //   child: IconButton(
+          //     icon: const Icon(Icons.mic),
+          //     onPressed: () {
+          //       ScaffoldMessenger.of(context).showSnackBar(
+          //         const SnackBar(
+          //           content: Text('正在保存描述'),
+          //           duration: Duration(seconds: 1),
+          //         ),
+          //       );
+          //     },
+          //           ),
+          // ),
+        ),
       ),
     );
     // This method is rerun every time setState is called, for instance as done
@@ -362,7 +365,7 @@ class _SlateRecordState extends State<SlateRecord> {
                           children: [
                             Expanded(
                               child: col3IncBtn,
-                              ),
+                            ),
                           ],
                         ),
                         Row(
@@ -420,7 +423,7 @@ class _SlateRecordState extends State<SlateRecord> {
           },
           label: '声音可用',
           child: const Icon(Icons.gpp_good),
-          ),
+        ),
         SpeedDialChild(
           onPressed: () {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -432,9 +435,9 @@ class _SlateRecordState extends State<SlateRecord> {
           },
           label: '声音弃用',
           child: const Icon(Icons.gpp_bad),
-          ),
-        ],
-      );
+        ),
+      ],
+    );
   }
 }
 
