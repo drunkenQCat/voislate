@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'scene_schedule_page.dart';
 import 'record_page.dart';
 import 'slate_log_page.dart';
+import 'settings_configue_page.dart';
 
 class VoiSlate extends StatelessWidget {
   const VoiSlate({super.key});
@@ -43,7 +44,19 @@ class _MyHomePageState extends State<MyHomePage>
     return Scaffold(
       appBar: AppBar(
         title: Text('VoiSlate'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.settings),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => SettingsConfiguePage()),
+              );
+            },
+          ),
+        ],
       ),
+
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _tabController.index,
         onTap: (index) {
