@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 import '../models/slate_schedule.dart';
 import '../models/slate_log_item.dart';
 
-// give me a frame of listview page
+/* 
+TODO：
+1. 与record页的数据绑定，最好能自动滚动到selected
+*/
 class SlateLog extends StatefulWidget {
   const SlateLog({super.key});
 
@@ -154,14 +157,18 @@ class _SlateLogState extends State<SlateLog> {
         Map<String, List<SlateLogItem>> shtItems = sortedItems[scn]!;
 
         return ExpansionTile(
+          backgroundColor: Colors.grey,
           initiallyExpanded: true,
-          title: Text(scn),
+          title: Center(child: Text(scn)),
+          subtitle: Center(child: Text('场')),
           children: shtItems.keys.map((sht) {
             List<SlateLogItem> items = shtItems[sht]!;
 
             return ExpansionTile(
+              backgroundColor: Colors.grey[200],
               initiallyExpanded: true,
               title: Text(sht),
+              subtitle: Text('镜'),
               children: items.map((item) {
                 return Container(
                   color: _getTkStatusColor(item.okTk),

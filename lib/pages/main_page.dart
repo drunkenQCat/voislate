@@ -36,7 +36,7 @@ class _MyHomePageState extends State<MyHomePage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(vsync: this, length: 3, initialIndex: 1);
+    _tabController = TabController(vsync: this, length: 3, initialIndex: 0);
   }
 
   @override
@@ -56,7 +56,6 @@ class _MyHomePageState extends State<MyHomePage>
           ),
         ],
       ),
-
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _tabController.index,
         onTap: (index) {
@@ -81,7 +80,7 @@ class _MyHomePageState extends State<MyHomePage>
       ),
       body: TabBarView(
         controller: _tabController,
-        // physics: const NeverScrollableScrollPhysics(),
+        physics: const NeverScrollableScrollPhysics(),
         children: [
           SceneSchedulePage(),
           const SlateRecord(),

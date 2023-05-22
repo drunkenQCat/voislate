@@ -28,9 +28,9 @@ class ScheduleItemAdapter extends TypeAdapter<ScheduleItem> {
     writer
       ..writeByte(4)
       ..writeByte(0)
-      ..write(obj.key)
+      ..write(obj._key)
       ..writeByte(1)
-      ..write(obj.fix)
+      ..write(obj._fix)
       ..writeByte(2)
       ..write(obj.name)
       ..writeByte(3)
@@ -94,20 +94,17 @@ class DataListAdapter extends TypeAdapter<DataList> {
 
   @override
   DataList read(BinaryReader reader) {
-    final length = reader.readByte();
-    final data = List<ScheduleItem>.generate(length, (_) {
-      final key = reader.readString();
-      final fix = reader.readString();
-      final note = reader.read() as Note;
-      return ScheduleItem(key, fix, note);
-    });
-    return DataList(data);
+    final numOfFields = reader.readByte();
+    final fields = <int, dynamic>{
+      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    };
+    return DataList((fields[0] as List).cast<ScheduleItem>());
   }
 
   @override
   void write(BinaryWriter writer, DataList obj) {
     writer
-      ..writeByte(obj._data.length)
+      ..writeByte(1)
       ..writeByte(0)
       ..write(obj._data);
   }
@@ -129,26 +126,24 @@ class SceneScheduleAdapter extends TypeAdapter<SceneSchedule> {
 
   @override
   SceneSchedule read(BinaryReader reader) {
-    final length = reader.readByte();
-    final data = List<ScheduleItem>.generate(length, (_) {
-      final key = reader.readString();
-      final fix = reader.readString();
-      final note = reader.read() as Note;
-      return ScheduleItem(key, fix, note);
-    });
-    final info = reader.read() as ScheduleItem;
-    return SceneSchedule(data, info);
+    final numOfFields = reader.readByte();
+    final fields = <int, dynamic>{
+      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    };
+    return SceneSchedule(
+      (fields[0] as List).cast<ScheduleItem>(),
+      fields[1] as ScheduleItem,
+    );
   }
 
   @override
   void write(BinaryWriter writer, SceneSchedule obj) {
-    writer.writeByte(obj.data.length);
-    for (final item in obj.data) {
-      writer.writeString(item.key);
-      writer.writeString(item.fix);
-      writer.write(item.note);
-    }
-    writer.write(obj.info);
+    writer
+      ..writeByte(2)
+      ..writeByte(1)
+      ..write(obj.info)
+      ..writeByte(0)
+      ..write(obj._data);
   }
 
   @override

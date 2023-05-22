@@ -14,7 +14,7 @@ import '../models/slate_num_notifier.dart';
 import '../models/value_scroll_control.dart';
 import '../widgets/quick_view_log_dialog.dart';
 import '../widgets/file_counter.dart';
-// import '../widgets/mono_direction_joystick.dart';
+import '../widgets/dual_direction_joystick.dart';
 import '../models/recorder_file_num.dart';
 import '../models/slate_status_notifier.dart';
 
@@ -108,18 +108,18 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
         note = note.isEmpty ? 'note ${num.number - 1}' : note;
         note = isFake ? 'fake $note' : note;
         notes.last = MapEntry(
-                previousFileNum, // File Name
-                note, //Note
-              );
+          previousFileNum, // File Name
+          note, //Note
+        );
         notes.add(MapEntry(num.fullName(), inputNotice));
       }
       previousFileNum = currentFileNum;
       num.increment();
       note = '';
       if (_canVibrate) {
-        isFake 
-          ?Vibrate.feedback(FeedbackType.error)
-          :Vibrate.feedback(FeedbackType.heavy);
+        isFake
+            ? Vibrate.feedback(FeedbackType.error)
+            : Vibrate.feedback(FeedbackType.heavy);
       }
     });
   }
@@ -256,10 +256,10 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
               const ListTile(
                 visualDensity: VisualDensity(vertical: -4),
                 leading: Icon(
-                  Icons.radio_button_checked_outlined,
-                  color: Colors.red,
+                  Icons.fast_forward_outlined,
+                  color: Colors.blue,
                 ),
-                title: Text('准备录音:'),
+                title: Text('下一条:'),
                 // trailing: IconButton(
                 //   icon: const Icon(Icons.list),
                 //   onPressed: () {
@@ -313,11 +313,13 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
       child: ListTileTheme(
         minLeadingWidth: 5,
         child: ListTile(
-          title: Row(
+          title: const Row(
             children: [
-              const Icon(Icons.stop_circle),
-              Text(
-                  '${num.prefix}${num.devider}${num.number < 2 ? '?' : (num.number - 1).toString()}'),
+              Icon(
+                Icons.radio_button_checked,
+                color: Colors.red,
+              ),
+              Text('正在录制'),
             ],
           ),
           subtitle: SizedBox(
@@ -329,10 +331,11 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
               onChanged: (text) {
                 note = text;
               },
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 // contentPadding: EdgeInsets.symmetric(vertical: 20),
                 border: OutlineInputBorder(),
-                hintText: 'Description',
+                hintText:
+                    '${num.prefix}${num.devider}${num.number < 2 ? '?' : (num.number - 1).toString()}\n 录音标注...',
               ),
             ),
           ),
@@ -346,7 +349,10 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
         child: ListTile(
           title: Row(
             children: [
-              const Icon(Icons.stop_circle),
+              const Icon(
+                Icons.movie_creation_outlined,
+                color: Colors.red,
+              ),
               Text(
                   'S$currentScn Sh$currentSht Tk${int.parse(currentTk) < 2 ? '?' : (int.parse(currentTk) - 1).toString()}'),
             ],
@@ -367,32 +373,10 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
               ),
             ),
           ),
-          // trailing: Container(
-          //   width: 1,
-          //   height: 10,
-          //   padding: const EdgeInsets.symmetric(vertical: 16),
-          //   alignment: Alignment.center,
-          //   child: IconButton(
-          //     icon: const Icon(Icons.mic),
-          //     onPressed: () {
-          //       ScaffoldMessenger.of(context).showSnackBar(
-          //         const SnackBar(
-          //           content: Text('正在保存描述'),
-          //           duration: Duration(seconds: 1),
-          //         ),
-          //       );
-          //     },
-          //           ),
-          // ),
         ),
       ),
     );
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
+
     return MultiProvider(
         providers: [
           ChangeNotifierProvider.value(value: col1),
@@ -462,17 +446,53 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
                                 ],
                               ),
                             ),
-                            IconButton(
-                              icon: const Icon(Icons.mic),
-                              onPressed: () {
+                            DualDirectionJoystick(
+                              width: 120,
+                              sliderButtonContent: const Icon(Icons.mic),
+                              onTapDown: () {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('正在保存描述'),
-                                    duration: Duration(seconds: 1),
+                                const SnackBar(
+                                  content: Text('正在录音'),
+                                  duration: Duration(seconds: 1),
                                   ),
                                 );
                               },
-                            ),
+                              onTapUp: () {
+                                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('录音取消'),
+                                  duration: Duration(seconds: 1),
+                                  ),
+                                );
+                              },
+                              onCancel: () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('正在保存录音描述'),
+                                  duration: Duration(seconds: 1),
+                                  ),
+                                );
+                              },
+                              onConfirmation: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('正在保存镜头描述'),
+                                    duration: Duration(seconds: 1),
+                                  ),
+                                );
+                            }),
+                            // IconButton(
+                            //   icon: const Icon(Icons.mic),
+                            //   onPressed: () {
+                            //     ScaffoldMessenger.of(context).showSnackBar(
+                            //       const SnackBar(
+                            //         content: Text('正在保存描述'),
+                            //         duration: Duration(seconds: 1),
+                            //       ),
+                            //     );
+                            //   },
+                            // ),
                           ],
                         ),
                         Row(

@@ -1,6 +1,6 @@
-# voislate
+# VoiSlate
 
-A new Flutter project.
+声音场记App
 
 ## Getting Started
 
