@@ -85,7 +85,7 @@ SceneSchedule sceneSchedule = SceneSchedule(
   sceneInfo1A,
 );
 SceneSchedule scene2ASchedule = SceneSchedule(
-  [twoAshotInfo1A, shotInfo2B, shotInfo3C],
-  sceneInfo1A,
+  [twoAshotInfo1A, twoAshotInfo2B, twoAshotInfo3C],
+  sceneInfo2A,
 );
 

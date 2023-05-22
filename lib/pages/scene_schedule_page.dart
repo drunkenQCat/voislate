@@ -24,7 +24,8 @@ class SceneSchedulePage extends StatefulWidget {
 4. 话筒信息可以根据通告自动生成
 5. 可以考虑火星大数据的接入 
 */
-class _SceneSchedulePageState extends State<SceneSchedulePage> with AutomaticKeepAliveClientMixin {
+class _SceneSchedulePageState extends State<SceneSchedulePage>
+    with AutomaticKeepAliveClientMixin {
   int _selectedIndex = 0;
   int _selectedShotIndex = 0;
   List<SceneSchedule> scenes = [];
@@ -47,7 +48,11 @@ class _SceneSchedulePageState extends State<SceneSchedulePage> with AutomaticKee
   }
 
   @override
+  bool get wantKeepAlive => true;
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context);
     return FutureBuilder(
       future: _openBox(),
       builder: (BuildContext context, AsyncSnapshot<void> snapshot) {
@@ -185,30 +190,35 @@ class _SceneSchedulePageState extends State<SceneSchedulePage> with AutomaticKee
         color: Colors.green,
         child: const Icon(Icons.edit),
       ),
-      child: ListTileTheme(
-        contentPadding: const EdgeInsets.all(5),
-        selectedColor: const Color(0xFF212121),
-        selectedTileColor: const Color(0xFFD1C4E9),
-        child: ListTile(
-          leading: Column(
-            children: [
-              CircleAvatar(
-                child: Text(
-                  scenes[index].info.name,
+      child: GestureDetector(
+        onDoubleTap: () {
+          _editNote(context, index);
+        },
+        child: ListTileTheme(
+          contentPadding: const EdgeInsets.all(5),
+          selectedColor: const Color(0xFF212121),
+          selectedTileColor: const Color(0xFFD1C4E9),
+          child: ListTile(
+            leading: Column(
+              children: [
+                CircleAvatar(
+                  child: Text(
+                    scenes[index].info.name,
+                  ),
                 ),
-              ),
-              Text(
-                scenes[index].info.note.type,
-                style: const TextStyle(fontSize: 10),
-              ),
-            ],
+                Text(
+                  scenes[index].info.note.type,
+                  style: const TextStyle(fontSize: 10),
+                ),
+              ],
+            ),
+            selected: index == _selectedIndex,
+            onTap: () {
+              setState(() {
+                _selectedIndex = index;
+              });
+            },
           ),
-          selected: index == _selectedIndex,
-          onTap: () {
-            setState(() {
-              _selectedIndex = index;
-            });
-          },
         ),
       ),
     );
@@ -253,46 +263,51 @@ class _SceneSchedulePageState extends State<SceneSchedulePage> with AutomaticKee
         color: Colors.green,
         child: const Icon(Icons.edit),
       ),
-      child: ListTileTheme(
-        tileColor: Colors.white,
-        selectedTileColor: const Color(0xFFE0E0E0),
-        child: ListTile(
-          leading: CircleAvatar(child: Text(item.name)),
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: item.note.objects
-                      .map((object) => Container(
-                            margin: EdgeInsets.only(right: 5),
-                            padding: EdgeInsets.all(3),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(20),
-                              color: Colors.purple[300],
-                            ),
-                            child: Text(
-                              object,
-                              style: TextStyle(fontSize: 14),
-                            ),
-                          ))
-                      .toList(),
+      child: GestureDetector(
+        onDoubleTap: () {
+          _editNote(context, _selectedIndex, index);
+        },
+        child: ListTileTheme(
+          tileColor: Colors.white,
+          selectedTileColor: const Color(0xFFE0E0E0),
+          child: ListTile(
+            leading: CircleAvatar(child: Text(item.name)),
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: item.note.objects
+                        .map((object) => Container(
+                              margin: EdgeInsets.only(right: 5),
+                              padding: EdgeInsets.all(3),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(20),
+                                color: Colors.purple[300],
+                              ),
+                              child: Text(
+                                object,
+                                style: TextStyle(fontSize: 14),
+                              ),
+                            ))
+                        .toList(),
+                  ),
                 ),
-              ),
-              Text(
-                '${item.note.type},',
-                style: TextStyle(fontSize: 13),
-              ),
-            ],
+                Text(
+                  '${item.note.type},',
+                  style: TextStyle(fontSize: 13),
+                ),
+              ],
+            ),
+            subtitle: Text('${item.note.append}'),
+            selected: index == _selectedShotIndex,
+            onTap: () {
+              setState(() {
+                _selectedShotIndex = index;
+              });
+            },
           ),
-          subtitle: Text('${item.note.append}'),
-          selected: index == _selectedShotIndex,
-          onTap: () {
-            setState(() {
-              _selectedShotIndex = index;
-            });
-          },
         ),
       ),
     );
@@ -307,7 +322,8 @@ class _SceneSchedulePageState extends State<SceneSchedulePage> with AutomaticKee
       _selectedShotIndex = 0;
       _saveBox();
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('第${removed.info.name} 场已撤回'),
+          duration: const Duration(seconds: 5),
+          content: Text('第 ${removed.info.name} 场已删除'),
           action: SnackBarAction(
             label: '恢复',
             onPressed: () {
@@ -321,7 +337,8 @@ class _SceneSchedulePageState extends State<SceneSchedulePage> with AutomaticKee
       _selectedShotIndex = (shotIndex - 1 < 0) ? 0 : shotIndex - 1;
       _saveBox();
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('第${removed.name} 镜已删除'),
+          duration: const Duration(seconds: 5),
+          content: Text('第 ${removed.name} 镜已删除'),
           action: SnackBarAction(
             label: '恢复',
             onPressed: () {
@@ -339,6 +356,45 @@ class _SceneSchedulePageState extends State<SceneSchedulePage> with AutomaticKee
         throw DuplicateItemException('本场号已存在');
       }
     }
+  }
+
+  void _dupShotDetect(ScheduleItem newShot) {
+    var detectorList =
+        scenes[_selectedIndex].data.map((shot) => shot.name).toList();
+    for (var name in detectorList) {
+      if (newShot.name == name) {
+        throw DuplicateItemException('本镜号已存在');
+      }
+    }
+  }
+
+  String _findFix(List<String> alphas, bool after) {
+    if (after) return '';
+    if (alphas == ['']) return 'A';
+    alphas =
+        alphas.where((element) => element.contains(RegExp(r'[A-Z]'))).toList();
+    alphas.sort();
+    String someLetterMax = alphas.last;
+    if (someLetterMax == 'Z') {
+      int maxGap = 0;
+      for (int i = 0; i < alphas.length - 1; i++) {
+        int gap = alphas[i + 1].codeUnitAt(0) - alphas[i].codeUnitAt(0);
+        if (gap > maxGap) {
+          maxGap = gap;
+          someLetterMax = alphas[i];
+        }
+      }
+    }
+    int nextLetter = someLetterMax.codeUnitAt(0) + 1;
+    return String.fromCharCode(nextLetter);
+  }
+
+  String _findKey(List<int> keys, int index, bool after) {
+    if (!after)
+      return (index == 0) ? keys[0].toString() : keys[index - 1].toString();
+    keys.sort();
+    int maxKey = keys.last;
+    return (maxKey + 1).toString();
   }
 
   void _editNote(BuildContext context, int index, [int? shotIndex]) async {
@@ -396,35 +452,42 @@ class _SceneSchedulePageState extends State<SceneSchedulePage> with AutomaticKee
                 var plusIndex = after ? 1 : 0;
 
                 if (isScene) {
+                  var newScene = SceneSchedule([newShot], newInfo);
                   try {
-                    var newScene = SceneSchedule([newShot], newInfo);
                     _dupSceneDetect(newScene);
-                    if (index == scenes.length - 1) {
-                      scenes.add(newScene);
-                      return;
-                    }
-                    scenes.insert(index + plusIndex, newScene);
                   } on DuplicateItemException {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('该场景序号已存在'),
-                      ),
-                    );
-
+                    List<int> keys = scenes
+                        .map((scene) => int.tryParse(scene.info.key) ?? 0)
+                        .toList();
+                    newInfo.key = _findKey(keys, index, after);
+                    List<String> fixs = scenes
+                        .where((scene) => scene.info.key == newInfo.key)
+                        .map((scene) => scene.info.fix)
+                        .toList();
+                    newInfo.fix = _findFix(fixs, after);
+                    newScene.info = newInfo;
                   }
+                  (index == scenes.length - 1 && after)
+                      ? scenes.add(newScene)
+                      : scenes.insert(index + plusIndex, newScene);
                 } else {
                   try {
-                    if (shotIndex == scenes[index].length - 1) {
-                      scenes[index].add(newInfo);
-                      return;
-                    }
-                    scenes[index].insert(shotIndex + plusIndex, newInfo);
-                  } on DuplicateItemException {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                      content: Text('该镜头序号已存在'),
-                    ));
-
+                    _dupShotDetect(newInfo);
+                  } catch (e) {
+                    List<int> keys = scenes[index]
+                        .data
+                        .map((shot) => int.tryParse(shot.key) ?? 0)
+                        .toList();
+                    newInfo.key = _findKey(keys, index, after);
+                    List<String> fixs = scenes[index]
+                        .data
+                        .where((shot) => shot.key == newInfo.key)
+                        .map((shot) => shot.fix)
+                        .toList();
+                    newInfo.fix = _findFix(fixs, after);
+                    (shotIndex == scenes[index].length - 1 && after)
+                        ? scenes[index].add(newInfo)
+                        : scenes[index].insert(shotIndex + plusIndex, newInfo);
                   }
                 }
               });
@@ -714,8 +777,4 @@ class _SceneSchedulePageState extends State<SceneSchedulePage> with AutomaticKee
 
     return chipList;
   }
-  
-  @override
-  // TODO: implement wantKeepAlive
-  bool get wantKeepAlive => true;
 }

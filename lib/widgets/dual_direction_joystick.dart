@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-
-class MonoDirectionJoystick extends StatefulWidget {
+class DualDirectionJoystick extends StatefulWidget {
   /// Height of the slider. Defaults to 70.
   final double height;
 
@@ -25,7 +24,7 @@ class MonoDirectionJoystick extends StatefulWidget {
   /// The color of the icon on the moving element if icon is IconData. Defaults to Colors.white.
   final Color iconColor;
 
-  /// The button widget used on the moving element of the slider. Defaults to Icon(Icons.chevron_right).
+  /// The button widget used on the moving element of the slider. Defaults Icons.unfold_more,
   final Widget sliderButtonContent;
 
   /// The shadow below the slider. Defaults to BoxShadow(color: Colors.black38, offset: Offset(0, 2),blurRadius: 2,spreadRadius: 0,).
@@ -39,7 +38,7 @@ class MonoDirectionJoystick extends StatefulWidget {
 
   /// The callback when slider is completed. This is the only required field.
   final VoidCallback onConfirmation;
-  
+
   /// the callback when slider is canceled.
   final VoidCallback? onCancel;
 
@@ -58,7 +57,7 @@ class MonoDirectionJoystick extends StatefulWidget {
   /// Stick the slider to the end
   final bool stickToEnd;
 
-  const MonoDirectionJoystick({
+  const DualDirectionJoystick({
     Key? key,
     this.height = 70,
     this.width = 300,
@@ -81,19 +80,18 @@ class MonoDirectionJoystick extends StatefulWidget {
     this.foregroundShape,
     this.backgroundShape,
     this.stickToEnd = false,
-
-  }) : assert(height >= 25 && width >= 180),
+  })  : assert(height >= 25 && width >= 120),
         slideLength = width - height,
         initValue = (width - height) / 2,
         super(key: key);
 
   @override
   State<StatefulWidget> createState() {
-    return MonoDirectionJoystickState();
+    return DualDirectionJoystickState();
   }
 }
 
-class MonoDirectionJoystickState extends State<MonoDirectionJoystick> {
+class DualDirectionJoystickState extends State<DualDirectionJoystick> {
   late double _position = widget.initValue;
   int _duration = 0;
 
@@ -128,7 +126,7 @@ class MonoDirectionJoystickState extends State<MonoDirectionJoystick> {
   void sliderReleased(details) {
     if (_position > widget.slideLength) {
       widget.onConfirmation();
-    }else if(_position < 0 && widget.onCancel != null ){
+    } else if (_position < 0 && widget.onCancel != null) {
       widget.onCancel!();
     }
     updatePosition(details);
@@ -151,7 +149,8 @@ class MonoDirectionJoystickState extends State<MonoDirectionJoystick> {
       int green = widget.backgroundColorEnd!.green;
       int blue = widget.backgroundColorEnd!.blue;
 
-      return Color.alphaBlend(Color.fromRGBO(red, green, blue, percent), widget.backgroundColor);
+      return Color.alphaBlend(
+          Color.fromRGBO(red, green, blue, percent), widget.backgroundColor);
     } else {
       return widget.backgroundColor;
     }
@@ -188,8 +187,11 @@ class MonoDirectionJoystickState extends State<MonoDirectionJoystick> {
       width: widget.width,
       padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(
-        borderRadius: widget.backgroundShape ?? BorderRadius.all(Radius.circular(widget.height)),
-        color: widget.backgroundColorEnd != null ? this.calculateBackground() : widget.backgroundColor,
+        borderRadius: widget.backgroundShape ??
+            BorderRadius.all(Radius.circular(widget.height)),
+        color: widget.backgroundColorEnd != null
+            ? this.calculateBackground()
+            : widget.backgroundColor,
         boxShadow: <BoxShadow>[shadow],
       ),
       child: Stack(
@@ -202,8 +204,11 @@ class MonoDirectionJoystickState extends State<MonoDirectionJoystick> {
               duration: Duration(milliseconds: _duration),
               curve: Curves.ease,
               decoration: BoxDecoration(
-                borderRadius: widget.backgroundShape ?? BorderRadius.all(Radius.circular(widget.height)),
-                color: widget.backgroundColorEnd != null ? this.calculateBackground() : widget.backgroundColor,
+                borderRadius: widget.backgroundShape ??
+                    BorderRadius.all(Radius.circular(widget.height)),
+                color: widget.backgroundColorEnd != null
+                    ? this.calculateBackground()
+                    : widget.backgroundColor,
               ),
             ),
           ),
@@ -233,7 +238,8 @@ class MonoDirectionJoystickState extends State<MonoDirectionJoystick> {
             left: getPosition(),
             top: 0,
             child: GestureDetector(
-              onTapDown: (_) => widget.onTapDown != null ? widget.onTapDown!() : null,
+              onTapDown: (_) =>
+                  widget.onTapDown != null ? widget.onTapDown!() : null,
               onTapUp: (_) => widget.onTapUp != null ? widget.onTapUp!() : null,
               onPanUpdate: (details) {
                 updatePosition(details);
@@ -246,10 +252,11 @@ class MonoDirectionJoystickState extends State<MonoDirectionJoystick> {
                 height: widget.height - 10,
                 width: widget.height - 10,
                 decoration: BoxDecoration(
-                  borderRadius: widget.foregroundShape ?? BorderRadius.all(Radius.circular(widget.height / 2)),
+                  borderRadius: widget.foregroundShape ??
+                      BorderRadius.all(Radius.circular(widget.height / 2)),
                   color: widget.foregroundColor,
                 ),
-                child: RotatedBox(quarterTurns: 1, child: widget.sliderButtonContent),
+                child: widget.sliderButtonContent,
               ),
             ),
           ),
