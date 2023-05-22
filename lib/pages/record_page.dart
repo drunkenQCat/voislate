@@ -51,6 +51,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
   bool isLinked = true;
   final int _counterInit = 1;
   var note = '';
+  String shotNote = '';
   List<MapEntry<String, String>> notes = [];
   List<MapEntry<String, String>> oldNotes = [];
   var ones = List.generate(8, (index) => (index + 1).toString());
@@ -65,23 +66,19 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
   final col3 = SlateColumnThree();
   final num = RecordFileNum();
   late SliderValueController<SlateColumnThree> scrl3;
+  final TextEditingController descEditingController = TextEditingController();
+  final TextEditingController noteEditingController = TextEditingController();
   late String currentFileNum;
   String previousFileNum = '';
   final inputNotice = 'Waiting for input...';
 
   late Future<int> col3InitIdx;
 
-  // 手动跑一条录音
-  void fakeTake() {
-    setState(() {
-      previousFileNum = currentFileNum;
-      num.increment();
-      currentFileNum = num.fullName();
-      notes.last = MapEntry(notes.last.key, 'fake take');
-    });
-  }
+  bool _isTouchable = false;
 
-  void drawbackItem() {
+  // 手动跑一条录音
+  // drawback the last note, and decrease the file number,but not the take number
+  void drawBackItem() {
     setState(() {
       num.decrement();
       // remove the last note
@@ -101,7 +98,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
     });
   }
 
-  void addItem(String currentFileNum) {
+  void addItem(String currentFileNum, [bool isFake = false]) {
     setState(() {
       oldNotes = notes;
       if (notes.isEmpty) {
@@ -109,9 +106,8 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
         notes.add(MapEntry(num.fullName(), inputNotice));
       } else {
         note = note.isEmpty ? 'note ${num.number - 1}' : note;
-        notes.last = (notes.last.value == 'fake take')
-            ? notes.last
-            : MapEntry(
+        note = isFake ? 'fake $note' : note;
+        notes.last = MapEntry(
                 previousFileNum, // File Name
                 note, //Note
               );
@@ -121,7 +117,9 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
       num.increment();
       note = '';
       if (_canVibrate) {
-        Vibrate.feedback(FeedbackType.heavy);
+        isFake 
+          ?Vibrate.feedback(FeedbackType.error)
+          :Vibrate.feedback(FeedbackType.heavy);
       }
     });
   }
@@ -217,8 +215,6 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
     var horizonPadding = 30.0;
     // everytime setState, the build method will be called again
     currentFileNum = num.fullName();
-    final TextEditingController descEditingController = TextEditingController();
-    final TextEditingController noteEditingController = TextEditingController();
 
     var col3IncBtn = ElevatedButton(
         onPressed: () {
@@ -231,7 +227,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
 
     var col3DecBtn = ElevatedButton(
       onPressed: () {
-        drawbackItem();
+        drawBackItem();
         descEditingController.clear();
         col3.scrollToPrev(isLinked);
       },
@@ -362,7 +358,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
               maxLines: 3,
               controller: noteEditingController,
               onChanged: (text) {
-                note = text;
+                shotNote = text;
               },
               decoration: const InputDecoration(
                 // contentPadding: EdgeInsets.symmetric(vertical: 20),
@@ -408,7 +404,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
             context: context,
             textCon: descEditingController,
             inc: () => addItem(currentFileNum),
-            dec: () => drawbackItem(),
+            dec: () => drawBackItem(),
             col: col3,
           );
 
@@ -424,23 +420,47 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: <Widget>[
-                        nextTakeMonitor,
-                        Row(
+                        AbsorbPointer(
+                            absorbing: _isTouchable, child: nextTakeMonitor),
+                        Stack(
                           children: [
-                            Expanded(
-                              child: col3IncBtn,
+                            Row(
+                              children: [
+                                Expanded(
+                                    child: AbsorbPointer(
+                                        absorbing: _isTouchable,
+                                        child: col3IncBtn))
+                              ],
+                            ),
+                            AbsorbPointer(
+                              absorbing: _isTouchable,
+                              child: Container(
+                                decoration: const BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.grey,
+                                ),
+                                child: IconButton(
+                                  onPressed: () {
+                                    addItem(currentFileNum, true);
+                                  },
+                                  icon: Icon(Icons.redo),
+                                ),
+                              ),
                             ),
                           ],
                         ),
                         Stack(
                           alignment: AlignmentDirectional.center,
                           children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                prevTakeEditor,
-                                prevShotNote,
-                              ],
+                            AbsorbPointer(
+                              absorbing: _isTouchable,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  prevTakeEditor,
+                                  prevShotNote,
+                                ],
+                              ),
                             ),
                             IconButton(
                               icon: const Icon(Icons.mic),
@@ -457,8 +477,17 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
                         ),
                         Row(
                           children: [
-                            Expanded(child: col3DecBtn),
+                            Expanded(
+                                child: AbsorbPointer(
+                                    absorbing: _isTouchable,
+                                    child: col3DecBtn)),
                           ],
+                        ),
+                        SwitchListTile(
+                          value: !_isTouchable,
+                          onChanged: ((value) =>
+                              setState(() => _isTouchable = !value)),
+                          title: Text('触控'),
                         ),
                       ],
                     ),
@@ -467,13 +496,16 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
               ],
             ),
             floatingActionButton: Stack(
-              alignment: AlignmentDirectional.bottomEnd,
+              alignment: AlignmentDirectional.bottomStart,
               children: [
+                // Positioned(
+                //     bottom: MediaQuery.of(context).size.height * 0.1,
+                //     left: -5,
+                //     child: okFloatingDial(context)),
                 Positioned(
-                  top: 10,
-                  child: okFloatingDial(context)
-                  ),
-                DisplayNotesButton(notes: notes),
+                  top: MediaQuery.of(context).size.height * 0.3,
+                  child: DisplayNotesButton(notes: notes),
+                ),
               ],
             ),
           );
