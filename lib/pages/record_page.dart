@@ -7,16 +7,17 @@ import 'package:flutter_vibrate/flutter_vibrate.dart';
 // import 'package:android_physical_buttons/android_physical_buttons.dart';
 import 'package:flutter_android_volume_keydown/flutter_android_volume_keydown.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:simple_speed_dial/simple_speed_dial.dart';
 
-import '../widgets/slate_picker.dart';
 import '../models/slate_num_notifier.dart';
 import '../models/value_scroll_control.dart';
-import '../widgets/quick_view_log_dialog.dart';
-import '../widgets/file_counter.dart';
-import '../widgets/dual_direction_joystick.dart';
 import '../models/recorder_file_num.dart';
 import '../models/slate_status_notifier.dart';
+
+import '../widgets/record_page/slate_picker.dart';
+import '../widgets/record_page/floating_ok_dial.dart';
+import '../widgets/record_page/quick_view_log_dialog.dart';
+import '../widgets/record_page/file_counter.dart';
+import '../widgets/record_page/dual_direction_joystick.dart';
 
 /* 
 这一页要做的事：
@@ -98,6 +99,17 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
     });
   }
 
+  void pickerNumSync() {
+    setState(() {
+      currentScn = col1.selected;
+      currentSht = col2.selected;
+      currentTk = col3.selected;
+      currentFileNum = num.fullName();
+      if (notes.isNotEmpty) {
+        notes.last = MapEntry(currentFileNum, inputNotice);
+      }
+    });
+  }
   void addItem(String currentFileNum, [bool isFake = false]) {
     setState(() {
       oldNotes = notes;
@@ -235,17 +247,6 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
       child: const Icon(Icons.remove),
     );
 
-    void pickerNumSync() {
-      setState(() {
-        currentScn = col1.selected;
-        currentSht = col2.selected;
-        currentTk = col3.selected;
-        currentFileNum = num.fullName();
-        if (notes.isNotEmpty) {
-          notes.last = MapEntry(currentFileNum, inputNotice);
-        }
-      });
-    }
 
     var nextTakeMonitor = Stack(
       alignment: AlignmentDirectional.centerStart,
@@ -531,57 +532,6 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
           );
         });
   }
-
-  SpeedDial okFloatingDial(BuildContext context) {
-    return SpeedDial(
-      child: const Text('OK'),
-      speedDialChildren: <SpeedDialChild>[
-        SpeedDialChild(
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('声音可用'),
-                duration: Duration(seconds: 1),
-              ),
-            );
-          },
-          label: '声音可用',
-          child: const Icon(Icons.gpp_good),
-        ),
-        SpeedDialChild(
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('声音弃用'),
-                duration: Duration(seconds: 1),
-              ),
-            );
-          },
-          label: '声音弃用',
-          child: const Icon(Icons.gpp_bad),
-        ),
-      ],
-    );
-  }
 }
 
-class DisplayNotesButton extends StatelessWidget {
-  // a button to show the notes in a list view
-  const DisplayNotesButton({
-    super.key,
-    required this.notes,
-  });
 
-  final List<MapEntry<String, String>> notes;
-
-  @override
-  Widget build(BuildContext context) {
-    return FloatingActionButton(
-      onPressed: () {
-        quickViewLog(context, notes);
-      },
-      tooltip: 'Quick View Log',
-      child: const Icon(Icons.notes),
-    );
-  }
-}
