@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../models/recorder_file_num.dart';
+import '../../models/recorder_file_num.dart';
 
 class FileCounter extends StatelessWidget {
   final RecordFileNum num;
