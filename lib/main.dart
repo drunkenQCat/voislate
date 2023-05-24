@@ -16,5 +16,6 @@ void main() async {
   if (Hive.box('scenes_box').isEmpty) {
     Hive.box('scenes_box').addAll([sceneSchedule, scene2ASchedule]);
   }
+  await Hive.openBox('scn_sht_tk');
   runApp(const VoiSlate());
 }
