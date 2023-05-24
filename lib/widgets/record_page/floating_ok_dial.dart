@@ -12,6 +12,7 @@ class FloatingOkDial extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SpeedDial(
+      key: const Key('speedDial'),
       child: const Text('OK'),
       speedDialChildren: <SpeedDialChild>[
         SpeedDialChild(

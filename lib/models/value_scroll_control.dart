@@ -3,14 +3,15 @@ import 'package:flutter/material.dart';
 import 'slate_num_notifier.dart';
 
 // the button to increment the counter for every column， add and scroll different columns
-class SliderValueController<T extends SlatePickerState> {
+// especiallly for volume key control
+class ScrollValueController<T extends SlatePickerState> {
   final TextEditingController textCon;
   BuildContext context;
   VoidCallback? inc;
   VoidCallback? dec;
   final T col;
 
-  SliderValueController({
+  ScrollValueController({
     required this.context,
     required this.textCon,
     this.inc,

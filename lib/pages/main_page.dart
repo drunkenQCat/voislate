@@ -1,21 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import 'scene_schedule_page.dart';
 import 'record_page.dart';
 import 'slate_log_page.dart';
 import 'settings_configue_page.dart';
+import '../models/slate_status_notifier.dart';
 
 class VoiSlate extends StatelessWidget {
   const VoiSlate({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Voislate',
-      theme: ThemeData(
-        primarySwatch: Colors.deepPurple,
+    return ChangeNotifierProvider(
+      create: (context) => SlateStatusNotifier(),
+      child: MaterialApp(
+        title: 'Voislate',
+        theme: ThemeData(
+          primarySwatch: Colors.deepPurple,
+        ),
+        home: const MyHomePage(title: 'Voislate Home Page'),
       ),
-      home: const MyHomePage(title: 'Voislate Home Page'),
     );
   }
 }

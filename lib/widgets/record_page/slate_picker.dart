@@ -12,11 +12,12 @@ typedef ResultChanged<V1, V2, V3> = Function(V1 v1, V2 v2, V3 v3);
 // notifier for every column
 
 // The Picker for the slate
+// ignore: must_be_immutable
 class SlatePicker extends StatefulWidget {
   // data for the three columns
-  final List<String> ones;
-  final List<String> twos;
-  final List<String> threes;
+  late List<String> ones;
+  late List<String> twos;
+  late List<String> threes;
   // in fact, the tags for the three columns
   final List<String> titles;
 
@@ -25,9 +26,9 @@ class SlatePicker extends StatefulWidget {
   final int initialTwoIndex;
   final int initialThreeIndex;
   // state for the three columns
-  SlateColumnOne? stateOne;
-  SlateColumnTwo? stateTwo;
-  SlateColumnThree? stateThree;
+  final SlateColumnOne stateOne;
+  final SlateColumnTwo stateTwo;
+  final SlateColumnThree stateThree;
 
   // the visual pramters for the SlatePicker
   final double height;
@@ -43,12 +44,9 @@ class SlatePicker extends StatefulWidget {
 
   SlatePicker({
     Key? key,
-    required this.ones,
-    required this.twos,
-    required this.threes,
-    this.stateOne,
-    this.stateTwo,
-    this.stateThree,
+    required this.stateOne,
+    required this.stateTwo,
+    required this.stateThree,
     required this.titles,
     this.resultChanged,
     this.initialOneIndex = 0,
@@ -62,6 +60,9 @@ class SlatePicker extends StatefulWidget {
   }) : super(key: key) {
     // 初始化 stateOne、stateTwo 和 stateThree
     assert(titles.length >= 3);
+    ones = stateOne.numList ?? ['1','2'];
+    twos = stateTwo.numList ?? ['1','2'];
+    threes = stateThree.numList ?? ['1','2'];
   }
 
   @override
@@ -74,18 +75,12 @@ class _SlatePickerState extends State<SlatePicker> {
   @override
   void initState() {
     super.initState();
-    widget.stateOne = widget.stateOne ?? SlateColumnOne()
-      ..init(widget.ones, widget.initialOneIndex);
-    widget.stateTwo = widget.stateTwo ?? SlateColumnTwo()
-      ..init(widget.twos, widget.initialTwoIndex);
-    widget.stateThree = widget.stateThree ?? SlateColumnThree()
-      ..init(widget.threes, widget.initialThreeIndex);
     // callback the result to the main.dart
     WidgetsBinding.instance.endOfFrame.then((_) {
       _resultChanged(
-        widget.stateOne!.selected, 
-        widget.stateTwo!.selected,
-        widget.stateThree!.selected);
+        widget.stateOne.selectedIndex, 
+        widget.stateTwo.selectedIndex,
+        widget.stateThree.selectedIndex);
     });
   }
 
@@ -98,24 +93,24 @@ class _SlatePickerState extends State<SlatePicker> {
           widget.ones,
           widget.titles[0],
           (value) => _resultChanged(
-              value, widget.stateTwo!.selected, widget.stateThree!.selected),
-          widget.stateOne!.controller,
+              value, widget.stateTwo.selectedIndex, widget.stateThree.selectedIndex),
+          widget.stateOne.controller,
         ),
         VerticalSeparator(widget: widget, padding: padding),
         _buildPicker(
           widget.twos,
           widget.titles[1],
           (value) => _resultChanged(
-              widget.stateOne!.selected, value, widget.stateThree!.selected),
-          widget.stateTwo!.controller,
+              widget.stateOne.selectedIndex, value, widget.stateThree.selectedIndex),
+          widget.stateTwo.controller,
         ),
         VerticalSeparator(widget: widget, padding: padding),
         _buildPicker(
           widget.threes,
           widget.titles[2],
           (value) => _resultChanged(
-              widget.stateOne!.selected, widget.stateTwo!.selected, value),
-          widget.stateThree!.controller,
+              widget.stateOne.selectedIndex, widget.stateTwo.selectedIndex, value),
+          widget.stateThree.controller,
         ),
       ],
     );
@@ -140,7 +135,7 @@ class _SlatePickerState extends State<SlatePicker> {
                 background: widget.itemBackgroundColor.withAlpha(80),
               ),
               onSelectedItemChanged: (selectedIndex) {
-                valueChanged(data[selectedIndex]);
+                valueChanged(selectedIndex);
               },
               children: data
                   .map(
@@ -167,12 +162,16 @@ class _SlatePickerState extends State<SlatePicker> {
 
   /// 刷新回调结果
   _resultChanged(v1, v2, v3) {
+    widget.stateOne.selectedIndex = v1;
+    widget.stateTwo.selectedIndex = v2;
+    widget.stateThree.selectedIndex = v3;
+
+    var a1 = widget.stateOne.selected;
+    var a2 = widget.stateTwo.selected;
+    var a3 = widget.stateThree.selected;
     if (widget.resultChanged != null) {
-      widget.resultChanged!(v1, v2, v3);
+      widget.resultChanged!(a1, a2, a3);
     }
-    widget.stateOne!.selected = v1;
-    widget.stateTwo!.selected = v2;
-    widget.stateThree!.selected = v3;
   }
 }
 
