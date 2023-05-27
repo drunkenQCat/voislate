@@ -60,9 +60,9 @@ class SlatePicker extends StatefulWidget {
   }) : super(key: key) {
     // 初始化 stateOne、stateTwo 和 stateThree
     assert(titles.length >= 3);
-    ones = stateOne.numList ?? ['1','2'];
-    twos = stateTwo.numList ?? ['1','2'];
-    threes = stateThree.numList ?? ['1','2'];
+    ones = stateOne.numList ?? ['1', '2'];
+    twos = stateTwo.numList ?? ['1', '2'];
+    threes = stateThree.numList ?? ['1', '2'];
   }
 
   @override
@@ -77,10 +77,8 @@ class _SlatePickerState extends State<SlatePicker> {
     super.initState();
     // callback the result to the main.dart
     WidgetsBinding.instance.endOfFrame.then((_) {
-      _resultChanged(
-        widget.stateOne.selectedIndex, 
-        widget.stateTwo.selectedIndex,
-        widget.stateThree.selectedIndex);
+      _resultChanged(widget.stateOne.selectedIndex,
+          widget.stateTwo.selectedIndex, widget.stateThree.selectedIndex);
     });
   }
 
@@ -92,24 +90,24 @@ class _SlatePickerState extends State<SlatePicker> {
         _buildPicker(
           widget.ones,
           widget.titles[0],
-          (value) => _resultChanged(
-              value, widget.stateTwo.selectedIndex, widget.stateThree.selectedIndex),
+          (value) => _resultChanged(value, widget.stateTwo.selectedIndex,
+              widget.stateThree.selectedIndex),
           widget.stateOne.controller,
         ),
         VerticalSeparator(widget: widget, padding: padding),
         _buildPicker(
           widget.twos,
           widget.titles[1],
-          (value) => _resultChanged(
-              widget.stateOne.selectedIndex, value, widget.stateThree.selectedIndex),
+          (value) => _resultChanged(widget.stateOne.selectedIndex, value,
+              widget.stateThree.selectedIndex),
           widget.stateTwo.controller,
         ),
         VerticalSeparator(widget: widget, padding: padding),
         _buildPicker(
           widget.threes,
           widget.titles[2],
-          (value) => _resultChanged(
-              widget.stateOne.selectedIndex, widget.stateTwo.selectedIndex, value),
+          (value) => _resultChanged(widget.stateOne.selectedIndex,
+              widget.stateTwo.selectedIndex, value),
           widget.stateThree.controller,
         ),
       ],
@@ -149,12 +147,12 @@ class _SlatePickerState extends State<SlatePicker> {
             ),
           ),
           // SizedBox(height: 4),
-          Text(
-            unit,
-            style: const TextStyle(
-              fontSize: 18,
-              color: Color(0xFF212121),
-              fontWeight: FontWeight.w400,)),
+          Text(unit,
+              style: const TextStyle(
+                fontSize: 18,
+                color: Color(0xFF212121),
+                fontWeight: FontWeight.w400,
+              )),
         ],
       ),
     );

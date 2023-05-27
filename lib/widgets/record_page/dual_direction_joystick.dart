@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+// ignore: must_be_immutable
 class DualDirectionJoystick extends StatefulWidget {
   /// Height of the slider. Defaults to 70.
   final double height;
@@ -56,8 +57,11 @@ class DualDirectionJoystick extends StatefulWidget {
 
   /// Stick the slider to the end
   final bool stickToEnd;
+  
+  bool _isVisible = false;
 
-  const DualDirectionJoystick({
+
+  DualDirectionJoystick({
     Key? key,
     this.height = 70,
     this.width = 300,
@@ -198,36 +202,40 @@ class DualDirectionJoystickState extends State<DualDirectionJoystick> {
         children: <Widget>[
           Positioned(
             left: widget.height / 2,
-            child: AnimatedContainer(
-              height: widget.height - 10,
-              width: getPosition(),
-              duration: Duration(milliseconds: _duration),
-              curve: Curves.ease,
-              decoration: BoxDecoration(
-                borderRadius: widget.backgroundShape ??
-                    BorderRadius.all(Radius.circular(widget.height)),
-                color: widget.backgroundColorEnd != null
-                    ? this.calculateBackground()
-                    : widget.backgroundColor,
+            child: AnimatedOpacity(
+              opacity: widget._isVisible? 1.0 : 0.0, 
+              duration: Duration(milliseconds: _duration), 
+              child: AnimatedContainer(
+                height: widget.height - 10,
+                width: getPosition(),
+                duration: Duration(milliseconds: _duration),
+                curve: Curves.ease,
+                decoration: BoxDecoration(
+                  borderRadius: widget.backgroundShape ??
+                      BorderRadius.all(Radius.circular(widget.height)),
+                  color: widget.backgroundColorEnd != null
+                      ? this.calculateBackground()
+                      : widget.backgroundColor,
+                ),
               ),
             ),
           ),
           Center(
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 Icon(
-                  Icons.cancel,
-                  size: 48,
-                  color: Colors.red[300],
-                ),
-                SizedBox(
-                  height: 5,
-                ),
-                Icon(
-                  Icons.add,
+                  Icons.arrow_right,
                   size: 48,
                   color: Colors.green[300],
+                ),
+                SizedBox(
+                  height: 10,
+                ),
+                Icon(
+                  Icons.arrow_left,
+                  size: 48,
+                  color: Colors.red[300],
                 ),
               ],
             ),
@@ -238,9 +246,14 @@ class DualDirectionJoystickState extends State<DualDirectionJoystick> {
             left: getPosition(),
             top: 0,
             child: GestureDetector(
-              onTapDown: (_) =>
-                  widget.onTapDown != null ? widget.onTapDown!() : null,
-              onTapUp: (_) => widget.onTapUp != null ? widget.onTapUp!() : null,
+              onTapDown: (_) {
+                setState(() =>widget._isVisible = true);
+                widget.onTapDown != null ? widget.onTapDown!() : null;
+              },
+              onTapUp: (_) {
+                setState(() =>widget._isVisible = false);
+                widget.onTapUp != null ? widget.onTapUp!() : null;
+              },
               onPanUpdate: (details) {
                 updatePosition(details);
               },

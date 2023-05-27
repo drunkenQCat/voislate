@@ -22,14 +22,14 @@ import '../widgets/record_page/dual_direction_joystick.dart';
 
 /* 
 这一页要做的事：
-1. 轮盘绑定拍摄计划
+1x 轮盘绑定拍摄计划
 2x 调整UI布局，删除一些输入框
 3x 删除场镜相关悬浮按钮（本来就是用来验证功能的）
 4x 调整轮盘高度
-5. 考虑特殊录音（补录对白、补录环境音）
-6. 跑条按钮
-7. 想办法让文件名可以长按修改
-8. "准备录音"不要那么高
+5x 考虑特殊录音（补录对白、补录环境音）
+6x 跑条按钮
+7x 想办法让文件名可以长按修改
+~~8. "准备录音"不要那么高~~
 9. "本场内容"注意schedule的数据结构
 10. (备选方案)可以考虑加入急行军模式
 11x *记得修改按键布局保证交互操作可以正常使用.某种意义上说，就是要足够的大
@@ -49,6 +49,7 @@ class SlateRecord extends StatefulWidget {
 class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
   // Some variables don't need to be in the state
 
+  late List<SceneSchedule> totalScenes;
   bool isLinked = true;
   final int _counterInit = 1;
   List<MapEntry<String, String>> notes = [];
@@ -64,16 +65,17 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
   late String currentFileNum;
   String previousFileNum = '';
   final inputNotice = 'Waiting for input...';
-
   late Future<int> col3InitIdx;
-
   bool _isTouchable = false;
 
   // 手动跑一条录音
   // drawback the last note, and decrease the file number,but not the take number
-
   // vibration feedback related
   bool _canVibrate = true;
+
+  var shotNoteController = TextEditingController();
+
+  var descController = TextEditingController();
 
   Future<void> _initVibrate() async {
     // init the vibration
@@ -114,18 +116,26 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
     //   });
     startListening();
     var box = Hive.box('scenes_box');
-    List<SceneSchedule> scenes = box.values.toList().cast();
+    totalScenes = box.values.toList().cast();
     var initValueProvider =
         Provider.of<SlateStatusNotifier>(context, listen: false);
-    var sceneList = scenes.map((e) => e.info.name.toString()).toList();
-    var shotList = scenes[initValueProvider.selectedSceneIndex]
+    var sceneList = totalScenes.map((e) => e.info.name.toString()).toList();
+    var shotList = totalScenes[initValueProvider.selectedSceneIndex]
         .data
         .map((e) => e.name.toString())
         .toList();
     var takeList = List.generate(200, (index) => (index + 1).toString());
-    sceneCol.init(sceneList, initValueProvider.selectedSceneIndex);
-    shotCol.init(shotList, initValueProvider.selectedShotIndex);
-    takeCol.init(takeList, initValueProvider.selectedTakeIndex);
+    sceneCol.init(0, sceneList);
+    shotCol.init(0, shotList);
+    takeCol.init(0, takeList);
+    WidgetsBinding.instance.endOfFrame.then((_) {
+      var initS = initValueProvider.selectedSceneIndex;
+      var initSh = initValueProvider.selectedShotIndex;
+      var initTk = initValueProvider.selectedTakeIndex;
+      sceneCol.init(initS);
+      shotCol.init(initSh);
+      takeCol.init(initTk);
+    });
   }
 
   @override
@@ -143,11 +153,16 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
     // everytime setState, the build method will be called again
     currentFileNum = num.fullName();
 
-    var prevTakeEditor = PrevTakeEditor(num: num);
+    var prevTakeEditor = PrevTakeEditor(
+      num: num,
+      descEditingController: descController,
+    );
     var prevShotNote = PrevShotNote(
-        currentScn: sceneCol.selected,
-        currentSht: shotCol.selected,
-        currentTk: takeCol.selected);
+      currentScn: sceneCol.selected,
+      currentSht: shotCol.selected,
+      currentTk: takeCol.selected,
+      controller: shotNoteController,
+    );
 
     void drawBackItem() {
       setState(() {
@@ -229,6 +244,19 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
 
       void pickerNumSync() {
         setState(() {
+          var shotList = totalScenes[sceneCol.selectedIndex]
+              .data
+              .map((e) => e.name.toString())
+              .toList();
+          // if the scene is changed manually
+          if (sceneCol.selectedIndex != slateNotifier.selectedSceneIndex) {
+            shotCol.init(0, shotList);
+            takeCol.init();
+          }
+          // if the shot is changed manually
+          if (shotCol.selectedIndex != slateNotifier.selectedShotIndex) {
+            takeCol.init();
+          }
           slateNotifier.setIndex(
             scene: sceneCol.selectedIndex,
             shot: shotCol.selectedIndex,
@@ -269,6 +297,11 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
                   height: screenHeight * 0.17,
                   itemHeight: screenHeight * 0.13 - 48,
                   resultChanged: (v1, v2, v3) {
+                    prevShotNote.controller.text =
+                        totalScenes[sceneCol.selectedIndex]
+                                [shotCol.selectedIndex]
+                            .note
+                            .append;
                     pickerNumSync();
                     debugPrint('v1: $v1, v2: $v2, v3: $v3');
                   },
@@ -354,6 +387,9 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
                         DualDirectionJoystick(
                             width: 120,
                             sliderButtonContent: const Icon(Icons.mic),
+                            backgroundColor: Colors.red.shade200,
+                            backgroundColorEnd: Colors.green.shade200,
+                            foregroundColor: Colors.purple.shade50,
                             onTapDown: () {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
@@ -388,17 +424,6 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
                                 ),
                               );
                             }),
-                        // IconButton(
-                        //   icon: const Icon(Icons.mic),
-                        //   onPressed: () {
-                        //     ScaffoldMessenger.of(context).showSnackBar(
-                        //       const SnackBar(
-                        //         content: Text('正在保存描述'),
-                        //         duration: Duration(seconds: 1),
-                        //       ),
-                        //     );
-                        //   },
-                        // ),
                       ],
                     ),
                     Row(

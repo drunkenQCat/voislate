@@ -4,12 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:voislate/models/recorder_file_num.dart';
 
 class PrevTakeEditor extends StatelessWidget {
+  /// This is the Description Editor for the previous record file.
   PrevTakeEditor({
     Key? key,
     required this.num,
+    required this.descEditingController,
   }) : super(key: key);
 
-  final TextEditingController descEditingController = TextEditingController();
+  final TextEditingController descEditingController;
   final RecordFileNum num;
   var note = '';
 
@@ -51,30 +53,37 @@ class PrevTakeEditor extends StatelessWidget {
   }
 }
 
-class PrevShotNote extends StatefulWidget {
+class PrevShotNote extends StatelessWidget {
   PrevShotNote({
     Key? key,
     required this.currentScn,
     required this.currentSht,
     required this.currentTk,
+    required this.controller,
   }) : super(key: key);
 
   final String currentScn;
   final String currentSht;
   final String currentTk;
   String shotNote = '';
+  final TextEditingController controller;
+
+//   @override
+//   State<PrevShotNote> createState() => _PrevShotNoteState();
+// }
+
+// class _PrevShotNoteState extends State<PrevShotNote> {
+//   late final TextEditingController noteEditingController;
+
+//   @override
+//   void initState() {
+//     // TODO: implement initState
+//     super.initState();
+//     noteEditingController = widget.controller;
+//   }
 
   @override
-  State<PrevShotNote> createState() => _PrevShotNoteState();
-}
-
-class _PrevShotNoteState extends State<PrevShotNote> {
-  final TextEditingController descEditingController = TextEditingController();
-
-  final TextEditingController noteEditingController = TextEditingController();
-
-  @override
-  Widget build(BuildContext context) {
+  build(BuildContext context) {
     return Flexible(
       child: ListTileTheme(
         minLeadingWidth: 5,
@@ -83,10 +92,10 @@ class _PrevShotNoteState extends State<PrevShotNote> {
             children: [
               const Icon(
                 Icons.movie_creation_outlined,
-                color: Colors.red,
+                color: Colors.green,
               ),
               Text(
-                  'S${widget.currentScn} Sh${widget.currentSht} Tk${int.parse(widget.currentTk) < 2 ? '?' : (int.parse(widget.currentTk) - 1).toString()}'),
+                  'S$currentScn Sh$currentSht Tk${int.parse(currentTk) < 2 ? '?' : (int.parse(currentTk) - 1).toString()}'),
             ],
           ),
           subtitle: SizedBox(
@@ -94,9 +103,9 @@ class _PrevShotNoteState extends State<PrevShotNote> {
             child: TextField(
               // bind the input to the note variable
               maxLines: 3,
-              controller: noteEditingController,
+              controller: controller,
               onChanged: (text) {
-                widget.shotNote = text;
+                shotNote = text;
               },
               decoration: const InputDecoration(
                 // contentPadding: EdgeInsets.symmetric(vertical: 20),
