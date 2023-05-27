@@ -265,7 +265,7 @@ class _SceneSchedulePageState extends State<SceneSchedulePage>
                     onTap: () {
                       setState(() {
                         selectedShotIndex = index;
-                        slateNotifier.setIndex(shot: index, take: 1);
+                        slateNotifier.setIndex(shot: index, take: 0);
                       });
                     },
                   ),
@@ -292,7 +292,7 @@ class _SceneSchedulePageState extends State<SceneSchedulePage>
                       scenes.insert(newIndex, shots);
                       // make the selected item to be the dragged item
                       selectedIndex = newIndex;
-                      slateNotifier.setIndex(scene: newIndex, shot: 1, take: 1);
+                      slateNotifier.setIndex(scene: newIndex, shot: 0, take: 0);
                       _saveBox();
                     });
                     slateNotifier.setIndex(scene: newIndex);
@@ -340,7 +340,7 @@ class _SceneSchedulePageState extends State<SceneSchedulePage>
                             // make the selected item to be the dragged item
                             selectedShotIndex = newIndex;
                           });
-                          slateNotifier.setIndex(shot: newIndex, take: 1);
+                          slateNotifier.setIndex(shot: newIndex, take: 0);
                           _saveBox();
                         },
                         itemBuilder: (BuildContext context, int index2) {

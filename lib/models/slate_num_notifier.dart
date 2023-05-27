@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 
 abstract class SlatePickerState with ChangeNotifier {
-  late FixedExtentScrollController controller;
+  final FixedExtentScrollController controller = FixedExtentScrollController();
   var _numList = <String>['1','2'];
   var _selectedIndex = 0;
   get selectedIndex => _selectedIndex;
@@ -22,9 +22,13 @@ abstract class SlatePickerState with ChangeNotifier {
     notifyListeners();
   }
 
-  void init([ List<String> inputList = const ['1', '2', '3', '4', '5', '6', '7', '8'], int initialIndex = 0 ]) {
-    controller = FixedExtentScrollController(initialItem: initialIndex);
-    numList = inputList;
+  /// initiallize the list of column and selectedIndex.
+  /// if no input, just jump the selectedIndex to 0.
+  /// if inputlist is [], just use the default numList.
+  void init([int initialIndex = 0, List<String>? inputList ]) {
+    // controller = FixedExtentScrollController(initialItem: initialIndex);
+    if(inputList != null) numList = inputList;
+    controller.jumpToItem(initialIndex);
     _selectedIndex = initialIndex;
   }
 
