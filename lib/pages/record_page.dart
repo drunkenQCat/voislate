@@ -132,9 +132,11 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
       var initS = initValueProvider.selectedSceneIndex;
       var initSh = initValueProvider.selectedShotIndex;
       var initTk = initValueProvider.selectedTakeIndex;
+      var initCount = initValueProvider.recordCount;
       sceneCol.init(initS);
       shotCol.init(initSh);
       takeCol.init(initTk);
+      num.setValue(initCount);
     });
   }
 
@@ -261,10 +263,11 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
             scene: sceneCol.selectedIndex,
             shot: shotCol.selectedIndex,
             take: takeCol.selectedIndex,
+            count: num.number,
           );
           currentFileNum = num.fullName();
           if (notes.isNotEmpty) {
-            notes.last = MapEntry(currentFileNum, inputNotice);
+            notes.last = MapEntry(previousFileNum, inputNotice);
           }
         });
       }
@@ -384,46 +387,53 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
                             ],
                           ),
                         ),
-                        DualDirectionJoystick(
-                            width: 120,
-                            sliderButtonContent: const Icon(Icons.mic),
-                            backgroundColor: Colors.red.shade200,
-                            backgroundColorEnd: Colors.green.shade200,
-                            foregroundColor: Colors.purple.shade50,
-                            onTapDown: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('正在录音'),
-                                  duration: Duration(seconds: 1),
-                                ),
-                              );
-                            },
-                            onTapUp: () {
-                              ScaffoldMessenger.of(context)
-                                  .hideCurrentSnackBar();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('录音取消'),
-                                  duration: Duration(seconds: 1),
-                                ),
-                              );
-                            },
-                            onCancel: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('正在保存录音描述'),
-                                  duration: Duration(seconds: 1),
-                                ),
-                              );
-                            },
-                            onConfirmation: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('正在保存镜头描述'),
-                                  duration: Duration(seconds: 1),
-                                ),
-                              );
-                            }),
+                        Transform.scale(
+                          scale: 0.8,
+                          child: DualDirectionJoystick(
+                              width: 120,
+                              sliderButtonContent: const Icon(Icons.mic),
+                              backgroundColor: Colors.red.shade200,
+                              backgroundColorEnd: Colors.green.shade200,
+                              foregroundColor: Colors.purple.shade50,
+                              onTapDown: () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('正在录音'),
+                                    duration: Duration(seconds: 1),
+                                  ),
+                                );
+                              },
+                              // onTapUp: () {
+                              //   ScaffoldMessenger.of(context)
+                              //       .hideCurrentSnackBar();
+                              //   ScaffoldMessenger.of(context).showSnackBar(
+                              //     const SnackBar(
+                              //       content: Text('录音取消'),
+                              //       duration: Duration(seconds: 1),
+                              //     ),
+                              //   );
+                              // },
+                              onCancel: () {
+                                ScaffoldMessenger.of(context)
+                                    .hideCurrentSnackBar();
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('正在保存录音描述'),
+                                    duration: Duration(seconds: 1),
+                                  ),
+                                );
+                              },
+                              onConfirmation: () {
+                                ScaffoldMessenger.of(context)
+                                    .hideCurrentSnackBar();
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('正在保存镜头描述'),
+                                    duration: Duration(seconds: 1),
+                                  ),
+                                );
+                              }),
+                        ),
                       ],
                     ),
                     Row(
