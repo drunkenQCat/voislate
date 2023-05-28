@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter_vibrate/flutter_vibrate.dart';
 // import 'package:android_physical_buttons/android_physical_buttons.dart';
 import 'package:flutter_android_volume_keydown/flutter_android_volume_keydown.dart';
+import 'package:voislate/models/slate_log_notifier.dart';
 import 'package:voislate/models/slate_schedule.dart';
 
 import '../models/slate_num_notifier.dart';
@@ -77,6 +78,8 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
 
   var descController = TextEditingController();
 
+  late SlateLogNotifier logProvider;
+
   Future<void> _initVibrate() async {
     // init the vibration
     bool canVibrate = await Vibrate.canVibrate;
@@ -119,6 +122,8 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
     totalScenes = box.values.toList().cast();
     var initValueProvider =
         Provider.of<SlateStatusNotifier>(context, listen: false);
+    logProvider =
+        Provider.of<SlateLogNotifier>(context, listen: false);
     var sceneList = totalScenes.map((e) => e.info.name.toString()).toList();
     var shotList = totalScenes[initValueProvider.selectedSceneIndex]
         .data
@@ -166,76 +171,77 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
       controller: shotNoteController,
     );
 
-    void drawBackItem() {
-      setState(() {
-        num.decrement();
-        // remove the last note
-        if (notes.isNotEmpty) {
-          notes = oldNotes;
-          if (oldNotes.isNotEmpty) {
-            oldNotes.removeLast();
-            oldNotes.last = MapEntry(oldNotes.last.key, inputNotice);
+    return Consumer2<SlateStatusNotifier, SlateLogNotifier>(
+        builder: (context, slateNotifier, logNotifier ,child) {
+
+      void drawBackItem() {
+        setState(() {
+          num.decrement();
+          // remove the last note
+          if (notes.isNotEmpty) {
+            notes = oldNotes;
+            if (oldNotes.isNotEmpty) {
+              oldNotes.removeLast();
+              oldNotes.last = MapEntry(oldNotes.last.key, inputNotice);
+            }
+            oldNotes = (oldNotes.length == 1) ? notes = [] : oldNotes;
+            previousFileNum = oldNotes.isEmpty ? '' : oldNotes.last.key;
           }
-          oldNotes = (oldNotes.length == 1) ? notes = [] : oldNotes;
-          previousFileNum = oldNotes.isEmpty ? '' : oldNotes.last.key;
-        }
-        prevTakeEditor.note = '';
-        if (_canVibrate) {
-          Vibrate.feedback(FeedbackType.warning);
-        }
-      });
-    }
+          prevTakeEditor.note = '';
+          if (_canVibrate) {
+            Vibrate.feedback(FeedbackType.warning);
+          }
+        });
+      }
 
-    void addItem(String currentFileNum, [bool isFake = false]) {
-      setState(() {
-        oldNotes = notes;
-        if (notes.isEmpty) {
-          notes.add(const MapEntry("File Name", "Note"));
-          notes.add(MapEntry(num.fullName(), inputNotice));
-        } else {
-          prevTakeEditor.note = prevTakeEditor.note.isEmpty
-              ? 'note ${num.number - 1}'
-              : prevTakeEditor.note;
-          prevTakeEditor.note =
-              isFake ? 'fake $prevTakeEditor.note' : prevTakeEditor.note;
-          notes.last = MapEntry(
-            previousFileNum, // File Name
-            prevTakeEditor.note, //Note
-          );
-          notes.add(MapEntry(num.fullName(), inputNotice));
-        }
-        previousFileNum = currentFileNum;
-        num.increment();
-        prevTakeEditor.note = '';
-        if (_canVibrate) {
-          isFake
-              ? Vibrate.feedback(FeedbackType.error)
-              : Vibrate.feedback(FeedbackType.heavy);
-        }
-      });
-    }
+      void addItem(String currentFileNum, [bool isFake = false]) {
+        setState(() {
+          oldNotes = notes;
+          if (notes.isEmpty) {
+            notes.add(const MapEntry("File Name", "Note"));
+            notes.add(MapEntry(num.fullName(), inputNotice));
+          } else {
+            prevTakeEditor.note = prevTakeEditor.note.isEmpty
+                ? 'note ${num.number - 1}'
+                : prevTakeEditor.note;
+            prevTakeEditor.note =
+                isFake ? 'fake $prevTakeEditor.note' : prevTakeEditor.note;
+            notes.last = MapEntry(
+              previousFileNum, // File Name
+              prevTakeEditor.note, //Note
+            );
+            notes.add(MapEntry(num.fullName(), inputNotice));
+          }
+          previousFileNum = currentFileNum;
+          num.increment();
+          prevTakeEditor.note = '';
+          if (_canVibrate) {
+            isFake
+                ? Vibrate.feedback(FeedbackType.error)
+                : Vibrate.feedback(FeedbackType.heavy);
+          }
+        });
+      }
 
-    var col3IncBtn = ElevatedButton(
+      var col3IncBtn = ElevatedButton(
+          onPressed: () {
+            addItem(currentFileNum);
+            prevTakeEditor.descEditingController.clear();
+            takeCol.scrollToNext(isLinked);
+          },
+          style: ElevatedButton.styleFrom(minimumSize: const Size(70, 60)),
+          child: const Icon(Icons.add));
+
+      var col3DecBtn = ElevatedButton(
         onPressed: () {
-          addItem(currentFileNum);
+          drawBackItem();
           prevTakeEditor.descEditingController.clear();
-          takeCol.scrollToNext(isLinked);
+          takeCol.scrollToPrev(isLinked);
         },
         style: ElevatedButton.styleFrom(minimumSize: const Size(70, 60)),
-        child: const Icon(Icons.add));
+        child: const Icon(Icons.remove),
+      );
 
-    var col3DecBtn = ElevatedButton(
-      onPressed: () {
-        drawBackItem();
-        prevTakeEditor.descEditingController.clear();
-        takeCol.scrollToPrev(isLinked);
-      },
-      style: ElevatedButton.styleFrom(minimumSize: const Size(70, 60)),
-      child: const Icon(Icons.remove),
-    );
-
-    return Consumer<SlateStatusNotifier>(
-        builder: (context, slateNotifier, child) {
       scrl3 = ScrollValueController<SlateColumnThree>(
         context: context,
         textCon: prevTakeEditor.descEditingController,
@@ -243,6 +249,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
         dec: () => drawBackItem(),
         col: takeCol,
       );
+
 
       void pickerNumSync() {
         setState(() {

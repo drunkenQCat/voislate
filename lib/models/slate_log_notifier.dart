@@ -47,9 +47,4 @@ class SlateLogNotifier with ChangeNotifier  {
     logBox.putAt(index, item);
     notifyListeners();
   }
-
-  void setLink(bool link) {
-    Hive.box('scn_sht_tk').put('isLinked', link);
-    notifyListeners();
-  }
 }

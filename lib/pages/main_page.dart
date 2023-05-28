@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../models/slate_log_notifier.dart';
 import 'scene_schedule_page.dart';
 import 'record_page.dart';
 import 'slate_log_page.dart';
@@ -12,8 +13,11 @@ class VoiSlate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => SlateStatusNotifier(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => SlateStatusNotifier()),
+        ChangeNotifierProvider(create: (_) => SlateLogNotifier()),
+      ],
       child: MaterialApp(
         title: 'Voislate',
         theme: ThemeData(

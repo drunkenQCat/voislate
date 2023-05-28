@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../models/slate_schedule.dart';
 import '../models/slate_log_item.dart';
 import '../data/dummy_data.dart';
+import '../models/slate_log_notifier.dart';
 
 /* 
 TODO：
@@ -19,79 +21,85 @@ class _SlateLogState extends State<SlateLog> {
 
   @override
   Widget build(BuildContext context) {
-    Map<String, Map<String, List<SlateLogItem>>> sortedItems = {};
+    return Consumer<SlateLogNotifier>(
+      builder: (context, slateLogs, child) {
+        Map<String, Map<String, List<SlateLogItem>>> sortedItems = {};
 
-    for (SlateLogItem item in slateLogItems) {
-      if (!sortedItems.containsKey(item.scn)) {
-        sortedItems[item.scn] = {};
-      }
-      if (!sortedItems[item.scn]!.containsKey(item.sht)) {
-        sortedItems[item.scn]![item.sht] = [];
-      }
-      sortedItems[item.scn]![item.sht]!.add(item);
-    }
+        for (SlateLogItem item in slateLogs.logToday) {
+          if (!sortedItems.containsKey(item.scn)) {
+            sortedItems[item.scn] = {};
+          }
+          if (!sortedItems[item.scn]!.containsKey(item.sht)) {
+            sortedItems[item.scn]![item.sht] = [];
+          }
+          sortedItems[item.scn]![item.sht]!.add(item);
+        }
 
-    return ListView.builder(
-      itemCount: sortedItems.length,
-      itemBuilder: (BuildContext context, int index) {
-        String scn = sortedItems.keys.elementAt(index);
-        Map<String, List<SlateLogItem>> shtItems = sortedItems[scn]!;
-
-        return ExpansionTile(
-          backgroundColor: Colors.grey,
-          initiallyExpanded: true,
-          title: Center(child: Text(scn)),
-          subtitle: Center(child: Text('场')),
-          children: shtItems.keys.map((sht) {
-            List<SlateLogItem> items = shtItems[sht]!;
-
+        return 
+        ListView.builder(
+          itemCount: sortedItems.length,
+          itemBuilder: (BuildContext context, int index) {
+            String scn = sortedItems.keys.elementAt(index);
+            Map<String, List<SlateLogItem>> shtItems = sortedItems[scn]!;
+      
             return ExpansionTile(
-              backgroundColor: Colors.grey[200],
+              backgroundColor: Colors.grey,
               initiallyExpanded: true,
-              title: Text(sht),
-              subtitle: Text('镜'),
-              children: items.map((item) {
-                return Container(
-                  color: _getTkStatusColor(item.okTk),
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      child: Text(item.tk.toString()),
-                    ),
-                    title: RichText(
-                      text: TextSpan(
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
+              title: Center(child: Text(scn)),
+              subtitle: Center(child: Text('场')),
+              children: shtItems.keys.map((sht) {
+                List<SlateLogItem> items = shtItems[sht]!;
+      
+                return ExpansionTile(
+                  backgroundColor: Colors.grey[200],
+                  initiallyExpanded: true,
+                  title: Text(sht),
+                  subtitle: Text('镜'),
+                  children: items.map((item) {
+                    return Container(
+                      color: _getTkStatusColor(item.okTk),
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          child: Text(item.tk.toString()),
                         ),
-                        children: [
-                          TextSpan(
-                            text: item.filenamePrefix,
+                        title: RichText(
+                          text: TextSpan(
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                            children: [
+                              TextSpan(
+                                text: item.filenamePrefix,
+                              ),
+                              TextSpan(text: ' '),
+                              TextSpan(text: item.filenameLinker),
+                              TextSpan(text: ' '),
+                              TextSpan(text: item.filenameNum.toString()),
+                            ],
                           ),
-                          TextSpan(text: ' '),
-                          TextSpan(text: item.filenameLinker),
-                          TextSpan(text: ' '),
-                          TextSpan(text: item.filenameNum.toString()),
-                        ],
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('TK Note: ${item.tkNote}'),
+                            Text('Shot Note: ${item.shtNote}'),
+                            Text('Scene Note: ${item.scnNote}'),
+                          ],
+                        ),
+                        trailing: Icon(
+                          _getShtStatusIcon(item.okSht),
+                        ),
                       ),
-                    ),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('TK Note: ${item.tkNote}'),
-                        Text('Shot Note: ${item.shtNote}'),
-                        Text('Scene Note: ${item.scnNote}'),
-                      ],
-                    ),
-                    trailing: Icon(
-                      _getShtStatusIcon(item.okSht),
-                    ),
-                  ),
+                    );
+                  }).toList(),
                 );
               }).toList(),
             );
-          }).toList(),
+          },
         );
       },
+
     );
   }
 
