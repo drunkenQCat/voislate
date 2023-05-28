@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/slate_schedule.dart';
 import '../models/slate_log_item.dart';
+import '../data/dummy_data.dart';
 
 /* 
 TODO：
@@ -15,126 +16,6 @@ class SlateLog extends StatefulWidget {
 }
 
 class _SlateLogState extends State<SlateLog> {
-  List<SlateLogItem> slateLogItems = [
-    SlateLogItem(
-      scn: 'Scene 1',
-      sht: 'Shot 1',
-      tk: 1,
-      filenamePrefix: '230522',
-      filenameLinker: '-T',
-      filenameNum: 1,
-      tkNote: 'TK Note 1',
-      shtNote: 'Shot Note 1',
-      scnNote: 'Scene Note 1',
-      okTk: TkStatus.ok,
-      okSht: ShtStatus.ok,
-    ),
-    SlateLogItem(
-      scn: 'Scene 1',
-      sht: 'Shot 1',
-      tk: 2,
-      filenamePrefix: '230522',
-      filenameLinker: '-T',
-      filenameNum: 2,
-      tkNote: 'TK Note 2',
-      shtNote: 'Shot Note 2',
-      scnNote: 'Scene Note 2',
-      okTk: TkStatus.ok,
-      okSht: ShtStatus.ok,
-    ),
-    SlateLogItem(
-      scn: 'Scene 1',
-      sht: 'Shot 1',
-      tk: 3,
-      filenamePrefix: '230522',
-      filenameLinker: '-T',
-      filenameNum: 3,
-      tkNote: 'TK Note 3',
-      shtNote: 'Shot Note 3',
-      scnNote: 'Scene Note 3',
-      okTk: TkStatus.ok,
-      okSht: ShtStatus.ok,
-    ),
-    SlateLogItem(
-      scn: 'Scene 1',
-      sht: 'Shot 2',
-      tk: 4,
-      filenamePrefix: '230522',
-      filenameLinker: '-T',
-      filenameNum: 4,
-      tkNote: 'TK Note 4',
-      shtNote: 'Shot Note 4',
-      scnNote: 'Scene Note 4',
-      okTk: TkStatus.ok,
-      okSht: ShtStatus.ok,
-    ),
-    SlateLogItem(
-      scn: 'Scene 1',
-      sht: 'Shot 2',
-      tk: 5,
-      filenamePrefix: '230522',
-      filenameLinker: '-T',
-      filenameNum: 5,
-      tkNote: 'TK Note 5',
-      shtNote: 'Shot Note 5',
-      scnNote: 'Scene Note 5',
-      okTk: TkStatus.ok,
-      okSht: ShtStatus.ok,
-    ),
-    // Scene 2 Shot2
-    SlateLogItem(
-      scn: 'Scene 2',
-      sht: 'Shot 2',
-      tk: 2,
-      filenamePrefix: '230522',
-      filenameLinker: '-T',
-      filenameNum: 2,
-      tkNote: 'TK Note 2',
-      shtNote: 'Shot Note 2',
-      scnNote: 'Scene Note 2',
-      okTk: TkStatus.bad,
-      okSht: ShtStatus.nice,
-    ),
-    SlateLogItem(
-      scn: 'Scene 2',
-      sht: 'Shot 2',
-      tk: 3,
-      filenamePrefix: '230522',
-      filenameLinker: '-T',
-      filenameNum: 3,
-      tkNote: 'TK Note 3',
-      shtNote: 'Shot Note 3',
-      scnNote: 'Scene Note 3',
-      okTk: TkStatus.bad,
-      okSht: ShtStatus.nice,
-    ),
-    SlateLogItem(
-      scn: 'Scene 2',
-      sht: 'Shot 2',
-      tk: 4,
-      filenamePrefix: '230522',
-      filenameLinker: '-T',
-      filenameNum: 4,
-      tkNote: 'TK Note 4',
-      shtNote: 'Shot Note 4',
-      scnNote: 'Scene Note 4',
-      okTk: TkStatus.bad,
-      okSht: ShtStatus.nice,
-    ),
-    SlateLogItem(
-      scn: 'Scene 2',
-      sht: 'Shot 1',
-      tk: 3,
-      filenamePrefix: 'Prefix 3',
-      filenameLinker: 'Linker 3',
-      filenameNum: 3,
-      tkNote: 'TK Note 3',
-      shtNote: 'Shot Note 3',
-      scnNote: 'Scene Note 3',
-      okTk: TkStatus.notChecked,
-      okSht: ShtStatus.ok,
-    ),
-  ];
 
   @override
   Widget build(BuildContext context) {

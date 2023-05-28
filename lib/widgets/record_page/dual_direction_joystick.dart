@@ -28,9 +28,6 @@ class DualDirectionJoystick extends StatefulWidget {
   /// The button widget used on the moving element of the slider. Defaults Icons.unfold_more,
   final Widget sliderButtonContent;
 
-  /// The shadow below the slider. Defaults to BoxShadow(color: Colors.black38, offset: Offset(0, 2),blurRadius: 2,spreadRadius: 0,).
-  final BoxShadow? shadow;
-
   /// The text showed below the foreground. Used to specify the functionality to the user. Defaults to "Slide to confirm".
   final String text;
 
@@ -58,8 +55,7 @@ class DualDirectionJoystick extends StatefulWidget {
   /// Stick the slider to the end
   final bool stickToEnd;
   
-  bool _isVisible = false;
-
+  var isOffstage = false;
 
   DualDirectionJoystick({
     Key? key,
@@ -69,7 +65,6 @@ class DualDirectionJoystick extends StatefulWidget {
     this.backgroundColorEnd,
     this.foregroundColor = Colors.blueAccent,
     this.iconColor = Colors.white,
-    this.shadow,
     this.sliderButtonContent = const Icon(
       Icons.unfold_more,
       color: Colors.white,
@@ -139,8 +134,6 @@ class DualDirectionJoystickState extends State<DualDirectionJoystick> {
   Color calculateBackground() {
     if (widget.backgroundColorEnd != null) {
       double percent;
-
-      // calculates the percentage of the position of the slider
       if (_position > widget.slideLength) {
         percent = 1.0;
       } else if (_position / (widget.slideLength) > 0) {
@@ -148,41 +141,27 @@ class DualDirectionJoystickState extends State<DualDirectionJoystick> {
       } else {
         percent = 0.0;
       }
-
       int red = widget.backgroundColorEnd!.red;
       int green = widget.backgroundColorEnd!.green;
       int blue = widget.backgroundColorEnd!.blue;
-
-      return Color.alphaBlend(
-          Color.fromRGBO(red, green, blue, percent), widget.backgroundColor);
+      if (_position == widget.slideLength / 2) {
+        return Colors.transparent;
+      } else if (_position > widget.slideLength) {
+        return Color.fromRGBO(red, green, blue, 1.0);
+      } else if (_position == widget.slideLength / 2) {
+        return widget.backgroundColor;
+      } else {
+        return Color.alphaBlend(
+            Color.fromRGBO(red, green, blue, percent), widget.backgroundColor);
+      }
     } else {
       return widget.backgroundColor;
     }
   }
 
+
   @override
   Widget build(BuildContext context) {
-    BoxShadow shadow;
-    if (widget.shadow == null) {
-      shadow = BoxShadow(
-        color: Colors.black38,
-        offset: Offset(0, 2),
-        blurRadius: 2,
-        spreadRadius: 0,
-      );
-    } else {
-      shadow = widget.shadow!;
-    }
-
-    TextStyle style;
-    if (widget.textStyle == null) {
-      style = TextStyle(
-        color: Colors.black26,
-        fontWeight: FontWeight.bold,
-      );
-    } else {
-      style = widget.textStyle!;
-    }
 
     return AnimatedContainer(
       duration: Duration(milliseconds: _duration),
@@ -196,85 +175,95 @@ class DualDirectionJoystickState extends State<DualDirectionJoystick> {
         color: widget.backgroundColorEnd != null
             ? this.calculateBackground()
             : widget.backgroundColor,
-        boxShadow: <BoxShadow>[shadow],
+        // boxShadow: <BoxShadow>[shadow],
       ),
       child: Stack(
         children: <Widget>[
-          Positioned(
-            left: widget.height / 2,
-            child: AnimatedOpacity(
-              opacity: widget._isVisible? 1.0 : 0.0, 
-              duration: Duration(milliseconds: _duration), 
-              child: AnimatedContainer(
-                height: widget.height - 10,
-                width: getPosition(),
-                duration: Duration(milliseconds: _duration),
-                curve: Curves.ease,
-                decoration: BoxDecoration(
-                  borderRadius: widget.backgroundShape ??
-                      BorderRadius.all(Radius.circular(widget.height)),
-                  color: widget.backgroundColorEnd != null
-                      ? this.calculateBackground()
-                      : widget.backgroundColor,
-                ),
-              ),
-            ),
-          ),
-          Center(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Icon(
-                  Icons.arrow_right,
-                  size: 48,
-                  color: Colors.green[300],
-                ),
-                SizedBox(
-                  height: 10,
-                ),
-                Icon(
-                  Icons.arrow_left,
-                  size: 48,
-                  color: Colors.red[300],
-                ),
-              ],
-            ),
-          ),
-          AnimatedPositioned(
-            duration: Duration(milliseconds: _duration),
-            curve: Curves.easeInExpo,
-            left: getPosition(),
-            top: 0,
-            child: GestureDetector(
-              onTapDown: (_) {
-                setState(() =>widget._isVisible = true);
-                widget.onTapDown != null ? widget.onTapDown!() : null;
-              },
-              onTapUp: (_) {
-                setState(() =>widget._isVisible = false);
-                widget.onTapUp != null ? widget.onTapUp!() : null;
-              },
-              onPanUpdate: (details) {
-                updatePosition(details);
-              },
-              onPanEnd: (details) {
-                if (widget.onTapUp != null) widget.onTapUp!();
-                sliderReleased(details);
-              },
-              child: Container(
-                height: widget.height - 10,
-                width: widget.height - 10,
-                decoration: BoxDecoration(
-                  borderRadius: widget.foregroundShape ??
-                      BorderRadius.all(Radius.circular(widget.height / 2)),
-                  color: widget.foregroundColor,
-                ),
-                child: widget.sliderButtonContent,
-              ),
-            ),
-          ),
+          Offstage(
+            offstage: widget.isOffstage,
+            child: slideBackground()),
+          confirmIcons(),
+          sliderBall(),
         ],
       ),
     );
+  }
+
+  AnimatedPositioned sliderBall() {
+    return AnimatedPositioned(
+          duration: Duration(milliseconds: _duration),
+          curve: Curves.easeInExpo,
+          left: getPosition(),
+          top: 0,
+          child: GestureDetector(
+            onTapDown: (_) {
+              widget.isOffstage = true;
+              widget.onTapDown != null ? widget.onTapDown!() : null;
+            },
+            onTapUp: (_) {
+              widget.isOffstage = false;
+              widget.onTapUp != null ? widget.onTapUp!() : null;
+            },
+            onPanUpdate: (details) {
+              updatePosition(details);
+            },
+            onPanEnd: (details) {
+              if (widget.onTapUp != null) widget.onTapUp!();
+              sliderReleased(details);
+            },
+            child: Container(
+              height: widget.height - 10,
+              width: widget.height - 10,
+              decoration: BoxDecoration(
+                borderRadius: widget.foregroundShape ??
+                    BorderRadius.all(Radius.circular(widget.height / 2)),
+                color: widget.foregroundColor,
+              ),
+              child: widget.sliderButtonContent,
+            ),
+          ),
+        );
+  }
+
+  Center confirmIcons() {
+    return Center(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Icon(
+                Icons.arrow_right,
+                size: 48,
+                color: Colors.green[300],
+              ),
+              SizedBox(
+                height: 10,
+              ),
+              Icon(
+                Icons.arrow_left,
+                size: 48,
+                color: Colors.red[300],
+              ),
+            ],
+          ),
+        );
+  }
+
+  Positioned slideBackground() {
+    return Positioned(
+          left: widget.height / 2,
+          child: AnimatedContainer(
+            height: widget.height - 10,
+            width: getPosition(),
+            duration: Duration(milliseconds: _duration),
+            curve: Curves.ease,
+            decoration: BoxDecoration(
+              borderRadius: widget.backgroundShape ??
+                  BorderRadius.all(Radius.circular(widget.height)),
+              color: widget.backgroundColorEnd != null
+                  ? this.calculateBackground()
+                  : widget.backgroundColor,
+            ),
+          ),
+        );
   }
 }
