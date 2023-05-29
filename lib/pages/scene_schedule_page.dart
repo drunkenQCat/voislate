@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
-import 'package:voislate/models/slate_status_notifier.dart';
+import 'package:voislate/providers/slate_status_notifier.dart';
 
 import '../models/slate_schedule.dart';
 import '../../widgets/scene_schedule_page/note_editor.dart';
@@ -173,7 +173,7 @@ class _SceneSchedulePageState extends State<SceneSchedulePage>
                     onTap: () {
                       setState(() {
                         selectedIndex = index;
-                        slateNotifier.setIndex(scene: index);
+                        slateNotifier.setIndex(scene: index, take: 0);
                       });
                     },
                   ),

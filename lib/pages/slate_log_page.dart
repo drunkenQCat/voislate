@@ -1,29 +1,47 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
-import '../models/slate_schedule.dart';
+import 'package:voislate/models/slate_schedule.dart';
 import '../models/slate_log_item.dart';
-import '../data/dummy_data.dart';
-import '../models/slate_log_notifier.dart';
+import '../providers/slate_log_notifier.dart';
+import '../providers/slate_status_notifier.dart';
 
 /* 
 TODO：
-1. 与record页的数据绑定，最好能自动滚动到selected
+1x 与record页的数据绑定，最好能自动滚动到selected
+2. 日期的TabView
 */
+// ignore: must_be_immutable
 class SlateLog extends StatefulWidget {
-  const SlateLog({super.key});
+  var controller = ScrollController(
+    initialScrollOffset: 0.0,
+    keepScrollOffset: false,
+  );
+  SlateLog({super.key});
 
   @override
   _SlateLogState createState() => _SlateLogState();
 }
 
 class _SlateLogState extends State<SlateLog> {
-
   @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    WidgetsBinding.instance.endOfFrame.then((_) {
+      widget.controller.jumpTo(widget.controller.position.maxScrollExtent);
+    });
+  }
+
   Widget build(BuildContext context) {
-    return Consumer<SlateLogNotifier>(
-      builder: (context, slateLogs, child) {
+    return Consumer2<SlateLogNotifier, SlateStatusNotifier>(
+      builder: (context, slateLogs, slateStatus, child) {
         Map<String, Map<String, List<SlateLogItem>>> sortedItems = {};
+        SceneSchedule currentSceneData = Hive.box('scenes_box')
+            .getAt(slateStatus.selectedSceneIndex) as SceneSchedule;
+        var currentScn = currentSceneData.info.name;
+        var currentShot = currentSceneData[slateStatus.selectedShotIndex].name;
 
         for (SlateLogItem item in slateLogs.logToday) {
           if (!sortedItems.containsKey(item.scn)) {
@@ -35,24 +53,24 @@ class _SlateLogState extends State<SlateLog> {
           sortedItems[item.scn]![item.sht]!.add(item);
         }
 
-        return 
-        ListView.builder(
+        return ListView.builder(
+          controller: widget.controller,
           itemCount: sortedItems.length,
           itemBuilder: (BuildContext context, int index) {
             String scn = sortedItems.keys.elementAt(index);
             Map<String, List<SlateLogItem>> shtItems = sortedItems[scn]!;
-      
+
             return ExpansionTile(
               backgroundColor: Colors.grey,
-              initiallyExpanded: true,
+              initiallyExpanded: (scn == currentScn),
               title: Center(child: Text(scn)),
               subtitle: Center(child: Text('场')),
               children: shtItems.keys.map((sht) {
                 List<SlateLogItem> items = shtItems[sht]!;
-      
+
                 return ExpansionTile(
                   backgroundColor: Colors.grey[200],
-                  initiallyExpanded: true,
+                  initiallyExpanded: (sht == currentShot),
                   title: Text(sht),
                   subtitle: Text('镜'),
                   children: items.map((item) {
@@ -99,7 +117,6 @@ class _SlateLogState extends State<SlateLog> {
           },
         );
       },
-
     );
   }
 

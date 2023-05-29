@@ -34,7 +34,12 @@ class RecordFileNum {
   }
 
   String fullName() {
-    return '$prefix$devider$_number.wav';
+    return '$prefix$devider$_number';
+  }
+
+  String prevName() {
+    if (_number == 1) return '';
+    return '$prefix$devider${_number - 1}';
   }
 
   RecordFileNum({

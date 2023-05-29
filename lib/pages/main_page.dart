@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../models/slate_log_notifier.dart';
-import 'scene_schedule_page.dart';
-import 'record_page.dart';
-import 'slate_log_page.dart';
-import 'settings_configue_page.dart';
-import '../models/slate_status_notifier.dart';
+import 'package:voislate/pages/slate_log_tabs.dart';
+import 'package:voislate/providers/slate_log_notifier.dart';
+import 'package:voislate/pages/scene_schedule_page.dart';
+import 'package:voislate/pages/record_page.dart';
+import 'package:voislate/pages/settings_configue_page.dart';
+import 'package:voislate/providers/slate_status_notifier.dart';
 
 class VoiSlate extends StatelessWidget {
   const VoiSlate({super.key});
@@ -52,14 +52,15 @@ class _MyHomePageState extends State<MyHomePage>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('VoiSlate'),
+        title: const Text('VoiSlate'),
         actions: [
           IconButton(
-            icon: Icon(Icons.settings),
+            icon: const Icon(Icons.settings),
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => SettingsConfiguePage()),
+                MaterialPageRoute(
+                    builder: (context) => const SettingsConfiguePage()),
               );
             },
           ),
@@ -93,7 +94,7 @@ class _MyHomePageState extends State<MyHomePage>
         children: [
           SceneSchedulePage(),
           const SlateRecord(),
-          SlateLog(),
+          const SlateLogTabs(),
         ],
       ),
     );
