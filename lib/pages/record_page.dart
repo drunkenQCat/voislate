@@ -3,16 +3,18 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_vibrate/flutter_vibrate.dart';
-// import 'package:android_physical_buttons/android_physical_buttons.dart';
-import 'package:flutter_android_volume_keydown/flutter_android_volume_keydown.dart';
-import 'package:voislate/models/slate_log_notifier.dart';
+import 'package:voislate/models/slate_log_item.dart';
+//TODO:RecoverAndroid
+// when just build for web, disable this package
+// import 'package:flutter_vibrate/flutter_vibrate.dart';
+// import 'package:flutter_android_volume_keydown/flutter_android_volume_keydown.dart';
+import 'package:voislate/providers/slate_log_notifier.dart';
 import 'package:voislate/models/slate_schedule.dart';
 
-import '../models/slate_num_notifier.dart';
-import '../models/value_scroll_control.dart';
+import '../providers/slate_num_notifier.dart';
+import '../providers/value_scroll_control.dart';
 import '../models/recorder_file_num.dart';
-import '../models/slate_status_notifier.dart';
+import '../providers/slate_status_notifier.dart';
 
 import '../widgets/record_page/prev_note_editor.dart';
 import '../widgets/record_page/slate_picker.dart';
@@ -31,12 +33,12 @@ import '../widgets/record_page/dual_direction_joystick.dart';
 6x 跑条按钮
 7x 想办法让文件名可以长按修改
 ~~8. "准备录音"不要那么高~~
-9. "本场内容"注意schedule的数据结构
+9x "本场内容"注意schedule的数据结构
 10. (备选方案)可以考虑加入急行军模式
 11x *记得修改按键布局保证交互操作可以正常使用.某种意义上说，就是要足够的大
 12x 增加振动交互
 13x *修一下减了之后再加的问题
-14. 把加减号改成方形的
+14x 把加减号改成方形的
 15. *把currentScn改成prevScene
 16. 保存配置的功能
 */
@@ -51,10 +53,13 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
   // Some variables don't need to be in the state
 
   late List<SceneSchedule> totalScenes;
-  bool isLinked = true;
+  late bool isLinked;
   final int _counterInit = 1;
-  List<MapEntry<String, String>> notes = [];
-  List<MapEntry<String, String>> oldNotes = [];
+  // about the logs
+  final Box<SlateLogItem> logBox = Hive.box(RecordFileNum.today);
+  var shotNoteController = TextEditingController();
+  var descController = TextEditingController();
+  // about the slate picker
   var titles = ['Scene', 'Shot', 'Take'];
   final sceneCol = SlateColumnOne();
   final shotCol = SlateColumnTwo();
@@ -63,73 +68,66 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
   // controller for volume key
   late ScrollValueController<SlateColumnThree> scrl3;
   // final TextEditingController descEditingController = TextEditingController();
-  late String currentFileNum;
-  String previousFileNum = '';
-  final inputNotice = 'Waiting for input...';
-  late Future<int> col3InitIdx;
-  bool _isTouchable = false;
+  bool _isAbsorbing = false;
 
   // 手动跑一条录音
   // drawback the last note, and decrease the file number,but not the take number
   // vibration feedback related
   bool _canVibrate = true;
 
-  var shotNoteController = TextEditingController();
+//TODO:RecoverAndroid
+  // Future<void> _initVibrate() async {
+  //   // init the vibration
+  //   bool canVibrate = await Vibrate.canVibrate;
+  //   setState(() {
+  //     _canVibrate = canVibrate;
+  //     _canVibrate
+  //         ? debugPrint('This device can vibrate')
+  //         : debugPrint('This device cannot vibrate');
+  //   });
+  // }
 
-  var descController = TextEditingController();
+  // StreamSubscription<HardwareButton>? subscription;
+  // void startListening() {
+  //   subscription = FlutterAndroidVolumeKeydown.stream.listen((event) {
+  //     if (event == HardwareButton.volume_down) {
+  //       // debugPrint("Volume down received");
+  //       scrl3.valueDec(isLinked);
+  //     } else if (event == HardwareButton.volume_up) {
+  //       // debugPrint("Volume up received");
+  //       // drawbackItem();
+  //       scrl3.valueInc(isLinked);
+  //     }
+  //   });
+  // }
 
-  late SlateLogNotifier logProvider;
-
-  Future<void> _initVibrate() async {
-    // init the vibration
-    bool canVibrate = await Vibrate.canVibrate;
-    setState(() {
-      _canVibrate = canVibrate;
-      _canVibrate
-          ? debugPrint('This device can vibrate')
-          : debugPrint('This device cannot vibrate');
-    });
-  }
-
-  StreamSubscription<HardwareButton>? subscription;
-  void startListening() {
-    subscription = FlutterAndroidVolumeKeydown.stream.listen((event) {
-      if (event == HardwareButton.volume_down) {
-        // debugPrint("Volume down received");
-        scrl3.valueDec(isLinked);
-      } else if (event == HardwareButton.volume_up) {
-        // debugPrint("Volume up received");
-        // drawbackItem();
-        scrl3.valueInc(isLinked);
-      }
-    });
-  }
-
-  void stopListening() {
-    subscription?.cancel();
-  }
+  // void stopListening() {
+  //   subscription?.cancel();
+  // }
 
   @override
   void initState() {
     WidgetsBinding.instance.addObserver(this);
     super.initState();
-    _initVibrate();
+//TODO:RecoverAndroid
+    // _initVibrate();
     // AndroidPhysicalButtons.listen((key) {
     //   debugPrint(key.toString());
     //   });
-    startListening();
+//TODO:RecoverAndroid
+    // startListening();
     var box = Hive.box('scenes_box');
     totalScenes = box.values.toList().cast();
+
     var initValueProvider =
         Provider.of<SlateStatusNotifier>(context, listen: false);
-    logProvider =
-        Provider.of<SlateLogNotifier>(context, listen: false);
     var sceneList = totalScenes.map((e) => e.info.name.toString()).toList();
     var shotList = totalScenes[initValueProvider.selectedSceneIndex]
         .data
         .map((e) => e.name.toString())
         .toList();
     var takeList = List.generate(200, (index) => (index + 1).toString());
+    isLinked = initValueProvider.isLinked;
     sceneCol.init(0, sceneList);
     shotCol.init(0, shotList);
     takeCol.init(0, takeList);
@@ -149,7 +147,8 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
-    stopListening();
+//TODO:RecoverAndroid
+    // stopListening();
   }
 
   @override
@@ -158,7 +157,6 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
     var screenHeight = MediaQuery.of(context).size.height;
     var horizonPadding = 30.0;
     // everytime setState, the build method will be called again
-    currentFileNum = num.fullName();
 
     var prevTakeEditor = PrevTakeEditor(
       num: num,
@@ -172,60 +170,54 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
     );
 
     return Consumer2<SlateStatusNotifier, SlateLogNotifier>(
-        builder: (context, slateNotifier, logNotifier ,child) {
-
+        builder: (context, slateNotifier, logNotifier, child) {
       void drawBackItem() {
         setState(() {
           num.decrement();
+          try {
+            logBox.deleteAt(logBox.length - 1);
+            // ignore: empty_catches
+          } catch (e) {}
           // remove the last note
-          if (notes.isNotEmpty) {
-            notes = oldNotes;
-            if (oldNotes.isNotEmpty) {
-              oldNotes.removeLast();
-              oldNotes.last = MapEntry(oldNotes.last.key, inputNotice);
-            }
-            oldNotes = (oldNotes.length == 1) ? notes = [] : oldNotes;
-            previousFileNum = oldNotes.isEmpty ? '' : oldNotes.last.key;
-          }
-          prevTakeEditor.note = '';
-          if (_canVibrate) {
-            Vibrate.feedback(FeedbackType.warning);
-          }
+//TODO:RecoverAndroid
+          // if (_canVibrate) {
+          //   Vibrate.feedback(FeedbackType.warning);
+          // }
         });
       }
 
-      void addItem(String currentFileNum, [bool isFake = false]) {
+      void addItem([bool isFake = false]) {
+        if (isFake) prevTakeEditor.note = 'fake take';
+        if (num.prevName().isNotEmpty) {
+          var newLogItem = SlateLogItem(
+            scn: sceneCol.selected,
+            sht: shotCol.selected,
+            tk: int.parse(takeCol.selected),
+            filenamePrefix: num.prefix,
+            filenameLinker: num.devider,
+            filenameNum: num.number,
+            tkNote: prevTakeEditor.note,
+            shtNote: prevShotNote.shotNote,
+            scnNote: totalScenes[sceneCol.selectedIndex].info.note.append,
+            okTk: TkStatus.notChecked,
+            okSht: ShtStatus.notChecked,
+          );
+          logBox.put(num.prevName(), newLogItem);
+        }
         setState(() {
-          oldNotes = notes;
-          if (notes.isEmpty) {
-            notes.add(const MapEntry("File Name", "Note"));
-            notes.add(MapEntry(num.fullName(), inputNotice));
-          } else {
-            prevTakeEditor.note = prevTakeEditor.note.isEmpty
-                ? 'note ${num.number - 1}'
-                : prevTakeEditor.note;
-            prevTakeEditor.note =
-                isFake ? 'fake $prevTakeEditor.note' : prevTakeEditor.note;
-            notes.last = MapEntry(
-              previousFileNum, // File Name
-              prevTakeEditor.note, //Note
-            );
-            notes.add(MapEntry(num.fullName(), inputNotice));
-          }
-          previousFileNum = currentFileNum;
           num.increment();
-          prevTakeEditor.note = '';
-          if (_canVibrate) {
-            isFake
-                ? Vibrate.feedback(FeedbackType.error)
-                : Vibrate.feedback(FeedbackType.heavy);
-          }
+//TODO:RecoverAndroid
+          // if (_canVibrate) {
+          //   isFake
+          //       ? Vibrate.feedback(FeedbackType.error)
+          //       : Vibrate.feedback(FeedbackType.heavy);
+          // }
         });
       }
 
       var col3IncBtn = ElevatedButton(
           onPressed: () {
-            addItem(currentFileNum);
+            addItem();
             prevTakeEditor.descEditingController.clear();
             takeCol.scrollToNext(isLinked);
           },
@@ -245,11 +237,10 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
       scrl3 = ScrollValueController<SlateColumnThree>(
         context: context,
         textCon: prevTakeEditor.descEditingController,
-        inc: () => addItem(currentFileNum),
+        inc: () => addItem(),
         dec: () => drawBackItem(),
         col: takeCol,
       );
-
 
       void pickerNumSync() {
         setState(() {
@@ -272,11 +263,18 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
             take: takeCol.selectedIndex,
             count: num.number,
           );
-          currentFileNum = num.fullName();
-          if (notes.isNotEmpty) {
-            notes.last = MapEntry(previousFileNum, inputNotice);
-          }
         });
+      }
+
+      List<MapEntry<String, String>> exportQuickNotes() {
+        var logs = logBox.values.toList().cast<SlateLogItem>();
+        var notes = logs.map((log) {
+          var fileName = log.filenamePrefix +
+              log.filenameLinker +
+              log.filenameNum.toString();
+          return MapEntry(fileName, log.tkNote);
+        }).toList();
+        return notes;
       }
 
       var nextTakeMonitor = Stack(
@@ -333,6 +331,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
               onPressed: () {
                 setState(() {
                   isLinked = !isLinked;
+                  slateNotifier.setLink(isLinked);
                 });
               },
               icon: Icon(isLinked ? Icons.link : Icons.link_off),
@@ -354,18 +353,18 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: <Widget>[
                     AbsorbPointer(
-                        absorbing: _isTouchable, child: nextTakeMonitor),
+                        absorbing: _isAbsorbing, child: nextTakeMonitor),
                     Stack(
                       children: [
                         Row(
                           children: [
                             Expanded(
                                 child: AbsorbPointer(
-                                    absorbing: _isTouchable, child: col3IncBtn))
+                                    absorbing: _isAbsorbing, child: col3IncBtn))
                           ],
                         ),
                         AbsorbPointer(
-                          absorbing: _isTouchable,
+                          absorbing: _isAbsorbing,
                           child: Container(
                             decoration: const BoxDecoration(
                               shape: BoxShape.circle,
@@ -373,7 +372,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
                             ),
                             child: IconButton(
                               onPressed: () {
-                                addItem(currentFileNum, true);
+                                addItem(true);
                               },
                               icon: Icon(Icons.redo),
                             ),
@@ -385,7 +384,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
                       alignment: AlignmentDirectional.center,
                       children: [
                         AbsorbPointer(
-                          absorbing: _isTouchable,
+                          absorbing: _isAbsorbing,
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -447,13 +446,13 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
                       children: [
                         Expanded(
                             child: AbsorbPointer(
-                                absorbing: _isTouchable, child: col3DecBtn)),
+                                absorbing: _isAbsorbing, child: col3DecBtn)),
                       ],
                     ),
                     SwitchListTile(
-                      value: !_isTouchable,
+                      value: !_isAbsorbing,
                       onChanged: ((value) =>
-                          setState(() => _isTouchable = !value)),
+                          setState(() => _isAbsorbing = !value)),
                       title: Text('触控'),
                     ),
                   ],
@@ -473,7 +472,10 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
                 )),
             Positioned(
               top: MediaQuery.of(context).size.height * 0.3,
-              child: DisplayNotesButton(notes: notes),
+              child: DisplayNotesButton(
+                notes: exportQuickNotes(),
+                num: num,
+              ),
             ),
           ],
         ),

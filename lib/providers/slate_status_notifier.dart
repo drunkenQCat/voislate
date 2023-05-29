@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
-import 'recorder_file_num.dart';
+import '../models/recorder_file_num.dart';
 
 class SlateStatusNotifier extends ChangeNotifier {
   int _selectedSceneIndex =

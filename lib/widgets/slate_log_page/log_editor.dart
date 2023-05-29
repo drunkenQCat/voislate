@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import '../../models/slate_schedule.dart';
 
-class NoteEditor extends StatefulWidget {
+class LogEditor extends StatefulWidget {
   final BuildContext context;
   final List<SceneSchedule> scenes;
   final int index;
   final int? selectedIndex;
   final int? shotIndex;
 
-  const NoteEditor({
+  const LogEditor({
     super.key,
     required this.context,
     required this.scenes,
@@ -23,7 +23,7 @@ class NoteEditor extends StatefulWidget {
   _NoteEditorState createState() => _NoteEditorState();
 }
 
-class _NoteEditorState extends State<NoteEditor> {
+class _NoteEditorState extends State<LogEditor> {
   late bool isScene;
   late Note note;
   late String editedKey;
@@ -505,5 +505,3 @@ class _NoteEditorState extends State<NoteEditor> {
     return chipList;
   }
 }
-
-

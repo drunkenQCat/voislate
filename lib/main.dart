@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:voislate/models/slate_log_item.dart';
 
 import 'pages/main_page.dart';
 import 'models/slate_schedule.dart';
@@ -30,9 +31,9 @@ void main() async {
     Hive.box('dates').putAt(lastDayIndex, today);
   }
 
-  var dates = Hive.box('dates').values as List<String>;
+  var dates = Hive.box('dates').values.map((e) => e as String).toList();
   for (var date in dates) {
-    await Hive.openBox(date);
+    await Hive.openBox<SlateLogItem>(date);
   }
   // the slate log of today 
   runApp(const VoiSlate());
