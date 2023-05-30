@@ -10,7 +10,8 @@ import '../providers/slate_status_notifier.dart';
 /* 
 TODO：
 1x 与record页的数据绑定，最好能自动滚动到selected
-2. 日期的TabView
+2x 日期的TabView
+3. 解决不能自动刷新的bug
 */
 // ignore: must_be_immutable
 class SlateLog extends StatefulWidget {

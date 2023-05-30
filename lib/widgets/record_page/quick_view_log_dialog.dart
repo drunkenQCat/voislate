@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:voislate/models/recorder_file_num.dart';
 
-class DisplayNotesButton extends StatefulWidget {
+class DisplayNotesButton extends StatelessWidget {
   final List<MapEntry<String, String>> notes;
   final RecordFileNum num;
 
@@ -12,66 +12,94 @@ class DisplayNotesButton extends StatefulWidget {
   });
 
   @override
-  State<DisplayNotesButton> createState() => _DisplayNotesButtonState();
+  Widget build(BuildContext context) {
+    return FloatingActionButton(
+      heroTag: 'display_notes',
+      onPressed: () {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('场记速览'),
+              content: LogQuickViewer(notes: notes, num: num),
+            );
+          },
+        );
+      },
+      tooltip: '显示场记速览',
+      child: const Icon(Icons.notes),
+    );
+  }
 }
 
-class _DisplayNotesButtonState extends State<DisplayNotesButton> {
+class LogQuickViewer extends StatefulWidget {
+  final List<MapEntry<String, String>> notes;
+  final RecordFileNum num;
+
+  const LogQuickViewer({
+    super.key,
+    required this.notes,
+    required this.num,
+  });
+
+  @override
+  State<LogQuickViewer> createState() => _LogQuickViewerState();
+}
+
+class _LogQuickViewerState extends State<LogQuickViewer> {
   final ScrollController controller = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance!.endOfFrame.then((_) {
-      controller.jumpTo(controller.position.maxScrollExtent);
+    WidgetsBinding.instance.endOfFrame.then((_) {
+      //   controller.jumpTo(controller.position.maxScrollExtent);
     });
   }
 
-  void quickViewLog(
-      BuildContext context, List<MapEntry<String, String>> notes) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        var screenWidth = MediaQuery.of(context).size.width;
-        var screenHeight = MediaQuery.of(context).size.height;
-        return AlertDialog(
-          title: const Text('场记速览'),
-          content: SizedBox(
-            width: screenWidth * 0.618,
-            height: screenHeight * 0.7,
-            child: Column(
-              children: [
-                Container(
-                  color: Colors.purple[100],
-                  child: itemRow(const MapEntry('File Name', 'Note'), -1),
-                ),
-                (widget.num.number == 1 || notes.isEmpty)
-                    ? const Center(child: Text('尚未开始记录'))
-                    : ListView.builder(
-                        itemCount: notes.length,
-                        controller: controller,
-                        itemBuilder: (BuildContext context, int index) {
-                          return Container(
-                            color: index % 2 == 0
-                                ? Colors.white
-                                : Colors.grey[200],
-                            child: itemRow(notes[index], index),
-                          );
-                        },
-                      ),
-                itemRow(
-                    MapEntry(widget.num.fullName(), '等待输入...'), notes.length)
-              ],
-            ),
-          ),
-        );
-      },
+  @override
+  Widget build(BuildContext context) {
+    var screenWidth = MediaQuery.of(context).size.width;
+    var screenHeight = MediaQuery.of(context).size.height;
+    var listHead = Container(
+      color: Colors.purple[100],
+      child: itemRow(const MapEntry('File Name', 'Note'), -1),
+    );
+    List<Container> logs = widget.notes.asMap().entries.map((notePair) {
+      var index = notePair.key;
+      var note = notePair.value;
+      return Container(
+        color: index % 2 == 0 ? Colors.white : Colors.grey[200],
+        child: itemRow(note, index),
+      );
+    }).toList();
+    var promptIndicator = Container(
+      color: Colors.blue[100],
+      child: itemRow(
+          MapEntry(widget.num.prevName(), '等待输入...'), widget.notes.length),
+    );
+    logs.add(promptIndicator);
+    logs = [listHead] + logs;
+
+    return SizedBox(
+      width: screenWidth * 0.618,
+      height: screenHeight * 0.7,
+      child: (widget.num.number == 1 || widget.notes.isEmpty)
+          ? const Center(child: Text('尚未开始记录'))
+          : SingleChildScrollView(
+              scrollDirection: Axis.vertical,
+              controller: controller,
+              child: Column(
+                children: logs,
+              )),
     );
   }
 
   Row itemRow(MapEntry<String, String> note, int index) {
     return Row(
+      mainAxisSize: MainAxisSize.max,
       children: [
-        Expanded(
+        Flexible(
           child: Padding(
             padding: const EdgeInsets.all(8.0),
             child: Text(
@@ -82,7 +110,7 @@ class _DisplayNotesButtonState extends State<DisplayNotesButton> {
             ),
           ),
         ),
-        Expanded(
+        Flexible(
           child: Padding(
             padding: const EdgeInsets.all(8.0),
             child: Text(
@@ -94,17 +122,6 @@ class _DisplayNotesButtonState extends State<DisplayNotesButton> {
           ),
         ),
       ],
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FloatingActionButton(
-      onPressed: () {
-        quickViewLog(context, widget.notes);
-      },
-      tooltip: 'Quick View Log',
-      child: const Icon(Icons.notes),
     );
   }
 }

@@ -6,8 +6,8 @@ import 'package:provider/provider.dart';
 import 'package:voislate/models/slate_log_item.dart';
 //TODO:RecoverAndroid
 // when just build for web, disable this package
-// import 'package:flutter_vibrate/flutter_vibrate.dart';
-// import 'package:flutter_android_volume_keydown/flutter_android_volume_keydown.dart';
+import 'package:flutter_vibrate/flutter_vibrate.dart';
+import 'package:flutter_android_volume_keydown/flutter_android_volume_keydown.dart';
 import 'package:voislate/providers/slate_log_notifier.dart';
 import 'package:voislate/models/slate_schedule.dart';
 
@@ -41,6 +41,7 @@ import '../widgets/record_page/dual_direction_joystick.dart';
 14x 把加减号改成方形的
 15. *把currentScn改成prevScene
 16. 保存配置的功能
+17. *****场景次与文件名的逻辑
 */
 class SlateRecord extends StatefulWidget {
   const SlateRecord({super.key});
@@ -56,7 +57,6 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
   late bool isLinked;
   final int _counterInit = 1;
   // about the logs
-  final Box<SlateLogItem> logBox = Hive.box(RecordFileNum.today);
   var shotNoteController = TextEditingController();
   var descController = TextEditingController();
   // about the slate picker
@@ -76,46 +76,46 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
   bool _canVibrate = true;
 
 //TODO:RecoverAndroid
-  // Future<void> _initVibrate() async {
-  //   // init the vibration
-  //   bool canVibrate = await Vibrate.canVibrate;
-  //   setState(() {
-  //     _canVibrate = canVibrate;
-  //     _canVibrate
-  //         ? debugPrint('This device can vibrate')
-  //         : debugPrint('This device cannot vibrate');
-  //   });
-  // }
+  Future<void> _initVibrate() async {
+    // init the vibration
+    bool canVibrate = await Vibrate.canVibrate;
+    setState(() {
+      _canVibrate = canVibrate;
+      _canVibrate
+          ? debugPrint('This device can vibrate')
+          : debugPrint('This device cannot vibrate');
+    });
+  }
 
-  // StreamSubscription<HardwareButton>? subscription;
-  // void startListening() {
-  //   subscription = FlutterAndroidVolumeKeydown.stream.listen((event) {
-  //     if (event == HardwareButton.volume_down) {
-  //       // debugPrint("Volume down received");
-  //       scrl3.valueDec(isLinked);
-  //     } else if (event == HardwareButton.volume_up) {
-  //       // debugPrint("Volume up received");
-  //       // drawbackItem();
-  //       scrl3.valueInc(isLinked);
-  //     }
-  //   });
-  // }
+  StreamSubscription<HardwareButton>? subscription;
+  void startListening() {
+    subscription = FlutterAndroidVolumeKeydown.stream.listen((event) {
+      if (event == HardwareButton.volume_down) {
+        // debugPrint("Volume down received");
+        scrl3.valueDec(isLinked);
+      } else if (event == HardwareButton.volume_up) {
+        // debugPrint("Volume up received");
+        // drawbackItem();
+        scrl3.valueInc(isLinked);
+      }
+    });
+  }
 
-  // void stopListening() {
-  //   subscription?.cancel();
-  // }
+  void stopListening() {
+    subscription?.cancel();
+  }
 
   @override
   void initState() {
     WidgetsBinding.instance.addObserver(this);
     super.initState();
 //TODO:RecoverAndroid
-    // _initVibrate();
+    _initVibrate();
     // AndroidPhysicalButtons.listen((key) {
     //   debugPrint(key.toString());
     //   });
 //TODO:RecoverAndroid
-    // startListening();
+    startListening();
     var box = Hive.box('scenes_box');
     totalScenes = box.values.toList().cast();
 
@@ -148,7 +148,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
 //TODO:RecoverAndroid
-    // stopListening();
+    stopListening();
   }
 
   @override
@@ -175,14 +175,14 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
         setState(() {
           num.decrement();
           try {
-            logBox.deleteAt(logBox.length - 1);
+            logNotifier.removeLast();
             // ignore: empty_catches
           } catch (e) {}
           // remove the last note
 //TODO:RecoverAndroid
-          // if (_canVibrate) {
-          //   Vibrate.feedback(FeedbackType.warning);
-          // }
+          if (_canVibrate) {
+            Vibrate.feedback(FeedbackType.warning);
+          }
         });
       }
 
@@ -195,23 +195,24 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
             tk: int.parse(takeCol.selected),
             filenamePrefix: num.prefix,
             filenameLinker: num.devider,
-            filenameNum: num.number,
-            tkNote: prevTakeEditor.note,
+            filenameNum: num.prevFileNum,
+            tkNote: (prevTakeEditor.note.isEmpty)?
+              'S${ sceneCol.selected } Sh${ shotCol.selected  }T${takeCol.selected}': prevTakeEditor.note,
             shtNote: prevShotNote.shotNote,
             scnNote: totalScenes[sceneCol.selectedIndex].info.note.append,
             okTk: TkStatus.notChecked,
             okSht: ShtStatus.notChecked,
           );
-          logBox.put(num.prevName(), newLogItem);
+          logNotifier.add(num.prevName(), newLogItem);
         }
         setState(() {
           num.increment();
 //TODO:RecoverAndroid
-          // if (_canVibrate) {
-          //   isFake
-          //       ? Vibrate.feedback(FeedbackType.error)
-          //       : Vibrate.feedback(FeedbackType.heavy);
-          // }
+          if (_canVibrate) {
+            isFake
+                ? Vibrate.feedback(FeedbackType.error)
+                : Vibrate.feedback(FeedbackType.heavy);
+          }
         });
       }
 
@@ -267,13 +268,11 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
       }
 
       List<MapEntry<String, String>> exportQuickNotes() {
-        var logs = logBox.values.toList().cast<SlateLogItem>();
+        var logs = logNotifier.logToday;
         var notes = logs.map((log) {
-          var fileName = log.filenamePrefix +
-              log.filenameLinker +
-              log.filenameNum.toString();
-          return MapEntry(fileName, log.tkNote);
+          return MapEntry(log.fileName, log.tkNote);
         }).toList();
+        if(notes.length > 40) return notes.sublist(40);
         return notes;
       }
 
@@ -461,23 +460,16 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
             ),
           ],
         ),
-        floatingActionButton: Stack(
-          alignment: AlignmentDirectional.bottomStart,
-          children: [
-            Positioned(
-                bottom: MediaQuery.of(context).size.height * 0.1,
-                left: -5,
-                child: FloatingOkDial(
+        floatingActionButton: Column(
+          children:[
+            FloatingOkDial(
                   context: context,
-                )),
-            Positioned(
-              top: MediaQuery.of(context).size.height * 0.3,
-              child: DisplayNotesButton(
+                ),
+            DisplayNotesButton(
                 notes: exportQuickNotes(),
                 num: num,
               ),
-            ),
-          ],
+          ]
         ),
       );
     });

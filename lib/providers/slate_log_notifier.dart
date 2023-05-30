@@ -1,5 +1,8 @@
+import 'dart:js';
+
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
+import 'package:provider/provider.dart';
 import 'package:voislate/models/slate_log_item.dart';
 import '../models/recorder_file_num.dart';
 
@@ -14,9 +17,8 @@ class SlateLogNotifier with ChangeNotifier {
     logToday = boxToday.values.map((e) => e).toList();
   }
 
-  void add(SlateLogItem item) {
+  void add(String logKey, SlateLogItem item) {
     logToday.add(item);
-    var logKey = item.filenamePrefix + item.filenameNum.toString();
     boxToday.put(logKey, item);
     notifyListeners();
   }
