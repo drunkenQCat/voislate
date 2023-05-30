@@ -9,6 +9,8 @@ class RecordFileNum {
   int _number = 1;
   int get number => _number;
 
+  int get prevFileNum => _number - 1;
+
   void setValue(int newValue) {
     _number = newValue;
     _valueController.sink.add(_number);

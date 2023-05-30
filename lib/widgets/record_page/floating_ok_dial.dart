@@ -3,7 +3,6 @@ import 'package:simple_speed_dial/simple_speed_dial.dart';
 
 class FloatingOkDial extends StatelessWidget {
   const FloatingOkDial({
-    super.key,
     required this.context,
   });
 
@@ -12,8 +11,7 @@ class FloatingOkDial extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SpeedDial(
-      key: const Key('speedDial'),
-      child: const Text('OK'),
+      key: super.key,
       speedDialChildren: <SpeedDialChild>[
         SpeedDialChild(
           onPressed: () {
@@ -40,6 +38,7 @@ class FloatingOkDial extends StatelessWidget {
           child: const Icon(Icons.gpp_bad),
         ),
       ],
+      child: const Text('OK'),
     );
   }
 }

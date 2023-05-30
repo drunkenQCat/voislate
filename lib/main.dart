@@ -13,6 +13,9 @@ void main() async {
   Hive.registerAdapter(ScheduleItemAdapter());
   Hive.registerAdapter(DataListAdapter());
   Hive.registerAdapter(SceneScheduleAdapter());
+  Hive.registerAdapter(SlateLogItemAdapter());
+  Hive.registerAdapter(ShtStatusAdapter());
+  Hive.registerAdapter(TkStatusAdapter());
 
   await Hive.openBox('scenes_box');
   if (Hive.box('scenes_box').isEmpty) {

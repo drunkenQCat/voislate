@@ -36,6 +36,9 @@ class SlateLogItem {
   String filenameLinker;
   @HiveField(5)
   int filenameNum;
+  String get fileName{
+    return filenamePrefix + filenameLinker + filenameNum.toString();
+  }
   @HiveField(6)
   String tkNote;
   @HiveField(7)

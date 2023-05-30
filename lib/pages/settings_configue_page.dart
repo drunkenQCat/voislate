@@ -1,10 +1,56 @@
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
+import 'package:provider/provider.dart';
+
+import 'package:voislate/providers/slate_log_notifier.dart';
 
 class SettingsConfiguePage extends StatelessWidget {
   const SettingsConfiguePage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    Widget cancelButton = TextButton(
+      child: const Text(
+        "取消",
+        style: TextStyle(color: Colors.red),
+        ),
+      onPressed: () => Navigator.pop(context),
+    );
+
+    Widget continueButton = TextButton(
+      child: const Text(
+        "确认",
+      ),
+      onPressed: () {
+        var logProvider = Provider.of<SlateLogNotifier>(context, listen: false);
+        logProvider.clear();
+        Navigator.pop(context); 
+      },
+    );
+
+    Widget clearAllConfirmButton = TextButton(
+      child: const Text(
+        "确认",
+      ),
+      onPressed: () {
+        var logProvider = Provider.of<SlateLogNotifier>(context, listen: false);
+        logProvider.clear();
+        var dateBox = Hive.box('dates');
+        for (String date in dateBox.values.toList().cast()) {
+          Hive.box(date).clear();
+        }
+        // if dates are more than one, delete all except the last one(today)
+        if (dateBox.length != 1) {
+          for (var i = 0; i < dateBox.length - 1 ; i++) {
+            String date = dateBox.getAt(0);
+            Hive.box(date).deleteFromDisk();
+            dateBox.deleteAt(0);
+          }
+        }
+        Navigator.pop(context); 
+      },
+    );
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('VoiSlate 设置'),
@@ -40,6 +86,44 @@ class SettingsConfiguePage extends StatelessWidget {
             value: true,
             onChanged: (bool value) {},
           ),
+          TextButton(
+              onPressed: () {
+                showDialog(
+                    context: context,
+                    builder: (context) {
+                      return AlertDialog(
+                        title: const Text('清除场记'),
+                        content: const Text('是否确认要清除场记？'),
+                        actions: [
+                          cancelButton,
+                          continueButton,
+                        ],
+                      );
+                    });
+              },
+              child: const Text(
+                '清空今日场记',
+                style: TextStyle(color: Colors.red),
+              )),
+          TextButton(
+              onPressed: () {
+                showDialog(
+                    context: context,
+                    builder: (context) {
+                      return AlertDialog(
+                        title: const Text('清除场记'),
+                        content: const Text('是否确认要清除场记？'),
+                        actions: [
+                          cancelButton,
+                          continueButton,
+                        ],
+                      );
+                    });
+              },
+              child: const Text(
+                '清空所有场记',
+                style: TextStyle(color: Colors.red),
+              ))
         ],
       ),
     );
