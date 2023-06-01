@@ -1,7 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:voislate/data/my_ifly_key.dart';
+import '../../data/dummy_data.dart';
+import 'package:ifly_speech_recognition/ifly_speech_recognition.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 
 // ignore: must_be_immutable
-class DualDirectionJoystick extends StatefulWidget {
+class RecorderJoystick extends StatefulWidget {
   /// Height of the slider. Defaults to 70.
   final double height;
 
@@ -35,13 +42,19 @@ class DualDirectionJoystick extends StatefulWidget {
   final TextStyle? textStyle;
 
   /// The callback when slider is completed. This is the only required field.
-  final VoidCallback onConfirmation;
+  final VoidCallback onRightEdge;
 
-  /// the callback when slider is canceled.
-  final VoidCallback? onCancel;
+  /// the callback when slider is at left edge.
+  final VoidCallback? onLeftEdge;
 
   /// The callback when slider is pressed.
   final VoidCallback? onTapDown;
+
+  /// The textcontroller of the textfield on left side.
+  final TextEditingController? leftTextController;
+
+  /// The textcontroller of the textfield on right side.
+  final TextEditingController? rightTextController;
 
   /// The callback when slider is release.
   final VoidCallback? onTapUp;
@@ -57,7 +70,7 @@ class DualDirectionJoystick extends StatefulWidget {
   
   var isOffstage = false;
 
-  DualDirectionJoystick({
+  RecorderJoystick({
     Key? key,
     this.height = 70,
     this.width = 300,
@@ -72,13 +85,15 @@ class DualDirectionJoystick extends StatefulWidget {
     ),
     this.text = "Slide to confirm",
     this.textStyle,
-    required this.onConfirmation,
-    this.onCancel,
+    required this.onRightEdge,
+    this.onLeftEdge,
     this.onTapDown,
     this.onTapUp,
+    this.leftTextController,
+    this.rightTextController,
     this.foregroundShape,
     this.backgroundShape,
-    this.stickToEnd = false,
+    this.stickToEnd = false, 
   })  : assert(height >= 25 && width >= 120),
         slideLength = width - height,
         initValue = (width - height) / 2,
@@ -86,11 +101,17 @@ class DualDirectionJoystick extends StatefulWidget {
 
   @override
   State<StatefulWidget> createState() {
-    return DualDirectionJoystickState();
+    return RecorderJoystickState();
   }
 }
 
-class DualDirectionJoystickState extends State<DualDirectionJoystick> {
+class RecorderJoystickState extends State<RecorderJoystick> {
+    // The Speech Recoginition Part
+  final SpeechRecognitionService _recognitionService = recognitionService;
+  bool _havePermission = false;
+
+  String? _result;
+
   late double _position = widget.initValue;
   int _duration = 0;
 
@@ -104,6 +125,109 @@ class DualDirectionJoystickState extends State<DualDirectionJoystick> {
     }
   }
 
+  // The permission part
+  Future<bool> _checkPermission() async {
+    final status = await Permission.microphone.status;
+    if (status.isDenied) {
+      var requestStatus = await Permission.microphone.request();
+      return requestStatus.isGranted;
+    } else {
+      return true;
+    }
+  }
+
+  void _initRecorder() async {
+    _havePermission = await _checkPermission();
+
+    if (!_havePermission) {
+      // 授权失败
+      EasyLoading.showToast('请开启麦克风权限');
+      return;
+    }
+
+    // 初始化语音识别服务
+    await _recognitionService.initRecorder();
+
+    // 语音识别回调
+    _recognitionService.onRecordResult().listen((message) {
+      EasyLoading.dismiss();
+      setState(() {
+        _result = message;
+      });
+    }, onError: (err) {
+      EasyLoading.dismiss();
+      debugPrint(err);
+    });
+
+    // 录音停止
+    _recognitionService.onStopRecording().listen((isAutomatic) {
+      if (isAutomatic) {
+        // 录音时间到达最大值60s，自动停止
+      } else {
+        // 主动调用 stopRecord，停止录音
+      }
+    });
+  }
+
+
+
+  @override
+  void initState() {
+    super.initState();
+    _checkPermission();
+    _initRecorder();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: Duration(milliseconds: _duration),
+      curve: Curves.easeInExpo,
+      height: widget.height,
+      width: widget.width,
+      padding: const EdgeInsets.all(5),
+      decoration: BoxDecoration(
+        borderRadius: widget.backgroundShape ??
+            BorderRadius.all(Radius.circular(widget.height)),
+        color: widget.backgroundColorEnd != null
+            ? calculateBackground()
+            : widget.backgroundColor,
+        // boxShadow: <BoxShadow>[shadow],
+      ),
+      child: Stack(
+        children: <Widget>[
+          Offstage(
+            offstage: widget.isOffstage,
+            child: slideBackground()),
+          confirmIcons(),
+          sliderBall(),
+        ],
+      ),
+    );
+  }
+
+  // recorder fuctions
+    /// 开始录音
+  void _startRecord() async {
+    if (!_havePermission) {
+      EasyLoading.showToast('请开启麦克风权限');
+      return;
+    }
+    EasyLoading.show(status: '正在录音');
+    final r = await _recognitionService.startRecord();
+    debugPrint('开启录音: $r');
+  }
+
+  /// 结束录音
+  void _stopRecord() async {
+    final r = await _recognitionService.stopRecord();
+    debugPrint('关闭录音: $r');
+    // 识别语音
+    EasyLoading.show(status: 'loading...');
+    _recognitionService.speechRecognition();
+  }
+
+  // The slider fuctions
   void updatePosition(details) {
     if (details is DragEndDetails) {
       setState(() {
@@ -124,9 +248,11 @@ class DualDirectionJoystickState extends State<DualDirectionJoystick> {
 
   void sliderReleased(details) {
     if (_position > widget.slideLength) {
-      widget.onConfirmation();
-    } else if (_position < 0 && widget.onCancel != null) {
-      widget.onCancel!();
+      (widget.rightTextController != null && _result != null) ? widget.rightTextController!.text = _result! : null;
+      widget.onRightEdge();
+    } else if (_position < 0 && widget.onLeftEdge != null) {
+      (widget.leftTextController != null && _result != null) ? widget.leftTextController!.text = _result! : null;
+      widget.onLeftEdge!();
     }
     updatePosition(details);
   }
@@ -158,37 +284,7 @@ class DualDirectionJoystickState extends State<DualDirectionJoystick> {
       return widget.backgroundColor;
     }
   }
-
-
-  @override
-  Widget build(BuildContext context) {
-
-    return AnimatedContainer(
-      duration: Duration(milliseconds: _duration),
-      curve: Curves.easeInExpo,
-      height: widget.height,
-      width: widget.width,
-      padding: const EdgeInsets.all(5),
-      decoration: BoxDecoration(
-        borderRadius: widget.backgroundShape ??
-            BorderRadius.all(Radius.circular(widget.height)),
-        color: widget.backgroundColorEnd != null
-            ? this.calculateBackground()
-            : widget.backgroundColor,
-        // boxShadow: <BoxShadow>[shadow],
-      ),
-      child: Stack(
-        children: <Widget>[
-          Offstage(
-            offstage: widget.isOffstage,
-            child: slideBackground()),
-          confirmIcons(),
-          sliderBall(),
-        ],
-      ),
-    );
-  }
-
+  // The background widgets
   AnimatedPositioned sliderBall() {
     return AnimatedPositioned(
           duration: Duration(milliseconds: _duration),
@@ -199,16 +295,19 @@ class DualDirectionJoystickState extends State<DualDirectionJoystick> {
             onTapDown: (_) {
               widget.isOffstage = true;
               widget.onTapDown != null ? widget.onTapDown!() : null;
+              _startRecord();
             },
             onTapUp: (_) {
               widget.isOffstage = false;
               widget.onTapUp != null ? widget.onTapUp!() : null;
+              _stopRecord();
             },
             onPanUpdate: (details) {
               updatePosition(details);
             },
             onPanEnd: (details) {
               if (widget.onTapUp != null) widget.onTapUp!();
+              _stopRecord();
               sliderReleased(details);
             },
             child: Container(

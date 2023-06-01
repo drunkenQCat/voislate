@@ -1,7 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 
 import 'package:voislate/pages/slate_log_tabs.dart';
+import 'package:voislate/pages/voice_recg_test.dart';
 import 'package:voislate/providers/slate_log_notifier.dart';
 import 'package:voislate/pages/scene_schedule_page.dart';
 import 'package:voislate/pages/record_page.dart';
@@ -24,6 +27,7 @@ class VoiSlate extends StatelessWidget {
           primarySwatch: Colors.deepPurple,
         ),
         home: const MyHomePage(title: 'Voislate Home Page'),
+        builder: EasyLoading.init(),
       ),
     );
   }
@@ -31,7 +35,7 @@ class VoiSlate extends StatelessWidget {
 
 class MyHomePage extends StatefulWidget {
   final String title;
-  const MyHomePage({Key? key, this.title = "No Title"}) : super(key: key);
+  const MyHomePage({Key? key, this.title = "VoiSlate"}) : super(key: key);
 
   @override
   // ignore: library_private_types_in_public_api
@@ -45,7 +49,7 @@ class _MyHomePageState extends State<MyHomePage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(vsync: this, length: 3, initialIndex: 0);
+    _tabController = TabController(vsync: this, length: kDebugMode? 4:3, initialIndex: 0);
   }
 
   @override
@@ -86,6 +90,10 @@ class _MyHomePageState extends State<MyHomePage>
             icon: Icon(Icons.format_list_bulleted_outlined),
             label: '场记',
           ),
+          if (kDebugMode) BottomNavigationBarItem(
+            icon: Icon(Icons.mic_outlined),
+            label: '识别测试',
+          ),
         ],
       ),
       body: TabBarView(
@@ -95,6 +103,7 @@ class _MyHomePageState extends State<MyHomePage>
           SceneSchedulePage(),
           const SlateRecord(),
           const SlateLogTabs(),
+          if (kDebugMode) const VoiceRecg(),
         ],
       ),
     );
