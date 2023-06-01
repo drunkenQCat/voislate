@@ -1,8 +1,6 @@
-import 'dart:js';
 
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
-import 'package:provider/provider.dart';
 import 'package:voislate/models/slate_log_item.dart';
 import '../models/recorder_file_num.dart';
 

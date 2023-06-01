@@ -21,7 +21,7 @@ import '../widgets/record_page/slate_picker.dart';
 import '../widgets/record_page/floating_ok_dial.dart';
 import '../widgets/record_page/quick_view_log_dialog.dart';
 import '../widgets/record_page/file_counter.dart';
-import '../widgets/record_page/dual_direction_joystick.dart';
+import '../widgets/record_page/recorder_joystick.dart';
 
 /* 
 这一页要做的事：
@@ -195,10 +195,11 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
             tk: int.parse(takeCol.selected),
             filenamePrefix: num.prefix,
             filenameLinker: num.devider,
-            filenameNum: num.prevFileNum,
-            tkNote: (prevTakeEditor.note.isEmpty)?
-              'S${ sceneCol.selected } Sh${ shotCol.selected  }T${takeCol.selected}': prevTakeEditor.note,
-            shtNote: prevShotNote.shotNote,
+            filenameNum: num.prevFileNum(),
+            tkNote: (descController.text.isEmpty)
+                ? 'S${sceneCol.selected} Sh${shotCol.selected}T${takeCol.selected}'
+                : descController.text,
+            shtNote: shotNoteController.text,
             scnNote: totalScenes[sceneCol.selectedIndex].info.note.append,
             okTk: TkStatus.notChecked,
             okSht: ShtStatus.notChecked,
@@ -272,7 +273,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
         var notes = logs.map((log) {
           return MapEntry(log.fileName, log.tkNote);
         }).toList();
-        if(notes.length > 40) return notes.sublist(40);
+        if (notes.length > 40) return notes.sublist(40);
         return notes;
       }
 
@@ -303,12 +304,14 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
                   width: screenWidth - 2 * horizonPadding,
                   height: screenHeight * 0.17,
                   itemHeight: screenHeight * 0.13 - 48,
-                  resultChanged: (v1, v2, v3) {
-                    prevShotNote.controller.text =
-                        totalScenes[sceneCol.selectedIndex]
-                                [shotCol.selectedIndex]
-                            .note
-                            .append;
+                  resultChanged: ({v1, v2, v3}) {
+                    if (v1 != null || v2 != null) {
+                      prevShotNote.controller.text =
+                          totalScenes[sceneCol.selectedIndex]
+                                  [shotCol.selectedIndex]
+                              .note
+                              .append;
+                    }
                     pickerNumSync();
                     debugPrint('v1: $v1, v2: $v2, v3: $v3');
                   },
@@ -394,50 +397,36 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
                         ),
                         Transform.scale(
                           scale: 0.8,
-                          child: DualDirectionJoystick(
-                              width: 120,
-                              sliderButtonContent: const Icon(Icons.mic),
-                              backgroundColor: Colors.red.shade200,
-                              backgroundColorEnd: Colors.green.shade200,
-                              foregroundColor: Colors.purple.shade50,
-                              onTapDown: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('正在录音'),
-                                    duration: Duration(seconds: 1),
-                                  ),
-                                );
-                              },
-                              // onTapUp: () {
-                              //   ScaffoldMessenger.of(context)
-                              //       .hideCurrentSnackBar();
-                              //   ScaffoldMessenger.of(context).showSnackBar(
-                              //     const SnackBar(
-                              //       content: Text('录音取消'),
-                              //       duration: Duration(seconds: 1),
-                              //     ),
-                              //   );
-                              // },
-                              onCancel: () {
-                                ScaffoldMessenger.of(context)
-                                    .hideCurrentSnackBar();
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('正在保存录音描述'),
-                                    duration: Duration(seconds: 1),
-                                  ),
-                                );
-                              },
-                              onConfirmation: () {
-                                ScaffoldMessenger.of(context)
-                                    .hideCurrentSnackBar();
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('正在保存镜头描述'),
-                                    duration: Duration(seconds: 1),
-                                  ),
-                                );
-                              }),
+                          child: RecorderJoystick(
+                            width: 120,
+                            sliderButtonContent: const Icon(Icons.mic),
+                            backgroundColor: Colors.red.shade200,
+                            backgroundColorEnd: Colors.green.shade200,
+                            foregroundColor: Colors.purple.shade50,
+                            onTapDown: () {},
+                            onLeftEdge: () {
+                              ScaffoldMessenger.of(context)
+                                  .hideCurrentSnackBar();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('正在保存录音描述'),
+                                  duration: Duration(seconds: 1),
+                                ),
+                              );
+                            },
+                            leftTextController: descController,
+                            onRightEdge: () {
+                              ScaffoldMessenger.of(context)
+                                  .hideCurrentSnackBar();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('正在保存镜头描述'),
+                                  duration: Duration(seconds: 1),
+                                ),
+                              );
+                            },
+                            rightTextController: shotNoteController,
+                          ),
                         ),
                       ],
                     ),
@@ -460,17 +449,22 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
             ),
           ],
         ),
-        floatingActionButton: Column(
-          children:[
-            FloatingOkDial(
-                  context: context,
-                ),
-            DisplayNotesButton(
-                notes: exportQuickNotes(),
-                num: num,
-              ),
-          ]
-        ),
+        floatingActionButton:
+            Stack(alignment: AlignmentDirectional.bottomStart, children: [
+          Positioned(
+              bottom: MediaQuery.of(context).size.height * 0.1,
+              left: -5,
+              child: FloatingOkDial(
+                context: context,
+              )),
+          Positioned(
+            top: MediaQuery.of(context).size.height * 0.3,
+            child: DisplayNotesButton(
+              notes: exportQuickNotes(),
+              num: num,
+            ),
+          ),
+        ]),
       );
     });
   }

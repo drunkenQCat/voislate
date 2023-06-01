@@ -7,7 +7,7 @@ import '../../providers/slate_num_notifier.dart';
 /// V1:第一列选中的值
 /// V2:第二列选中的值
 /// V3:第三列选中的值
-typedef ResultChanged<V1, V2, V3> = Function(V1 v1, V2 v2, V3 v3);
+typedef ResultChanged<V1, V2, V3> = Function({V1? v1, V2? v2, V3? v3});
 
 // notifier for every column
 
@@ -77,8 +77,10 @@ class _SlatePickerState extends State<SlatePicker> {
     super.initState();
     // callback the result to the main.dart
     WidgetsBinding.instance.endOfFrame.then((_) {
-      _resultChanged(widget.stateOne.selectedIndex,
-          widget.stateTwo.selectedIndex, widget.stateThree.selectedIndex);
+      _resultChanged(
+          v1: widget.stateOne.selectedIndex,
+          v2: widget.stateTwo.selectedIndex,
+          v3: widget.stateThree.selectedIndex);
     });
   }
 
@@ -90,24 +92,21 @@ class _SlatePickerState extends State<SlatePicker> {
         _buildPicker(
           widget.ones,
           widget.titles[0],
-          (value) => _resultChanged(value, widget.stateTwo.selectedIndex,
-              widget.stateThree.selectedIndex),
+          (value) => _resultChanged(v1: value),
           widget.stateOne.controller,
         ),
         VerticalSeparator(widget: widget, padding: padding),
         _buildPicker(
           widget.twos,
           widget.titles[1],
-          (value) => _resultChanged(widget.stateOne.selectedIndex, value,
-              widget.stateThree.selectedIndex),
+          (value) => _resultChanged(v2: value),
           widget.stateTwo.controller,
         ),
         VerticalSeparator(widget: widget, padding: padding),
         _buildPicker(
           widget.threes,
           widget.titles[2],
-          (value) => _resultChanged(widget.stateOne.selectedIndex,
-              widget.stateTwo.selectedIndex, value),
+          (value) => _resultChanged(v3: value),
           widget.stateThree.controller,
         ),
       ],
@@ -159,16 +158,16 @@ class _SlatePickerState extends State<SlatePicker> {
   }
 
   /// 刷新回调结果
-  _resultChanged(v1, v2, v3) {
-    widget.stateOne.selectedIndex = v1;
-    widget.stateTwo.selectedIndex = v2;
-    widget.stateThree.selectedIndex = v3;
+  _resultChanged({int? v1, int? v2, int? v3}) {
+    widget.stateOne.selectedIndex = v1 ?? widget.stateOne.selectedIndex;
+    widget.stateTwo.selectedIndex = v2 ?? widget.stateTwo.selectedIndex;
+    widget.stateThree.selectedIndex = v3 ?? widget.stateThree.selectedIndex;
 
-    var a1 = widget.stateOne.selected;
-    var a2 = widget.stateTwo.selected;
-    var a3 = widget.stateThree.selected;
+    var a1 = (v1 != null) ? widget.stateOne.selected : null;
+    var a2 = (v2 != null) ? widget.stateTwo.selected : null;
+    var a3 = (v3 != null) ? widget.stateThree.selected : null;
     if (widget.resultChanged != null) {
-      widget.resultChanged!(a1, a2, a3);
+      widget.resultChanged!(v1: a1, v2: a2, v3: a3);
     }
   }
 }

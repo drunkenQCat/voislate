@@ -44,3 +44,4 @@ app.*.map.json
 /android/app/release
 # The Counter will place build artifacts here
 .VSCodeCounter 
+lib/data/my_ifly_key.dart
