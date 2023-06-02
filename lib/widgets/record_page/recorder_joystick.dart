@@ -2,8 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:voislate/data/my_ifly_key.dart';
-import '../../data/dummy_data.dart';
 import 'package:ifly_speech_recognition/ifly_speech_recognition.dart';
+// ignore: depend_on_referenced_packages
+import 'package:flutter_sound_platform_interface/flutter_sound_recorder_platform_interface.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 
@@ -114,6 +115,8 @@ class RecorderJoystickState extends State<RecorderJoystick> {
 
   late double _position = widget.initValue;
   int _duration = 0;
+  
+  late Stream<String> resultStream;
 
   double getPosition() {
     if (_position < 0) {
@@ -173,6 +176,7 @@ class RecorderJoystickState extends State<RecorderJoystick> {
 
   @override
   void initState() {
+    resultStream = _recognitionService.onRecordResult();
     super.initState();
     _checkPermission();
     _initRecorder();
@@ -180,29 +184,35 @@ class RecorderJoystickState extends State<RecorderJoystick> {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: Duration(milliseconds: _duration),
-      curve: Curves.easeInExpo,
-      height: widget.height,
-      width: widget.width,
-      padding: const EdgeInsets.all(5),
-      decoration: BoxDecoration(
-        borderRadius: widget.backgroundShape ??
-            BorderRadius.all(Radius.circular(widget.height)),
-        color: widget.backgroundColorEnd != null
-            ? calculateBackground()
-            : widget.backgroundColor,
-        // boxShadow: <BoxShadow>[shadow],
-      ),
-      child: Stack(
-        children: <Widget>[
-          Offstage(
-            offstage: widget.isOffstage,
-            child: slideBackground()),
-          confirmIcons(),
-          sliderBall(),
-        ],
-      ),
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        // resultPreviewer(),
+        AnimatedContainer(
+          duration: Duration(milliseconds: _duration),
+          curve: Curves.easeInExpo,
+          height: widget.height,
+          width: widget.width,
+          padding: const EdgeInsets.all(5),
+          decoration: BoxDecoration(
+            borderRadius: widget.backgroundShape ??
+                BorderRadius.all(Radius.circular(widget.height)),
+            color: widget.backgroundColorEnd != null
+                ? calculateBackground()
+                : widget.backgroundColor,
+            // boxShadow: <BoxShadow>[shadow],
+          ),
+          child: Stack(
+            children: <Widget>[
+              Offstage(
+                offstage: widget.isOffstage,
+                child: slideBackground()),
+              confirmIcons(),
+              sliderBall(),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -214,7 +224,7 @@ class RecorderJoystickState extends State<RecorderJoystick> {
       return;
     }
     EasyLoading.show(status: '正在录音');
-    final r = await _recognitionService.startRecord();
+    final r = await _recognitionService.startRecord(AudioSource.microphone);
     debugPrint('开启录音: $r');
   }
 
@@ -248,9 +258,11 @@ class RecorderJoystickState extends State<RecorderJoystick> {
 
   void sliderReleased(details) {
     if (_position > widget.slideLength) {
+      _stopRecord();
       (widget.rightTextController != null && _result != null) ? widget.rightTextController!.text = _result! : null;
       widget.onRightEdge();
     } else if (_position < 0 && widget.onLeftEdge != null) {
+      _stopRecord();
       (widget.leftTextController != null && _result != null) ? widget.leftTextController!.text = _result! : null;
       widget.onLeftEdge!();
     }
@@ -349,20 +361,20 @@ class RecorderJoystickState extends State<RecorderJoystick> {
 
   Positioned slideBackground() {
     return Positioned(
-          left: widget.height / 2,
-          child: AnimatedContainer(
-            height: widget.height - 10,
-            width: getPosition(),
-            duration: Duration(milliseconds: _duration),
-            curve: Curves.ease,
-            decoration: BoxDecoration(
-              borderRadius: widget.backgroundShape ??
-                  BorderRadius.all(Radius.circular(widget.height)),
-              color: widget.backgroundColorEnd != null
-                  ? this.calculateBackground()
-                  : widget.backgroundColor,
-            ),
-          ),
-        );
+      left: widget.height / 2,
+      child: AnimatedContainer(
+        height: widget.height - 10,
+        width: getPosition(),
+        duration: Duration(milliseconds: _duration),
+        curve: Curves.ease,
+        decoration: BoxDecoration(
+          borderRadius: widget.backgroundShape ??
+              BorderRadius.all(Radius.circular(widget.height)),
+          color: widget.backgroundColorEnd != null
+              ? this.calculateBackground()
+              : widget.backgroundColor,
+        ),
+      ),
+    );
   }
 }
