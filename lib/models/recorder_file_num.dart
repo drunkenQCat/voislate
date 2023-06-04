@@ -1,8 +1,13 @@
 import 'dart:async';
 
 class RecordFileNum {
-  final String prefix;
-  String devider;
+  late String customPrefix;
+  String get prefix {
+    if (customPrefix.isNotEmpty) return customPrefix;
+    return today;
+  }
+
+  String intervalSymbol;
   final _valueController = StreamController<int>();
   Stream<int> get value => _valueController.stream;
 
@@ -34,20 +39,20 @@ class RecordFileNum {
   }
 
   String fullName() {
-    return '$prefix$devider$_number';
+    return '$prefix$intervalSymbol$_number';
   }
 
   String prevName() {
     if (_number == 1) return '';
-    return '$prefix$devider${_number - 1}';
+    return '$prefix$intervalSymbol${_number - 1}';
   }
 
   int prevFileNum() => _number - 1;
 
   RecordFileNum({
     String? prefix,
-    this.devider = '-T',
-  }) : prefix = prefix ?? today;
+    this.intervalSymbol = '-T',
+  }) : customPrefix = prefix ?? '';
 
   // a function to get the date of today
   // to be used as the defualt prefix of the file name

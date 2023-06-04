@@ -92,7 +92,7 @@ class _SlatePickerState extends State<SlatePicker> {
         _buildPicker(
           widget.ones,
           widget.titles[0],
-          (value) => _resultChanged(v1: value),
+          (value) => _resultChanged(v1: value, v2:0, v3: 0 ),
           widget.stateOne.controller,
         ),
         VerticalSeparator(widget: widget, padding: padding),

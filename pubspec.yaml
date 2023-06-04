@@ -40,15 +40,15 @@ dependencies:
   hive_flutter: ^1.1.0
   hive_generator: ^2.0.0
   ifly_speech_recognition: 
-      git:
-        url: https://github.com/drunkenQCat/ifly_speech_recognition.git
-        ref: dev
+      # git:
+      #   url: https://github.com/drunkenQCat/ifly_speech_recognition.git
+      #   ref: dev
+      path: ../ifly_speech_recognition
   permission_handler: ^10.2.0
   provider: ^6.0.5
   record: ^4.4.4
   shared_preferences: ^2.1.1
   simple_speed_dial: ^0.1.7
-  undo: ^1.4.0
 
 dev_dependencies:
   flutter_lints: ^2.0.0

@@ -68,8 +68,8 @@ class RecorderJoystick extends StatefulWidget {
 
   /// Stick the slider to the end
   final bool stickToEnd;
-  
-  var isOffstage = false;
+
+  var isVisible = false;
 
   RecorderJoystick({
     Key? key,
@@ -94,7 +94,7 @@ class RecorderJoystick extends StatefulWidget {
     this.rightTextController,
     this.foregroundShape,
     this.backgroundShape,
-    this.stickToEnd = false, 
+    this.stickToEnd = false,
   })  : assert(height >= 25 && width >= 120),
         slideLength = width - height,
         initValue = (width - height) / 2,
@@ -106,17 +106,19 @@ class RecorderJoystick extends StatefulWidget {
   }
 }
 
-class RecorderJoystickState extends State<RecorderJoystick> {
-    // The Speech Recoginition Part
+class RecorderJoystickState extends MountedState<RecorderJoystick> {
+  // The Speech Recoginition Part
   final SpeechRecognitionService _recognitionService = recognitionService;
   bool _havePermission = false;
-
-  String? _result;
+  //
+  // String? _result;
 
   late double _position = widget.initValue;
   int _duration = 0;
-  
+
   late Stream<String> resultStream;
+  //
+  // late bool _wsStatus;
 
   double getPosition() {
     if (_position < 0) {
@@ -151,28 +153,15 @@ class RecorderJoystickState extends State<RecorderJoystick> {
     // 初始化语音识别服务
     await _recognitionService.initRecorder();
 
-    // 语音识别回调
-    _recognitionService.onRecordResult().listen((message) {
-      EasyLoading.dismiss();
-      setState(() {
-        _result = message;
-      });
-    }, onError: (err) {
-      EasyLoading.dismiss();
-      debugPrint(err);
-    });
-
     // 录音停止
-    _recognitionService.onStopRecording().listen((isAutomatic) {
-      if (isAutomatic) {
-        // 录音时间到达最大值60s，自动停止
-      } else {
-        // 主动调用 stopRecord，停止录音
-      }
-    });
+    // _recognitionService.onStopRecording().listen((isAutomatic) {
+    //   if (isAutomatic) {
+    //     // 录音时间到达最大值60s，自动停止
+    //   } else {
+    //     // 主动调用 stopRecord，停止录音
+    //   }
+    // });
   }
-
-
 
   @override
   void initState() {
@@ -184,40 +173,32 @@ class RecorderJoystickState extends State<RecorderJoystick> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        // resultPreviewer(),
-        AnimatedContainer(
-          duration: Duration(milliseconds: _duration),
-          curve: Curves.easeInExpo,
-          height: widget.height,
-          width: widget.width,
-          padding: const EdgeInsets.all(5),
-          decoration: BoxDecoration(
-            borderRadius: widget.backgroundShape ??
-                BorderRadius.all(Radius.circular(widget.height)),
-            color: widget.backgroundColorEnd != null
-                ? calculateBackground()
-                : widget.backgroundColor,
-            // boxShadow: <BoxShadow>[shadow],
-          ),
-          child: Stack(
-            children: <Widget>[
-              Offstage(
-                offstage: widget.isOffstage,
-                child: slideBackground()),
-              confirmIcons(),
-              sliderBall(),
-            ],
-          ),
-        ),
-      ],
+    return AnimatedContainer(
+      duration: Duration(milliseconds: _duration),
+      curve: Curves.easeInExpo,
+      height: widget.height,
+      width: widget.width,
+      padding: const EdgeInsets.all(5),
+      decoration: BoxDecoration(
+        borderRadius: widget.backgroundShape ??
+            BorderRadius.all(Radius.circular(widget.height)),
+        color: widget.backgroundColorEnd != null
+            ? calculateBackground()
+            : widget.backgroundColor,
+        // boxShadow: <BoxShadow>[shadow],
+      ),
+      child: Stack(
+        children: <Widget>[
+          Visibility(visible: !widget.isVisible, child: slideBackground()),
+          confirmIcons(),
+          sliderBall(),
+        ],
+      ),
     );
   }
 
   // recorder fuctions
-    /// 开始录音
+  /// 开始录音
   void _startRecord() async {
     if (!_havePermission) {
       EasyLoading.showToast('请开启麦克风权限');
@@ -256,17 +237,25 @@ class RecorderJoystickState extends State<RecorderJoystick> {
     }
   }
 
-  void sliderReleased(details) {
-    if (_position > widget.slideLength) {
-      _stopRecord();
-      (widget.rightTextController != null && _result != null) ? widget.rightTextController!.text = _result! : null;
+  Future<void> sliderReleased(details) async {
+    _stopRecord();
+    if (_position > widget.slideLength && widget.rightTextController != null) {
+      var message = resultStream.take(1);
+      await for (var value in message) {
+        EasyLoading.dismiss();
+        widget.rightTextController!.text = value;
+      }
       widget.onRightEdge();
-    } else if (_position < 0 && widget.onLeftEdge != null) {
-      _stopRecord();
-      (widget.leftTextController != null && _result != null) ? widget.leftTextController!.text = _result! : null;
+    } else if (_position < 0 && widget.leftTextController != null) {
+      var message = resultStream.take(1);
+      await for (var value in message) {
+        EasyLoading.dismiss();
+        widget.leftTextController!.text = value;
+      }
       widget.onLeftEdge!();
     }
     updatePosition(details);
+    widget.isVisible = false;
   }
 
   Color calculateBackground() {
@@ -296,67 +285,66 @@ class RecorderJoystickState extends State<RecorderJoystick> {
       return widget.backgroundColor;
     }
   }
+
   // The background widgets
   AnimatedPositioned sliderBall() {
     return AnimatedPositioned(
-          duration: Duration(milliseconds: _duration),
-          curve: Curves.easeInExpo,
-          left: getPosition(),
-          top: 0,
-          child: GestureDetector(
-            onTapDown: (_) {
-              widget.isOffstage = true;
-              widget.onTapDown != null ? widget.onTapDown!() : null;
-              _startRecord();
-            },
-            onTapUp: (_) {
-              widget.isOffstage = false;
-              widget.onTapUp != null ? widget.onTapUp!() : null;
-              _stopRecord();
-            },
-            onPanUpdate: (details) {
-              updatePosition(details);
-            },
-            onPanEnd: (details) {
-              if (widget.onTapUp != null) widget.onTapUp!();
-              _stopRecord();
-              sliderReleased(details);
-            },
-            child: Container(
-              height: widget.height - 10,
-              width: widget.height - 10,
-              decoration: BoxDecoration(
-                borderRadius: widget.foregroundShape ??
-                    BorderRadius.all(Radius.circular(widget.height / 2)),
-                color: widget.foregroundColor,
-              ),
-              child: widget.sliderButtonContent,
-            ),
+      duration: Duration(milliseconds: _duration),
+      curve: Curves.easeInExpo,
+      left: getPosition(),
+      top: 0,
+      child: GestureDetector(
+        onTapDown: (_) {
+          widget.isVisible = true;
+          widget.onTapDown != null ? widget.onTapDown!() : null;
+          _startRecord();
+        },
+        onTapUp: (_) {
+          widget.onTapUp != null ? widget.onTapUp!() : null;
+          _stopRecord();
+        },
+        onPanUpdate: (details) {
+          updatePosition(details);
+        },
+        onPanEnd: (details) {
+          if (widget.onTapUp != null) widget.onTapUp!();
+          sliderReleased(details);
+        },
+        child: Container(
+          height: widget.height - 10,
+          width: widget.height - 10,
+          decoration: BoxDecoration(
+            borderRadius: widget.foregroundShape ??
+                BorderRadius.all(Radius.circular(widget.height / 2)),
+            color: widget.foregroundColor,
           ),
-        );
+          child: widget.sliderButtonContent,
+        ),
+      ),
+    );
   }
 
   Center confirmIcons() {
     return Center(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              Icon(
-                Icons.arrow_right,
-                size: 48,
-                color: Colors.green[300],
-              ),
-              SizedBox(
-                height: 10,
-              ),
-              Icon(
-                Icons.arrow_left,
-                size: 48,
-                color: Colors.red[300],
-              ),
-            ],
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Icon(
+            Icons.arrow_right,
+            size: 48,
+            color: Colors.green[300],
           ),
-        );
+          SizedBox(
+            height: 10,
+          ),
+          Icon(
+            Icons.arrow_left,
+            size: 48,
+            color: Colors.red[300],
+          ),
+        ],
+      ),
+    );
   }
 
   Positioned slideBackground() {
@@ -376,5 +364,19 @@ class RecorderJoystickState extends State<RecorderJoystick> {
         ),
       ),
     );
+  }
+}
+
+class MountedState<T extends StatefulWidget> extends State<T> {
+  @override
+  Widget build(BuildContext context) {
+    return const Text('mounted');
+  }
+
+  @override
+  void setState(VoidCallback fn) {
+    if (mounted) {
+      super.setState(fn);
+    }
   }
 }

@@ -49,7 +49,7 @@ class _MyHomePageState extends State<MyHomePage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(vsync: this, length: kDebugMode? 4:3, initialIndex: 0);
+    _tabController = TabController(vsync: this, length: 3, initialIndex: 0);
   }
 
   @override
@@ -90,10 +90,10 @@ class _MyHomePageState extends State<MyHomePage>
             icon: Icon(Icons.format_list_bulleted_outlined),
             label: '场记',
           ),
-          if (kDebugMode) BottomNavigationBarItem(
-            icon: Icon(Icons.mic_outlined),
-            label: '识别测试',
-          ),
+          // if (kDebugMode) BottomNavigationBarItem(
+          //   icon: Icon(Icons.mic_outlined),
+          //   label: '识别测试',
+          // ),
         ],
       ),
       body: TabBarView(
@@ -103,7 +103,7 @@ class _MyHomePageState extends State<MyHomePage>
           SceneSchedulePage(),
           const SlateRecord(),
           const SlateLogTabs(),
-          if (kDebugMode) const VoiceRecg(),
+          // if (kDebugMode) const VoiceRecg(),
         ],
       ),
     );
