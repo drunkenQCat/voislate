@@ -80,7 +80,7 @@ class FileNameDisplayCard extends StatelessWidget {
                     showDialog(
                       context: context,
                       builder: (BuildContext context) {
-                        String value = num.devider;
+                        String value = num.intervalSymbol;
                         return AlertDialog(
                           title: const Text('Edit Devider'),
                           content: TextField(
@@ -88,7 +88,7 @@ class FileNameDisplayCard extends StatelessWidget {
                               value = newValue;
                             },
                             onSubmitted: (newValue) {
-                              num.devider = newValue;
+                              num.intervalSymbol = newValue;
                               Navigator.of(context).pop();
                             },
                             controller: TextEditingController(text: value),
@@ -98,7 +98,7 @@ class FileNameDisplayCard extends StatelessWidget {
                     );
                   },
                   child: Text(
-                    num.devider,
+                    num.intervalSymbol,
                     style: const TextStyle(
                       fontSize: 32,
                       color: Colors.black45,

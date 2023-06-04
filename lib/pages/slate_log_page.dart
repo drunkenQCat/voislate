@@ -19,7 +19,8 @@ class SlateLog extends StatefulWidget {
     initialScrollOffset: 0.0,
     keepScrollOffset: false,
   );
-  SlateLog({super.key});
+  String date;
+  SlateLog(this.date, {super.key});
 
   @override
   _SlateLogState createState() => _SlateLogState();
@@ -38,13 +39,14 @@ class _SlateLogState extends State<SlateLog> {
   Widget build(BuildContext context) {
     return Consumer2<SlateLogNotifier, SlateStatusNotifier>(
       builder: (context, slateLogs, slateStatus, child) {
-        Map<String, Map<String, List<SlateLogItem>>> sortedItems = {};
         SceneSchedule currentSceneData = Hive.box('scenes_box')
             .getAt(slateStatus.selectedSceneIndex) as SceneSchedule;
         var currentScn = currentSceneData.info.name;
         var currentShot = currentSceneData[slateStatus.selectedShotIndex].name;
+        Box<SlateLogItem> logBox = Hive.box(widget.date);
 
-        for (SlateLogItem item in slateLogs.logToday) {
+        Map<String, Map<String, List<SlateLogItem>>> sortedItems = {};
+        for (SlateLogItem item in logBox.values.toList().cast()) {
           if (!sortedItems.containsKey(item.scn)) {
             sortedItems[item.scn] = {};
           }

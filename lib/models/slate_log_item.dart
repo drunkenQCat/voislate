@@ -2,6 +2,10 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 part 'slate_log_item.g.dart';
 
+/// The status of the file. 
+/// * 0: not checked
+/// * 1: ok
+/// * 2: bad
 @HiveType(typeId: 4)
 enum TkStatus {
   @HiveField(0)
@@ -12,6 +16,10 @@ enum TkStatus {
   bad,
 }
 
+/// The status of the slate.
+/// * 0: not checked
+/// * 1: ok
+/// * 2: nice
 @HiveType(typeId: 5)
 enum ShtStatus {
   @HiveField(0)

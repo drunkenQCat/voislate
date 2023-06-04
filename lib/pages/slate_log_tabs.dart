@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
+import 'package:provider/provider.dart';
+
 import 'slate_log_page.dart';
+import 'package:voislate/providers/slate_log_notifier.dart';
 
 class SlateLogTabs extends StatefulWidget {
   const SlateLogTabs({super.key});
@@ -17,7 +20,8 @@ class _SlateLogTabsState extends State<SlateLogTabs>
   @override
   void initState() {
     super.initState();
-    tabs = Hive.box('dates').values.toList().cast();
+    var logs = Provider.of<SlateLogNotifier>(context, listen: false);
+    tabs = logs.dates;
     tabs = tabs.reversed.toList();
     _tabController =
         TabController(vsync: this, length: tabs.length, initialIndex: 0);
@@ -64,7 +68,7 @@ class _SlateLogTabsState extends State<SlateLogTabs>
       ]),
       body: TabBarView(
         controller: _tabController,
-        children: tabs.map((date) => SlateLog()).toList(),
+        children: tabs.map((date) => SlateLog(date)).toList(),
       ),
     );
   }

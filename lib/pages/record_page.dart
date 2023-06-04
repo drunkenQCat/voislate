@@ -74,6 +74,9 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
   // drawback the last note, and decrease the file number,but not the take number
   // vibration feedback related
   bool _canVibrate = true;
+  /// 0: not checked, 1: ok, 2: not ok
+  var okTk = TkStatus.notChecked;
+  var okSht = ShtStatus.notChecked;
 
 //TODO:RecoverAndroid
   Future<void> _initVibrate() async {
@@ -156,26 +159,43 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
     var screenWidth = MediaQuery.of(context).size.width;
     var screenHeight = MediaQuery.of(context).size.height;
     var horizonPadding = 30.0;
+    var pickerHistory = Hive.box('picker_history');
     // everytime setState, the build method will be called again
 
+    var takeOkDial = TakeOkDial(
+              context: context,
+            );
     var prevTakeEditor = PrevTakeEditor(
       num: num,
       descEditingController: descController,
     );
     var prevShotNote = PrevShotNote(
-      currentScn: sceneCol.selected,
-      currentSht: shotCol.selected,
-      currentTk: takeCol.selected,
+      currentScn: pickerHistory.isNotEmpty
+          ? pickerHistory.getAt(pickerHistory.length - 1)[0]
+          : '0',
+      currentSht: pickerHistory.isNotEmpty
+          ? pickerHistory.getAt(pickerHistory.length - 1)[1]
+          : '0',
+      currentTk: pickerHistory.isNotEmpty
+          ? pickerHistory.getAt(pickerHistory.length - 1)[2]
+          : '0',
       controller: shotNoteController,
     );
 
     return Consumer2<SlateStatusNotifier, SlateLogNotifier>(
         builder: (context, slateNotifier, logNotifier, child) {
+
+      void resetOkEnum(){
+          takeOkDial.tkStatus = TkStatus.notChecked;
+          okSht = ShtStatus.notChecked;
+      }
+
       void drawBackItem() {
         setState(() {
           num.decrement();
           try {
             logNotifier.removeLast();
+            pickerHistory.deleteAt(pickerHistory.length - 1);
             // ignore: empty_catches
           } catch (e) {}
           // remove the last note
@@ -187,27 +207,37 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
       }
 
       void addItem([bool isFake = false]) {
-        if (isFake) prevTakeEditor.note = 'fake take';
+        List<String> prevTake = (pickerHistory.isNotEmpty)
+            ? pickerHistory.getAt(pickerHistory.length - 1) as List<String>
+            : [];
         if (num.prevName().isNotEmpty) {
           var newLogItem = SlateLogItem(
-            scn: sceneCol.selected,
-            sht: shotCol.selected,
-            tk: int.parse(takeCol.selected),
+            scn: prevTake[0],
+            sht: prevTake[1],
+            tk: int.parse(prevTake[2]),
             filenamePrefix: num.prefix,
-            filenameLinker: num.devider,
+            filenameLinker: num.intervalSymbol,
             filenameNum: num.prevFileNum(),
-            tkNote: (descController.text.isEmpty)
+            tkNote: !isFake? (descController.text.isEmpty
                 ? 'S${sceneCol.selected} Sh${shotCol.selected}T${takeCol.selected}'
-                : descController.text,
+                : descController.text)
+                : 'Fake Take',
             shtNote: shotNoteController.text,
             scnNote: totalScenes[sceneCol.selectedIndex].info.note.append,
-            okTk: TkStatus.notChecked,
-            okSht: ShtStatus.notChecked,
+            okTk: takeOkDial.tkStatus,
+            okSht: okSht,
           );
           logNotifier.add(num.prevName(), newLogItem);
         }
+        List<String> prevTakePickerData = [
+          sceneCol.selected,
+          shotCol.selected,
+          takeCol.selected
+        ];
+        pickerHistory.add(prevTakePickerData);
         setState(() {
           num.increment();
+          resetOkEnum();
 //TODO:RecoverAndroid
           if (_canVibrate) {
             isFake
@@ -405,25 +435,25 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
                             foregroundColor: Colors.purple.shade50,
                             onTapDown: () {},
                             onLeftEdge: () {
-                              ScaffoldMessenger.of(context)
-                                  .hideCurrentSnackBar();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('正在保存录音描述'),
-                                  duration: Duration(seconds: 1),
-                                ),
-                              );
+                              // ScaffoldMessenger.of(context)
+                              //     .hideCurrentSnackBar();
+                              // ScaffoldMessenger.of(context).showSnackBar(
+                              //   const SnackBar(
+                              //     content: Text('正在保存录音描述'),
+                              //     duration: Duration(seconds: 1),
+                              //   ),
+                              // );
                             },
                             leftTextController: descController,
                             onRightEdge: () {
-                              ScaffoldMessenger.of(context)
-                                  .hideCurrentSnackBar();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('正在保存镜头描述'),
-                                  duration: Duration(seconds: 1),
-                                ),
-                              );
+                              // ScaffoldMessenger.of(context)
+                              //     .hideCurrentSnackBar();
+                              // ScaffoldMessenger.of(context).showSnackBar(
+                              //   const SnackBar(
+                              //     content: Text('正在保存镜头描述'),
+                              //     duration: Duration(seconds: 1),
+                              //   ),
+                              // );
                             },
                             rightTextController: shotNoteController,
                           ),
@@ -454,9 +484,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
           Positioned(
               bottom: MediaQuery.of(context).size.height * 0.1,
               left: -5,
-              child: FloatingOkDial(
-                context: context,
-              )),
+              child: takeOkDial),
           Positioned(
             top: MediaQuery.of(context).size.height * 0.3,
             child: DisplayNotesButton(

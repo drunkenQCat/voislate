@@ -37,16 +37,11 @@ class SettingsConfiguePage extends StatelessWidget {
         logProvider.clear();
         var dateBox = Hive.box('dates');
         for (String date in dateBox.values.toList().cast()) {
-          Hive.box(date).clear();
+          if(date != logProvider.today) Hive.box(date).deleteFromDisk();
         }
         // if dates are more than one, delete all except the last one(today)
-        if (dateBox.length != 1) {
-          for (var i = 0; i < dateBox.length - 1 ; i++) {
-            String date = dateBox.getAt(0);
-            Hive.box(date).deleteFromDisk();
-            dateBox.deleteAt(0);
-          }
-        }
+        dateBox.clear();
+        dateBox.put(logProvider.today, logProvider.today);
         Navigator.pop(context); 
       },
     );
@@ -115,7 +110,7 @@ class SettingsConfiguePage extends StatelessWidget {
                         content: const Text('是否确认要清除场记？'),
                         actions: [
                           cancelButton,
-                          continueButton,
+                          clearAllConfirmButton,
                         ],
                       );
                     });

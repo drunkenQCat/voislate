@@ -23,21 +23,23 @@ void main() async {
   }
   await Hive.openBox('scn_sht_tk');
   await Hive.openBox('dates');
+  await Hive.openBox('picker_history');
   var today = RecordFileNum.today;
 
   // if today is not in the dates box, add it
   if (Hive.box('dates').isEmpty) {
-    Hive.box('dates').add(today);
+    Hive.box('dates').put(today, today);
   }
   var lastDayIndex = Hive.box('dates').length - 1;
   if (!Hive.box('dates').containsKey(today)) {
     Hive.box('dates').putAt(lastDayIndex, today);
+    Hive.box('picker_history').clear();
   }
 
   var dates = Hive.box('dates').values.map((e) => e as String).toList();
   for (var date in dates) {
     await Hive.openBox<SlateLogItem>(date);
   }
-  // the slate log of today 
+  // the slate log of today
   runApp(const VoiSlate());
 }

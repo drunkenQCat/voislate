@@ -173,7 +173,8 @@ class _SceneSchedulePageState extends State<SceneSchedulePage>
                     onTap: () {
                       setState(() {
                         selectedIndex = index;
-                        slateNotifier.setIndex(scene: index, take: 0);
+                        selectedShotIndex = 0;
+                        slateNotifier.setIndex(scene: index,shot: 0, take: 0);
                       });
                     },
                   ),
