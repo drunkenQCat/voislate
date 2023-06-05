@@ -25,6 +25,14 @@ packages:
       url: "https://mirrors.tuna.tsinghua.edu.cn/dart-pub/"
     source: hosted
     version: "0.1.0"
+  animated_toggle_switch:
+    dependency: "direct main"
+    description:
+      name: animated_toggle_switch
+      sha256: "3c6d98dcd53cb93253a9418b888b3fcd9452a55fe1a7a390bd48c0a410a41634"
+      url: "https://mirrors.tuna.tsinghua.edu.cn/dart-pub/"
+    source: hosted
+    version: "0.6.2"
   args:
     dependency: transitive
     description:
@@ -278,6 +286,14 @@ packages:
       url: "https://mirrors.tuna.tsinghua.edu.cn/dart-pub/"
     source: hosted
     version: "9.2.13"
+  flutter_speed_dial:
+    dependency: "direct main"
+    description:
+      name: flutter_speed_dial
+      sha256: "698a037274a66dbae8697c265440e6acb6ab6cae9ac5f95c749e7944d8f28d41"
+      url: "https://mirrors.tuna.tsinghua.edu.cn/dart-pub/"
+    source: hosted
+    version: "7.0.0"
   flutter_spinkit:
     dependency: transitive
     description:
@@ -767,14 +783,6 @@ packages:
       url: "https://mirrors.tuna.tsinghua.edu.cn/dart-pub/"
     source: hosted
     version: "1.0.4"
-  simple_speed_dial:
-    dependency: "direct main"
-    description:
-      name: simple_speed_dial
-      sha256: b8322649ac3a6ab1ed1153e005efe90d48e6cb5b2b4e264ca0997cf1e88006fa
-      url: "https://mirrors.tuna.tsinghua.edu.cn/dart-pub/"
-    source: hosted
-    version: "0.1.7"
   sky_engine:
     dependency: transitive
     description: flutter

@@ -216,6 +216,7 @@ class RecorderJoystickState extends MountedState<RecorderJoystick> {
     // 识别语音
     EasyLoading.show(status: 'loading...');
     _recognitionService.speechRecognition();
+    EasyLoading.dismiss();
   }
 
   // The slider fuctions
@@ -300,6 +301,7 @@ class RecorderJoystickState extends MountedState<RecorderJoystick> {
           _startRecord();
         },
         onTapUp: (_) {
+          EasyLoading.dismiss();
           widget.onTapUp != null ? widget.onTapUp!() : null;
           _stopRecord();
         },
@@ -307,6 +309,7 @@ class RecorderJoystickState extends MountedState<RecorderJoystick> {
           updatePosition(details);
         },
         onPanEnd: (details) {
+          EasyLoading.dismiss();
           if (widget.onTapUp != null) widget.onTapUp!();
           sliderReleased(details);
         },

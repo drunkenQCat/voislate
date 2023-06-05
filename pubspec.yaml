@@ -29,26 +29,24 @@ environment:
 # versions available, run `flutter pub outdated`.
 dependencies:
   android_physical_buttons: ^0.1.0
+  animated_toggle_switch: ^0.6.2
   build_runner: ^2.4.4
   cupertino_icons: ^1.0.2
   flutter:
     sdk: flutter
   flutter_android_volume_keydown: ^1.0.0
   flutter_easyloading: ^3.0.5
+  flutter_speed_dial: ^7.0.0
   flutter_vibrate: ^1.3.0
   hive: ^2.2.3
   hive_flutter: ^1.1.0
   hive_generator: ^2.0.0
-  ifly_speech_recognition: 
-      # git:
-      #   url: https://github.com/drunkenQCat/ifly_speech_recognition.git
-      #   ref: dev
-      path: ../ifly_speech_recognition
+  ifly_speech_recognition:
+    path: ../ifly_speech_recognition
   permission_handler: ^10.2.0
   provider: ^6.0.5
   record: ^4.4.4
   shared_preferences: ^2.1.1
-  simple_speed_dial: ^0.1.7
 
 dev_dependencies:
   flutter_lints: ^2.0.0
