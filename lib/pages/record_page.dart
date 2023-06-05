@@ -8,6 +8,7 @@ import 'package:voislate/models/slate_log_item.dart';
 // when just build for web, disable this package
 import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:flutter_android_volume_keydown/flutter_android_volume_keydown.dart';
+import 'package:animated_toggle_switch/animated_toggle_switch.dart';
 import 'package:voislate/providers/slate_log_notifier.dart';
 import 'package:voislate/models/slate_schedule.dart';
 
@@ -18,7 +19,8 @@ import '../providers/slate_status_notifier.dart';
 
 import '../widgets/record_page/prev_note_editor.dart';
 import '../widgets/record_page/slate_picker.dart';
-import '../widgets/record_page/floating_ok_dial.dart';
+import '../widgets/record_page/take_ok_dial.dart';
+import '../widgets/record_page/shot_ok_dial.dart';
 import '../widgets/record_page/quick_view_log_dialog.dart';
 import '../widgets/record_page/file_counter.dart';
 import '../widgets/record_page/recorder_joystick.dart';
@@ -74,6 +76,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
   // drawback the last note, and decrease the file number,but not the take number
   // vibration feedback related
   bool _canVibrate = true;
+
   /// 0: not checked, 1: ok, 2: not ok
   var okTk = TkStatus.notChecked;
   var okSht = ShtStatus.notChecked;
@@ -163,8 +166,11 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
     // everytime setState, the build method will be called again
 
     var takeOkDial = TakeOkDial(
-              context: context,
-            );
+      context: context,
+    );
+    var shotOkDial = ShotOkDial(
+      context: context,
+    );
     var prevTakeEditor = PrevTakeEditor(
       num: num,
       descEditingController: descController,
@@ -184,10 +190,9 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
 
     return Consumer2<SlateStatusNotifier, SlateLogNotifier>(
         builder: (context, slateNotifier, logNotifier, child) {
-
-      void resetOkEnum(){
-          takeOkDial.tkStatus = TkStatus.notChecked;
-          okSht = ShtStatus.notChecked;
+      void resetOkEnum() {
+        takeOkDial.tkStatus = TkStatus.notChecked;
+        shotOkDial.shtStatus = ShtStatus.notChecked;
       }
 
       void drawBackItem() {
@@ -218,14 +223,15 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
             filenamePrefix: num.prefix,
             filenameLinker: num.intervalSymbol,
             filenameNum: num.prevFileNum(),
-            tkNote: !isFake? (descController.text.isEmpty
-                ? 'S${sceneCol.selected} Sh${shotCol.selected}T${takeCol.selected}'
-                : descController.text)
+            tkNote: !isFake
+                ? (descController.text.isEmpty
+                    ? 'S${sceneCol.selected} Sh${shotCol.selected}T${takeCol.selected}'
+                    : descController.text)
                 : 'Fake Take',
             shtNote: shotNoteController.text,
             scnNote: totalScenes[sceneCol.selectedIndex].info.note.append,
             okTk: takeOkDial.tkStatus,
-            okSht: okSht,
+            okSht: shotOkDial.shtStatus,
           );
           logNotifier.add(num.prevName(), newLogItem);
         }
@@ -433,28 +439,8 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
                             backgroundColor: Colors.red.shade200,
                             backgroundColorEnd: Colors.green.shade200,
                             foregroundColor: Colors.purple.shade50,
-                            onTapDown: () {},
-                            onLeftEdge: () {
-                              // ScaffoldMessenger.of(context)
-                              //     .hideCurrentSnackBar();
-                              // ScaffoldMessenger.of(context).showSnackBar(
-                              //   const SnackBar(
-                              //     content: Text('正在保存录音描述'),
-                              //     duration: Duration(seconds: 1),
-                              //   ),
-                              // );
-                            },
+                            onRightEdge: (){},
                             leftTextController: descController,
-                            onRightEdge: () {
-                              // ScaffoldMessenger.of(context)
-                              //     .hideCurrentSnackBar();
-                              // ScaffoldMessenger.of(context).showSnackBar(
-                              //   const SnackBar(
-                              //     content: Text('正在保存镜头描述'),
-                              //     duration: Duration(seconds: 1),
-                              //   ),
-                              // );
-                            },
                             rightTextController: shotNoteController,
                           ),
                         ),
@@ -479,20 +465,39 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
             ),
           ],
         ),
-        floatingActionButton:
-            Stack(alignment: AlignmentDirectional.bottomStart, children: [
-          Positioned(
-              bottom: MediaQuery.of(context).size.height * 0.1,
-              left: -5,
-              child: takeOkDial),
-          Positioned(
-            top: MediaQuery.of(context).size.height * 0.3,
-            child: DisplayNotesButton(
+        floatingActionButtonLocation: FloatingActionButtonLocation.startDocked,
+        floatingActionButton: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            DisplayNotesButton(
               notes: exportQuickNotes(),
               num: num,
             ),
-          ),
-        ]),
+            takeOkDial,
+            shotOkDial,
+            AnimatedToggleSwitch.dual(
+              dif: 5,
+              current: _isAbsorbing,
+              first: false, 
+              second: true,
+              onChanged: (value) {
+                setState(() => _isAbsorbing = value);
+              },
+              colorBuilder: (bool isLocked) => !isLocked ? Colors.green : Colors.red,
+              iconBuilder: (bool isLocked) => Icon(!isLocked ? Icons.lock_open : Icons.lock),
+              textBuilder: (bool isLocked) => Text(!isLocked ? '触控' : '锁定'),
+            ),
+          ],
+        ),
+        //   Stack(alignment: AlignmentDirectional.bottomStart, children: [
+        //   Positioned(
+        //     top: MediaQuery.of(context).size.height * 0.3,
+        //     child: DisplayNotesButton(
+        //       notes: exportQuickNotes(),
+        //       num: num,
+        //     ),
+        //   ),
+        // ]),
       );
     });
   }

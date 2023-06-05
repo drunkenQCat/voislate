@@ -2,14 +2,17 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:voislate/models/slate_log_item.dart';
+import 'package:voislate/data/dummy_data.dart';
 
 import 'package:voislate/pages/slate_log_tabs.dart';
-import 'package:voislate/pages/voice_recg_test.dart';
+// import 'package:voislate/pages/voice_recg_test.dart';
 import 'package:voislate/providers/slate_log_notifier.dart';
 import 'package:voislate/pages/scene_schedule_page.dart';
 import 'package:voislate/pages/record_page.dart';
 import 'package:voislate/pages/settings_configue_page.dart';
 import 'package:voislate/providers/slate_status_notifier.dart';
+import 'package:voislate/widgets/slate_log_page/log_editor.dart';
 
 class VoiSlate extends StatelessWidget {
   const VoiSlate({super.key});
@@ -45,7 +48,6 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-
   @override
   void initState() {
     super.initState();
@@ -102,7 +104,8 @@ class _MyHomePageState extends State<MyHomePage>
         children: [
           SceneSchedulePage(),
           const SlateRecord(),
-          const SlateLogTabs(),
+          // const SlateLogTabs(),
+          LogEditor(context: context, logItems: slateLogItems, index: 1)
           // if (kDebugMode) const VoiceRecg(),
         ],
       ),
