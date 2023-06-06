@@ -41,9 +41,10 @@ import '../widgets/record_page/recorder_joystick.dart';
 12x 增加振动交互
 13x *修一下减了之后再加的问题
 14x 把加减号改成方形的
-15. *把currentScn改成prevScene
-16. 保存配置的功能
-17. *****场景次与文件名的逻辑
+15x *把currentScn改成prevScene
+16x 保存配置的功能
+17x *****场景次与文件名的逻辑
+18. 思考音量键/录音信号绑定情况下跑条的设置
 */
 class SlateRecord extends StatefulWidget {
   const SlateRecord({super.key});
@@ -230,8 +231,8 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
                 : 'Fake Take',
             shtNote: shotNoteController.text,
             scnNote: totalScenes[sceneCol.selectedIndex].info.note.append,
-            okTk: takeOkDial.tkStatus,
-            okSht: shotOkDial.shtStatus,
+            okTk: !isFake?takeOkDial.tkStatus:TkStatus.bad,
+            okSht: !isFake?shotOkDial.shtStatus:ShtStatus.notChecked,
           );
           logNotifier.add(num.prevName(), newLogItem);
         }

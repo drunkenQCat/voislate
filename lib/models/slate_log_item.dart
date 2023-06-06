@@ -1,4 +1,5 @@
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:dart_json_mapper/dart_json_mapper.dart';
 
 part 'slate_log_item.g.dart';
 
@@ -6,6 +7,7 @@ part 'slate_log_item.g.dart';
 /// * 0: not checked
 /// * 1: ok
 /// * 2: bad
+@JsonSerializable()
 @HiveType(typeId: 4)
 enum TkStatus {
   @HiveField(0)
@@ -20,6 +22,7 @@ enum TkStatus {
 /// * 0: not checked
 /// * 1: ok
 /// * 2: nice
+@JsonSerializable()
 @HiveType(typeId: 5)
 enum ShtStatus {
   @HiveField(0)
@@ -30,6 +33,7 @@ enum ShtStatus {
   nice,
 }
 
+@JsonSerializable()
 @HiveType(typeId: 6)
 class SlateLogItem {
   @HiveField(0)
@@ -68,7 +72,8 @@ class SlateLogItem {
     required this.tkNote,
     required this.shtNote,
     required this.scnNote,
-    required this.okTk,
-    required this.okSht,
-  });
+    @JsonProperty(name: 'okTk') TkStatus okTk = TkStatus.notChecked,
+    @JsonProperty(name: 'okSht') ShtStatus okSht = ShtStatus.notChecked,
+  })  : this.okTk = okTk,
+        this.okSht = okSht;
 }

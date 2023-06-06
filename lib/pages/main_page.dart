@@ -104,8 +104,8 @@ class _MyHomePageState extends State<MyHomePage>
         children: [
           SceneSchedulePage(),
           const SlateRecord(),
-          // const SlateLogTabs(),
-          LogEditor(context: context, logItems: slateLogItems, index: 1)
+          const SlateLogTabs(),
+          // const SlateLogList()
           // if (kDebugMode) const VoiceRecg(),
         ],
       ),

@@ -32,6 +32,7 @@ dependencies:
   animated_toggle_switch: ^0.6.2
   build_runner: ^2.4.4
   cupertino_icons: ^1.0.2
+  dart_json_mapper: ^2.2.9
   flutter:
     sdk: flutter
   flutter_android_volume_keydown: ^1.0.0
@@ -46,6 +47,7 @@ dependencies:
   permission_handler: ^10.2.0
   provider: ^6.0.5
   record: ^4.4.4
+  share_plus: ^7.0.2
   shared_preferences: ^2.1.1
 
 dev_dependencies:
