@@ -1,17 +1,23 @@
+import 'dart:io';
+
+import 'package:dart_json_mapper/dart_json_mapper.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:share_plus/share_plus.dart';
 
 import 'package:voislate/models/slate_schedule.dart';
 import '../models/slate_log_item.dart';
 import '../providers/slate_log_notifier.dart';
 import '../providers/slate_status_notifier.dart';
+import '../widgets/slate_log_page/log_editor.dart';
 
 /* 
 TODO：
 1x 与record页的数据绑定，最好能自动滚动到selected
 2x 日期的TabView
-3. 解决不能自动刷新的bug
+3x 解决不能自动刷新的bug
+4. 优化界面
 */
 // ignore: must_be_immutable
 class SlateLog extends StatefulWidget {
@@ -27,6 +33,10 @@ class SlateLog extends StatefulWidget {
 }
 
 class _SlateLogState extends State<SlateLog> {
+  late SceneSchedule currentSceneData;
+  late Box<SlateLogItem> logBox;
+  late List<SlateLogItem> logList;
+
   @override
   void initState() {
     // TODO: implement initState
@@ -39,87 +49,136 @@ class _SlateLogState extends State<SlateLog> {
   Widget build(BuildContext context) {
     return Consumer2<SlateLogNotifier, SlateStatusNotifier>(
       builder: (context, slateLogs, slateStatus, child) {
-        SceneSchedule currentSceneData = Hive.box('scenes_box')
+        currentSceneData = Hive.box('scenes_box')
             .getAt(slateStatus.selectedSceneIndex) as SceneSchedule;
+        logBox = Hive.box(widget.date);
+        logList = logBox.values.toList().cast<SlateLogItem>();
         var currentScn = currentSceneData.info.name;
         var currentShot = currentSceneData[slateStatus.selectedShotIndex].name;
-        Box<SlateLogItem> logBox = Hive.box(widget.date);
 
-        Map<String, Map<String, List<SlateLogItem>>> sortedItems = {};
-        for (SlateLogItem item in logBox.values.toList().cast()) {
+        Map<String, Map<String, Map<int, SlateLogItem>>> sortedItems = {};
+
+        for (int i = 0; i < logList.length; i++) {
+          // i is the index in logList
+          SlateLogItem item = logList[i];
           if (!sortedItems.containsKey(item.scn)) {
             sortedItems[item.scn] = {};
           }
           if (!sortedItems[item.scn]!.containsKey(item.sht)) {
-            sortedItems[item.scn]![item.sht] = [];
+            sortedItems[item.scn]![item.sht] = {};
           }
-          sortedItems[item.scn]![item.sht]!.add(item);
+          sortedItems[item.scn]![item.sht]![i] = item;
         }
 
-        return ListView.builder(
-          controller: widget.controller,
-          itemCount: sortedItems.length,
-          itemBuilder: (BuildContext context, int index) {
-            String scn = sortedItems.keys.elementAt(index);
-            Map<String, List<SlateLogItem>> shtItems = sortedItems[scn]!;
-
-            return ExpansionTile(
-              backgroundColor: Colors.grey,
-              initiallyExpanded: (scn == currentScn),
-              title: Center(child: Text(scn)),
-              subtitle: Center(child: Text('场')),
-              children: shtItems.keys.map((sht) {
-                List<SlateLogItem> items = shtItems[sht]!;
+        return Stack(
+          alignment: AlignmentDirectional.bottomEnd,
+          children: [
+            ListView.builder(
+              controller: widget.controller,
+              itemCount: sortedItems.length,
+              itemBuilder: (BuildContext context, int index) {
+                String scn = sortedItems.keys.elementAt(index);
+                Map<String, Map<int, SlateLogItem>> shtItems =
+                    sortedItems[scn]!;
 
                 return ExpansionTile(
-                  backgroundColor: Colors.grey[200],
-                  initiallyExpanded: (sht == currentShot),
-                  title: Text(sht),
-                  subtitle: Text('镜'),
-                  children: items.map((item) {
-                    return Container(
-                      color: _getTkStatusColor(item.okTk),
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          child: Text(item.tk.toString()),
-                        ),
-                        title: RichText(
-                          text: TextSpan(
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
-                            children: [
-                              TextSpan(
-                                text: item.filenamePrefix,
-                              ),
-                              TextSpan(text: ' '),
-                              TextSpan(text: item.filenameLinker),
-                              TextSpan(text: ' '),
-                              TextSpan(text: item.filenameNum.toString()),
-                            ],
-                          ),
-                        ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('TK Note: ${item.tkNote}'),
-                            Text('Shot Note: ${item.shtNote}'),
-                            Text('Scene Note: ${item.scnNote}'),
-                          ],
-                        ),
-                        trailing: Icon(
-                          _getShtStatusIcon(item.okSht),
-                        ),
-                      ),
+                  backgroundColor: Colors.grey,
+                  initiallyExpanded: (scn == currentScn),
+                  title: Center(child: Text(scn)),
+                  subtitle: Center(child: Text('场')),
+                  children: shtItems.keys.map((sht) {
+                    Map<int, SlateLogItem> items = shtItems[sht]!;
+
+                    return ExpansionTile(
+                      backgroundColor: Colors.grey[200],
+                      initiallyExpanded: (sht == currentShot),
+                      title: Text(sht),
+                      subtitle: Text('镜'),
+                      children: items.entries.map((item) {
+                        return logViewItem(item);
+                      }).toList(),
                     );
                   }).toList(),
                 );
-              }).toList(),
-            );
-          },
+              },
+            ),
+            ElevatedButton(
+              onPressed: () {
+                var json = JsonMapper.serialize(logList);
+                final tempDir = Directory.systemTemp.createTempSync();
+                final timeStamp = DateTime.now()
+                    .millisecondsSinceEpoch
+                    .toString(); // get current time stamp
+                final slateLogDestiny = File(
+                    '${tempDir.path}/slateLog_$timeStamp.json'); // create file with time stamp suffix
+                slateLogDestiny.writeAsStringSync(json);
+                Share.share(json);
+                Share.shareXFiles([XFile(slateLogDestiny.path)]);
+              },
+              style: ElevatedButton.styleFrom(
+                shape: const CircleBorder(),
+                backgroundColor: Colors.blue,
+                padding: const EdgeInsets.all(16),
+              ),
+              child: const Icon(Icons.share),
+            ),
+          ],
         );
       },
+    );
+  }
+
+  Container logViewItem(MapEntry<int, SlateLogItem> item) {
+    return Container(
+      color: _getTkStatusColor(item.value.okTk),
+      child: ListTile(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => LogEditor(
+                context: context,
+                logItems: logList,
+                logsBox: logBox,
+                index: item.key,
+              ),
+            ),
+          ).then((value) => setState(
+                () => {},
+              ));
+        },
+        leading: CircleAvatar(
+          child: Text(item.value.tk.toString()),
+        ),
+        title: RichText(
+          text: TextSpan(
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
+            children: [
+              TextSpan(
+                text: item.value.filenamePrefix,
+              ),
+              const TextSpan(text: ' '),
+              TextSpan(text: item.value.filenameLinker),
+              const TextSpan(text: ' '),
+              TextSpan(text: item.value.filenameNum.toString()),
+            ],
+          ),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('TK Note: ${item.value.tkNote}'),
+            Text('Shot Note: ${item.value.shtNote}'),
+            Text('Scene Note: ${item.value.scnNote}'),
+          ],
+        ),
+        trailing: Icon(
+          _getShtStatusIcon(item.value.okSht),
+        ),
+      ),
     );
   }
 

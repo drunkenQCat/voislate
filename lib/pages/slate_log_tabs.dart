@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
 import 'package:provider/provider.dart';
 
 import 'slate_log_page.dart';
@@ -49,16 +48,16 @@ class _SlateLogTabsState extends State<SlateLogTabs>
             unselectedLabelColor: Colors.black,
             labelColor: Colors.blue,
             tabs: tabs
-                .map((date) => Tab(
-                      text: date,
-                    ))
-                .toList(),
+              .map((date) => Tab(
+                    text: date,
+                  ))
+              .toList(),
           ),
         ),
         IconButton(
           icon: const Icon(Icons.arrow_forward_ios),
           onPressed: () {
-            if (_tabController.index + 1 < 20) {
+            if (_tabController.index + 1 < _tabController.length) {
               _tabController.animateTo(_tabController.index + 1);
             } else {
               //
