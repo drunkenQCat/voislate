@@ -39,12 +39,14 @@ class RecordFileNum {
   }
 
   String fullName() {
-    return '$prefix$intervalSymbol$_number';
+    var numberPad = _number.toString().padLeft(3, '0');
+    return '$prefix$intervalSymbol$numberPad';
   }
 
   String prevName() {
     if (_number == 1) return '';
-    return '$prefix$intervalSymbol${_number - 1}';
+    var numberPad = (_number - 1).toString().padLeft(3, '0');
+    return '$prefix$intervalSymbol$numberPad';
   }
 
   int prevFileNum() => _number - 1;

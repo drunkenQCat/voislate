@@ -112,7 +112,7 @@ class _SlateLogState extends State<SlateLog> {
                 final slateLogDestiny = File(
                     '${tempDir.path}/slateLog_$timeStamp.json'); // create file with time stamp suffix
                 slateLogDestiny.writeAsStringSync(json);
-                Share.share(json);
+                // Share.share(json);
                 Share.shareXFiles([XFile(slateLogDestiny.path)]);
               },
               style: ElevatedButton.styleFrom(
@@ -150,21 +150,28 @@ class _SlateLogState extends State<SlateLog> {
         leading: CircleAvatar(
           child: Text(item.value.tk.toString()),
         ),
-        title: RichText(
-          text: TextSpan(
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
-            children: [
-              TextSpan(
-                text: item.value.filenamePrefix,
-              ),
-              const TextSpan(text: ' '),
-              TextSpan(text: item.value.filenameLinker),
-              const TextSpan(text: ' '),
-              TextSpan(text: item.value.filenameNum.toString()),
-            ],
+        // title: RichText(
+        //   text: TextSpan(
+        //     style: const TextStyle(
+        //       fontWeight: FontWeight.bold,
+        //       color: Colors.black,
+        //     ),
+        //     children: [
+        //       TextSpan(
+        //         text: item.value.filenamePrefix,
+        //       ),
+        //       const TextSpan(text: ' '),
+        //       TextSpan(text: item.value.filenameLinker),
+        //       const TextSpan(text: ' '),
+        //       TextSpan(text: item.value.filenameNum.toString().padLeft(3, '0')),
+        //     ],
+        //   ),
+        // ),
+        title: Text(
+          item.value.fileName,
+          style:const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
           ),
         ),
         subtitle: Column(

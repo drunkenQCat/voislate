@@ -35,7 +35,7 @@ class SlateLogNotifier with ChangeNotifier {
 
   void removeFile(String key) {
     logToday.removeWhere((element) =>
-        element.filenamePrefix + element.filenameNum.toString() == key);
+        element.fileName == key);
     boxToday.delete(key);
     notifyListeners();
   }

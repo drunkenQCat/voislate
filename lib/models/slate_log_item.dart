@@ -49,7 +49,7 @@ class SlateLogItem {
   @HiveField(5)
   int filenameNum;
   String get fileName{
-    return filenamePrefix + filenameLinker + filenameNum.toString();
+    return filenamePrefix + filenameLinker + filenameNum.toString().padLeft(3,'0');
   }
   @HiveField(6)
   String tkNote;
