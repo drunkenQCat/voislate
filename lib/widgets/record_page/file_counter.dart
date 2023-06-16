@@ -124,7 +124,7 @@ class FileNameDisplayCard extends StatelessWidget {
                       builder: (BuildContext context) {
                         String value = snapshot.data.toString();
                         return AlertDialog(
-                          title: const Text('Edit Num'),
+                          title: const Text('编辑录音编号（不需要输入0）'),
                           content: TextField(
                             keyboardType: TextInputType.number,
                             onChanged: (newValue) {
@@ -141,7 +141,7 @@ class FileNameDisplayCard extends StatelessWidget {
                     );
                   },
                   child: Text(
-                    snapshot.data.toString(),
+                    snapshot.data.toString().padLeft(3, '0'),
                     style: style,
                   ),
                 ),

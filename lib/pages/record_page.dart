@@ -231,9 +231,10 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
                 : 'Fake Take',
             shtNote: shotNoteController.text,
             scnNote: totalScenes[sceneCol.selectedIndex].info.note.append,
-            okTk: !isFake?takeOkDial.tkStatus:TkStatus.bad,
-            okSht: !isFake?shotOkDial.shtStatus:ShtStatus.notChecked,
+            okTk: !isFake ? takeOkDial.tkStatus : TkStatus.bad,
+            okSht: !isFake ? shotOkDial.shtStatus : ShtStatus.notChecked,
           );
+          if (!isLinked) newLogItem.tkNote = "wild ${newLogItem.tkNote}";
           logNotifier.add(num.prevName(), newLogItem);
         }
         List<String> prevTakePickerData = [
@@ -440,7 +441,8 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
                             backgroundColor: Colors.red.shade200,
                             backgroundColorEnd: Colors.green.shade200,
                             foregroundColor: Colors.purple.shade50,
-                            onRightEdge: (){},
+                            onLeftEdge: () {},
+                            onRightEdge: () {},
                             leftTextController: descController,
                             rightTextController: shotNoteController,
                           ),
@@ -479,13 +481,15 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
             AnimatedToggleSwitch.dual(
               dif: 5,
               current: _isAbsorbing,
-              first: false, 
+              first: false,
               second: true,
               onChanged: (value) {
                 setState(() => _isAbsorbing = value);
               },
-              colorBuilder: (bool isLocked) => !isLocked ? Colors.green : Colors.red,
-              iconBuilder: (bool isLocked) => Icon(!isLocked ? Icons.lock_open : Icons.lock),
+              colorBuilder: (bool isLocked) =>
+                  !isLocked ? Colors.green : Colors.red,
+              iconBuilder: (bool isLocked) =>
+                  Icon(!isLocked ? Icons.lock_open : Icons.lock),
               textBuilder: (bool isLocked) => Text(!isLocked ? '触控' : '锁定'),
             ),
           ],
