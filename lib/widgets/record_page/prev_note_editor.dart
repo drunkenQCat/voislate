@@ -1,5 +1,3 @@
-// ignore_for_file: must_be_immutable
-
 import 'package:flutter/material.dart';
 import 'package:voislate/models/recorder_file_num.dart';
 
@@ -42,8 +40,7 @@ class PrevTakeEditor extends StatelessWidget {
               decoration: InputDecoration(
                 // contentPadding: EdgeInsets.symmetric(vertical: 20),
                 border: OutlineInputBorder(),
-                hintText:
-                    '${num.prevName()}\n 录音标注...',
+                hintText: '${num.prevName()}\n 录音标注...',
               ),
             ),
           ),
@@ -95,7 +92,7 @@ class PrevShotNote extends StatelessWidget {
                 color: Colors.green,
               ),
               Text(
-                  'S$currentScn Sh$currentSht Tk${int.parse(currentTk) < 2 ? '?' : (int.parse(currentTk) - 1).toString()}'),
+                  'S$currentScn Sh$currentSht Tk$currentTk'),
             ],
           ),
           subtitle: SizedBox(

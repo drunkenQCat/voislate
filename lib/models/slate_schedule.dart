@@ -28,6 +28,8 @@ class ScheduleItem {
   Note note;
   // constructor
   ScheduleItem(this._key, this._fix, this.note) : name = _key + _fix;
+
+  static fromJson() {}
 }
 
 @HiveType(typeId: 1)

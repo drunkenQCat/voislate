@@ -47,11 +47,10 @@ abstract class SlatePickerState with ChangeNotifier {
   void scrollToNext(bool isLink) {
     if(selected == numList.last) return;
 
-    _selectedIndex++;
-    if (_selectedIndex >= numList.length) {
-      _selectedIndex = 0;
+    if (isLink && _selectedIndex + 1 < numList.length) {
+      _selectedIndex++;
+      scrollSelectedToIndex(_selectedIndex);
     }
-    if (isLink) scrollSelectedToIndex(_selectedIndex);
   }
 
   void scrollToPrev(bool isLink){

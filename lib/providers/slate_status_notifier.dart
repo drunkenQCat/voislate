@@ -18,12 +18,19 @@ class SlateStatusNotifier extends ChangeNotifier {
       ? Hive.box('scn_sht_tk').get('recordCount', defaultValue: 1) as int
       : 1;
 
+  String _currentDesc = 
+      Hive.box('scn_sht_tk').get('desc', defaultValue: "") as String;
+  String _currentNote = 
+      Hive.box('scn_sht_tk').get('note', defaultValue: "") as String;
+
   int get selectedSceneIndex => _selectedSceneIndex;
   int get selectedShotIndex => _selectedShotIndex;
   int get selectedTakeIndex => _selectedTakeIndex;
   bool get isLinked => _isLinked;
   String get date => _date;
   int get recordCount => _recordCount;
+  String get currentDesc => _currentDesc;
+  String get currentNote => _currentNote;
 
   void setIndex({int? scene, int? shot, int? take, int? count}) {
     if (scene != null) {
@@ -44,6 +51,17 @@ class SlateStatusNotifier extends ChangeNotifier {
     }
     Hive.box('scn_sht_tk').put('date', RecordFileNum.today);
     notifyListeners();
+  }
+
+  void setNote({String? desc, String? note}) {
+    if (desc != null) {
+      _currentDesc = desc;
+      Hive.box('scn_sht_tk').put('desc', desc);
+    }
+    if (note != null) {
+      _currentNote = note;
+      Hive.box('scn_sht_tk').put('note', note);
+    }
   }
 
   void setLink(bool link) {
