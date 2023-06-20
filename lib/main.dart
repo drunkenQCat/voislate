@@ -45,9 +45,8 @@ void main() async {
   if (Hive.box('dates').isEmpty) {
     Hive.box('dates').put(today, today);
   }
-  var lastDayIndex = Hive.box('dates').length - 1;
   if (!Hive.box('dates').containsKey(today)) {
-    Hive.box('dates').putAt(lastDayIndex, today);
+    Hive.box('dates').put(today, today);
     Hive.box('picker_history').clear();
   }
 

@@ -11,6 +11,7 @@ import 'package:flutter_android_volume_keydown/flutter_android_volume_keydown.da
 import 'package:animated_toggle_switch/animated_toggle_switch.dart';
 import 'package:voislate/providers/slate_log_notifier.dart';
 import 'package:voislate/models/slate_schedule.dart';
+import 'package:voislate/widgets/scene_schedule_page/note_editor.dart';
 
 import '../providers/slate_num_notifier.dart';
 import '../providers/value_scroll_control.dart';
@@ -53,15 +54,16 @@ class SlateRecord extends StatefulWidget {
   State<SlateRecord> createState() => _SlateRecordState();
 }
 
-class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
+class _SlateRecordState extends State<SlateRecord>
+    with WidgetsBindingObserver, AutomaticKeepAliveClientMixin {
   // Some variables don't need to be in the state
 
   late List<SceneSchedule> totalScenes;
   late bool isLinked;
   final int _counterInit = 1;
   // about the logs
-  var shotNoteController = TextEditingController();
-  var descController = TextEditingController();
+  late TextEditingController shotNoteController;
+  late TextEditingController descController;
   // about the slate picker
   var titles = ['Scene', 'Shot', 'Take'];
   final sceneCol = SlateColumnOne();
@@ -138,6 +140,10 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
     sceneCol.init(0, sceneList);
     shotCol.init(0, shotList);
     takeCol.init(0, takeList);
+    String initDesc = initValueProvider.currentDesc;
+    String initNote = initValueProvider.currentNote;
+    descController = TextEditingController(text: initDesc);
+    shotNoteController = TextEditingController(text: initNote);
     WidgetsBinding.instance.endOfFrame.then((_) {
       var initS = initValueProvider.selectedSceneIndex;
       var initSh = initValueProvider.selectedShotIndex;
@@ -191,6 +197,10 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
 
     return Consumer2<SlateStatusNotifier, SlateLogNotifier>(
         builder: (context, slateNotifier, logNotifier, child) {
+      descController
+          .addListener(() => slateNotifier.setNote(desc: descController.text));
+      shotNoteController.addListener(
+          () => slateNotifier.setNote(note: shotNoteController.text));
       void resetOkEnum() {
         takeOkDial.tkStatus = TkStatus.notChecked;
         shotOkDial.shtStatus = ShtStatus.notChecked;
@@ -217,6 +227,15 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
             ? pickerHistory.getAt(pickerHistory.length - 1) as List<String>
             : [];
         if (num.prevName().isNotEmpty) {
+          String currentScn = pickerHistory.isNotEmpty
+              ? pickerHistory.getAt(pickerHistory.length - 1)[0]
+              : '0';
+          String currentSht = pickerHistory.isNotEmpty
+              ? pickerHistory.getAt(pickerHistory.length - 1)[1]
+              : '0';
+          String currentTk = pickerHistory.isNotEmpty
+              ? pickerHistory.getAt(pickerHistory.length - 1)[2]
+              : '0';
           var newLogItem = SlateLogItem(
             scn: prevTake[0],
             sht: prevTake[1],
@@ -226,7 +245,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
             filenameNum: num.prevFileNum(),
             tkNote: !isFake
                 ? (descController.text.isEmpty
-                    ? 'S${sceneCol.selected} Sh${shotCol.selected}T${takeCol.selected}'
+                    ? 'S$currentScn Sh$currentSht Tk$currentTk'
                     : descController.text)
                 : 'Fake Take',
             shtNote: shotNoteController.text,
@@ -234,7 +253,8 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
             okTk: !isFake ? takeOkDial.tkStatus : TkStatus.bad,
             okSht: !isFake ? shotOkDial.shtStatus : ShtStatus.notChecked,
           );
-          if (!isLinked) newLogItem.tkNote = "wild ${newLogItem.tkNote}";
+          if (!isLinked)
+            newLogItem.tkNote = "wild track after ${newLogItem.tkNote}";
           logNotifier.add(num.prevName(), newLogItem);
         }
         List<String> prevTakePickerData = [
@@ -252,31 +272,33 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
                 ? Vibrate.feedback(FeedbackType.error)
                 : Vibrate.feedback(FeedbackType.heavy);
           }
+          descController.clear();
         });
       }
 
       var col3IncBtn = ElevatedButton(
           onPressed: () {
             addItem();
-            prevTakeEditor.descEditingController.clear();
             takeCol.scrollToNext(isLinked);
           },
           style: ElevatedButton.styleFrom(minimumSize: const Size(70, 60)),
           child: const Icon(Icons.add));
 
+      var bottomButtonStyleFrom =
+          ElevatedButton.styleFrom(minimumSize: const Size(87, 50));
       var col3DecBtn = ElevatedButton(
         onPressed: () {
           drawBackItem();
           prevTakeEditor.descEditingController.clear();
           takeCol.scrollToPrev(isLinked);
         },
-        style: ElevatedButton.styleFrom(minimumSize: const Size(70, 60)),
+        style: bottomButtonStyleFrom,
         child: const Icon(Icons.remove),
       );
 
       scrl3 = ScrollValueController<SlateColumnThree>(
         context: context,
-        textCon: prevTakeEditor.descEditingController,
+        textCon: descController,
         inc: () => addItem(),
         dec: () => drawBackItem(),
         col: takeCol,
@@ -334,25 +356,39 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
                   //   },
                   // ),
                 ),
-                SlatePicker(
-                  titles: titles,
-                  stateOne: sceneCol,
-                  stateTwo: shotCol,
-                  stateThree: takeCol,
-                  width: screenWidth - 2 * horizonPadding,
-                  height: screenHeight * 0.17,
-                  itemHeight: screenHeight * 0.13 - 48,
-                  resultChanged: ({v1, v2, v3}) {
-                    if (v1 != null || v2 != null) {
-                      prevShotNote.controller.text =
-                          totalScenes[sceneCol.selectedIndex]
-                                  [shotCol.selectedIndex]
-                              .note
-                              .append;
-                    }
-                    pickerNumSync();
-                    debugPrint('v1: $v1, v2: $v2, v3: $v3');
-                  },
+                GestureDetector(
+                  onTap: () {},
+                  onLongPress: () => showModalBottomSheet(
+                    context: context, 
+                    builder:(context){
+                      return NoteEditor(
+                        context: context,
+                        scenes: totalScenes, 
+                        index: shotCol.selectedIndex,
+                        scnIndex: sceneCol.selectedIndex,
+                        shotIndex: shotCol.selectedIndex,
+                        );
+                    } ,),
+                  child: SlatePicker(
+                    titles: titles,
+                    stateOne: sceneCol,
+                    stateTwo: shotCol,
+                    stateThree: takeCol,
+                    width: screenWidth - 2 * horizonPadding,
+                    height: screenHeight * 0.17,
+                    itemHeight: screenHeight * 0.13 - 48,
+                    resultChanged: ({v1, v2, v3}) {
+                      if (v3.toString() == "2") {
+                        shotNoteController.text =
+                            totalScenes[sceneCol.selectedIndex]
+                                    [shotCol.selectedIndex]
+                                .note
+                                .append;
+                      }
+                      pickerNumSync();
+                      debugPrint('v1: , v2: , v3: ');
+                    },
+                  ),
                 ),
                 // add an input box to have a note about the number
                 const SizedBox(
@@ -449,18 +485,44 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
                         ),
                       ],
                     ),
-                    Row(
-                      children: [
-                        Expanded(
-                            child: AbsorbPointer(
-                                absorbing: _isAbsorbing, child: col3DecBtn)),
-                      ],
+                    AbsorbPointer(
+                      absorbing: _isAbsorbing,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          col3DecBtn,
+                          ElevatedButton(
+                              onPressed: () {},
+                              style: bottomButtonStyleFrom,
+                              child: const Icon(Icons.check_rounded))
+                        ],
+                      ),
                     ),
-                    SwitchListTile(
-                      value: !_isAbsorbing,
-                      onChanged: ((value) =>
-                          setState(() => _isAbsorbing = !value)),
-                      title: Text('触控'),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        DisplayNotesButton(
+                          notes: exportQuickNotes(),
+                          num: num,
+                        ),
+                        takeOkDial,
+                        shotOkDial,
+                        AnimatedToggleSwitch.dual(
+                          dif: 5,
+                          current: _isAbsorbing,
+                          first: false,
+                          second: true,
+                          onChanged: (value) {
+                            setState(() => _isAbsorbing = value);
+                          },
+                          colorBuilder: (bool isLocked) =>
+                              !isLocked ? Colors.green : Colors.red,
+                          iconBuilder: (bool isLocked) =>
+                              Icon(!isLocked ? Icons.lock_open : Icons.lock),
+                          textBuilder: (bool isLocked) =>
+                              Text(!isLocked ? '触控' : '锁定'),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -468,32 +530,32 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
             ),
           ],
         ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.startDocked,
-        floatingActionButton: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            DisplayNotesButton(
-              notes: exportQuickNotes(),
-              num: num,
-            ),
-            takeOkDial,
-            shotOkDial,
-            AnimatedToggleSwitch.dual(
-              dif: 5,
-              current: _isAbsorbing,
-              first: false,
-              second: true,
-              onChanged: (value) {
-                setState(() => _isAbsorbing = value);
-              },
-              colorBuilder: (bool isLocked) =>
-                  !isLocked ? Colors.green : Colors.red,
-              iconBuilder: (bool isLocked) =>
-                  Icon(!isLocked ? Icons.lock_open : Icons.lock),
-              textBuilder: (bool isLocked) => Text(!isLocked ? '触控' : '锁定'),
-            ),
-          ],
-        ),
+        // floatingActionButtonLocation: FloatingActionButtonLocation.startDocked,
+        // floatingActionButton: Row(
+        //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        //   children: [
+        //     DisplayNotesButton(
+        //       notes: exportQuickNotes(),
+        //       num: num,
+        //     ),
+        //     // takeOkDial,
+        //     shotOkDial,
+        //     AnimatedToggleSwitch.dual(
+        //       dif: 5,
+        //       current: _isAbsorbing,
+        //       first: false,
+        //       second: true,
+        //       onChanged: (value) {
+        //         setState(() => _isAbsorbing = value);
+        //       },
+        //       colorBuilder: (bool isLocked) =>
+        //           !isLocked ? Colors.green : Colors.red,
+        //       iconBuilder: (bool isLocked) =>
+        //           Icon(!isLocked ? Icons.lock_open : Icons.lock),
+        //       textBuilder: (bool isLocked) => Text(!isLocked ? '触控' : '锁定'),
+        //     ),
+        //   ],
+        // ),
         //   Stack(alignment: AlignmentDirectional.bottomStart, children: [
         //   Positioned(
         //     top: MediaQuery.of(context).size.height * 0.3,
@@ -506,4 +568,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
       );
     });
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }

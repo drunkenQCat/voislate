@@ -7,6 +7,8 @@ import '../models/slate_schedule.dart';
 import '../../widgets/scene_schedule_page/note_editor.dart';
 
 class SceneSchedulePage extends StatefulWidget {
+  const SceneSchedulePage({super.key});
+
   @override
   _SceneSchedulePageState createState() => _SceneSchedulePageState();
 }
@@ -30,7 +32,7 @@ class SceneSchedulePage extends StatefulWidget {
 class _SceneSchedulePageState extends State<SceneSchedulePage>
     with AutomaticKeepAliveClientMixin {
   List<SceneSchedule> scenes = [];
-  int selectedIndex = 0;
+  int selectedSceneIndex = 0;
   int selectedShotIndex = 0;
 
   @override
@@ -50,7 +52,7 @@ class _SceneSchedulePageState extends State<SceneSchedulePage>
       builder: (BuildContext context, AsyncSnapshot<void> snapshot) {
         return Consumer<SlateStatusNotifier>(
             builder: (context, slateNotifier, child) {
-          selectedIndex = slateNotifier.selectedSceneIndex;
+          selectedSceneIndex = slateNotifier.selectedSceneIndex;
           selectedShotIndex = slateNotifier.selectedShotIndex;
 
           void removeItem(BuildContext context, int sceneIndex,
@@ -59,17 +61,17 @@ class _SceneSchedulePageState extends State<SceneSchedulePage>
             bool isScene = shotIndex == null;
             if (isScene) {
               var removed = scenes.removeAt(sceneIndex);
-              if (selectedIndex < sceneIndex) {
+              if (selectedSceneIndex < sceneIndex) {
                 // do nothing
-              } else if (selectedIndex == sceneIndex &&
-                  selectedIndex == scenes.length) {
-                selectedIndex--;
+              } else if (selectedSceneIndex == sceneIndex &&
+                  selectedSceneIndex == scenes.length) {
+                selectedSceneIndex--;
                 selectedShotIndex = 0;
                 slateNotifier.setIndex(
-                    scene: selectedIndex, shot: selectedShotIndex, take: 0);
-              } else if (selectedIndex > sceneIndex) {
-                selectedIndex--;
-                slateNotifier.setIndex(scene: selectedIndex);
+                    scene: selectedSceneIndex, shot: selectedShotIndex, take: 0);
+              } else if (selectedSceneIndex > sceneIndex) {
+                selectedSceneIndex--;
+                slateNotifier.setIndex(scene: selectedSceneIndex);
               }
               _saveBox();
               ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -83,14 +85,16 @@ class _SceneSchedulePageState extends State<SceneSchedulePage>
                     },
                   )));
             } else {
-              var removed = scenes[selectedIndex].removeAt(shotIndex);
+              var removed = scenes[selectedSceneIndex].removeAt(shotIndex);
               // if remove the last item, selectedShotIndex will be -1
-              selectedShotIndex = (shotIndex - 1 < 0) ? 0 : shotIndex - 1;
+              // selectedShotIndex = (shotIndex - 1 < 0) ? 0 : shotIndex - 1;
               if (selectedShotIndex < shotIndex) {
-                // do nothing
+
               } else if (selectedShotIndex == shotIndex &&
-                  selectedShotIndex == scenes[selectedIndex].length) {
-                selectedShotIndex--;
+                  selectedShotIndex == scenes[selectedSceneIndex].length) {
+                setState(() {
+                  selectedShotIndex--;
+                });
                 slateNotifier.setIndex(shot: selectedShotIndex, take: 0);
               } else if (selectedShotIndex > shotIndex) {
                 selectedShotIndex--;
@@ -169,12 +173,12 @@ class _SceneSchedulePageState extends State<SceneSchedulePage>
                         ),
                       ],
                     ),
-                    selected: index == selectedIndex,
+                    selected: index == selectedSceneIndex,
                     onTap: () {
                       setState(() {
-                        selectedIndex = index;
+                        selectedSceneIndex = index;
                         selectedShotIndex = 0;
-                        slateNotifier.setIndex(scene: index,shot: 0, take: 0);
+                        slateNotifier.setIndex(scene: index, shot: 0, take: 0);
                       });
                     },
                   ),
@@ -184,15 +188,15 @@ class _SceneSchedulePageState extends State<SceneSchedulePage>
           }
 
           Dismissible rightList(int index, BuildContext context) {
-            var itemGroup = scenes[selectedIndex];
+            var itemGroup = scenes[selectedSceneIndex];
             var item = itemGroup[index];
 
             return Dismissible(
               key: Key(item.name + index.toString()),
               onDismissed: (direction) => setState(() {
                 if (direction == DismissDirection.endToStart) {
-                  if (scenes[selectedIndex].length > 1) {
-                    removeItem(context, selectedIndex, index);
+                  if (scenes[selectedSceneIndex].length > 1) {
+                    removeItem(context, selectedSceneIndex, index);
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
@@ -204,13 +208,13 @@ class _SceneSchedulePageState extends State<SceneSchedulePage>
               }),
               confirmDismiss: (direction) async {
                 if (direction == DismissDirection.endToStart) {
-                  if (scenes[selectedIndex].length > 1) {
+                  if (scenes[selectedSceneIndex].length > 1) {
                     return true;
                   }
                   return false;
                 } else if (direction == DismissDirection.startToEnd) {
                   showNoteEditor(
-                      context, scenes, selectedIndex, selectedIndex, index);
+                      context, scenes, selectedSceneIndex, selectedSceneIndex, index);
                   return false;
                 }
                 return null;
@@ -226,7 +230,7 @@ class _SceneSchedulePageState extends State<SceneSchedulePage>
               child: GestureDetector(
                 onDoubleTap: () {
                   showNoteEditor(
-                      context, scenes, selectedIndex, selectedIndex, index);
+                      context, scenes, selectedSceneIndex, selectedSceneIndex, index);
                 },
                 child: ListTileTheme(
                   tileColor: Colors.white,
@@ -275,95 +279,118 @@ class _SceneSchedulePageState extends State<SceneSchedulePage>
             );
           }
 
-          return Row(
+          return Stack(
+            alignment: AlignmentDirectional.bottomEnd,
             children: [
-              Flexible(
-                flex: 1,
-                child: ReorderableListView.builder(
-                  // 左边的列表
-                  itemCount: scenes.length,
-                  onReorder: (int oldIndex, int newIndex) {
-                    setState(() {
-                      var shots = scenes[oldIndex];
-                      if (newIndex > oldIndex) {
-                        newIndex -= 1;
-                      }
-                      scenes.removeAt(oldIndex);
-                      // int index = newIndex > oldIndex ? newIndex - 1 : newIndex;
-                      scenes.insert(newIndex, shots);
-                      // make the selected item to be the dragged item
-                      selectedIndex = newIndex;
-                      slateNotifier.setIndex(scene: newIndex, shot: 0, take: 0);
-                      _saveBox();
-                    });
-                    slateNotifier.setIndex(scene: newIndex);
-                  },
-                  itemBuilder: (BuildContext context, int index) {
-                    return ReorderableDelayedDragStartListener(
-                      key: ValueKey(scenes[index].info.name + index.toString()),
-                      index: index,
-                      child: leftList(index, context),
-                    );
-                  },
-                  proxyDecorator: (child, index, animation) {
-                    return Material(
-                      color: Colors.transparent,
-                      elevation: 10.0,
-                      child: child,
-                    );
-                  },
-                ),
-              ),
-              Flexible(
-                flex: 3,
-                child: Column(
-                  children: [
-                    ListTile(
-                      // 用来显示场的基本信息，作为接下来创建的镜的计划
-                      tileColor: Colors.purple[50],
-                      title: Text(
-                          '${scenes[selectedIndex].info.name}场，地点：${scenes[selectedIndex].info.note.type}'),
-                      subtitle: Text(scenes[selectedIndex].info.note.append),
-                    ),
-                    Expanded(
-                      child: ReorderableListView.builder(
-                        // 右边的列表
-                        itemCount: scenes[selectedIndex].length,
-                        onReorder: (int oldIndex, int newIndex) {
-                          setState(() {
-                            if (newIndex > oldIndex) {
-                              newIndex -= 1;
-                            }
-                            final item =
-                                scenes[selectedIndex].removeAt(oldIndex);
-                            // int index = newIndex > oldIndex ? newIndex - 1 : newIndex;
-                            scenes[selectedIndex].insert(newIndex, item);
-                            // make the selected item to be the dragged item
-                            selectedShotIndex = newIndex;
-                          });
-                          slateNotifier.setIndex(shot: newIndex, take: 0);
+              Row(
+                children: [
+                  Flexible(
+                    flex: 1,
+                    child: ReorderableListView.builder(
+                      // 左边的列表
+                      itemCount: scenes.length,
+                      onReorder: (int oldIndex, int newIndex) {
+                        setState(() {
+                          var shots = scenes[oldIndex];
+                          if (newIndex > oldIndex) {
+                            newIndex -= 1;
+                          }
+                          scenes.removeAt(oldIndex);
+                          // int index = newIndex > oldIndex ? newIndex - 1 : newIndex;
+                          scenes.insert(newIndex, shots);
+                          // make the selected item to be the dragged item
+                          selectedSceneIndex = newIndex;
+                          slateNotifier.setIndex(
+                              scene: newIndex, shot: 0, take: 0);
                           _saveBox();
-                        },
-                        itemBuilder: (BuildContext context, int index2) {
-                          return ReorderableDelayedDragStartListener(
-                            key: ValueKey(scenes[selectedIndex][index2].name +
-                                index2.toString()),
-                            index: index2,
-                            child: rightList(index2, context),
-                          );
-                        },
-                        proxyDecorator: (child, index, animation) {
-                          return Material(
-                            color: Colors.transparent,
-                            elevation: 10.0,
-                            child: child,
-                          );
-                        },
-                      ),
+                        });
+                        slateNotifier.setIndex(scene: newIndex);
+                      },
+                      itemBuilder: (BuildContext context, int index) {
+                        return ReorderableDelayedDragStartListener(
+                          key: ValueKey(
+                              scenes[index].info.name + index.toString()),
+                          index: index,
+                          child: leftList(index, context),
+                        );
+                      },
+                      proxyDecorator: (child, index, animation) {
+                        return Material(
+                          color: Colors.transparent,
+                          elevation: 10.0,
+                          child: child,
+                        );
+                      },
                     ),
-                  ],
-                ),
+                  ),
+                  Flexible(
+                    flex: 3,
+                    child: Column(
+                      children: [
+                        ListTile(
+                          // 用来显示场的基本信息，作为接下来创建的镜的计划
+                          tileColor: Colors.purple[50],
+                          title: Text(
+                              '${scenes[selectedSceneIndex].info.name}场，地点：${scenes[selectedSceneIndex].info.note.type}'),
+                          subtitle:
+                              Text(scenes[selectedSceneIndex].info.note.append),
+                        ),
+                        Expanded(
+                          child: ReorderableListView.builder(
+                            // 右边的列表
+                            itemCount: scenes[selectedSceneIndex].length,
+                            onReorder: (int oldIndex, int newIndex) {
+                              setState(() {
+                                if (newIndex > oldIndex) {
+                                  newIndex -= 1;
+                                }
+                                final item =
+                                    scenes[selectedSceneIndex].removeAt(oldIndex);
+                                // int index = newIndex > oldIndex ? newIndex - 1 : newIndex;
+                                scenes[selectedSceneIndex].insert(newIndex, item);
+                                // make the selected item to be the dragged item
+                                selectedShotIndex = newIndex;
+                              });
+                              slateNotifier.setIndex(shot: newIndex, take: 0);
+                              _saveBox();
+                            },
+                            itemBuilder: (BuildContext context, int index2) {
+                              return ReorderableDelayedDragStartListener(
+                                key: ValueKey(
+                                    scenes[selectedSceneIndex][index2].name +
+                                        index2.toString()),
+                                index: index2,
+                                child: rightList(index2, context),
+                              );
+                            },
+                            proxyDecorator: (child, index, animation) {
+                              return Material(
+                                color: Colors.transparent,
+                                elevation: 10.0,
+                                child: child,
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
+              ElevatedButton.icon(
+                onPressed: () {
+                  var util = ScheduleUtils(
+                    scenes: scenes,
+                    currentIndex: selectedSceneIndex,
+                    selectedScnIndex: selectedSceneIndex,
+                    selectedShtIndex: selectedShotIndex
+                    );
+                  util.addItem(scenes[selectedSceneIndex][selectedShotIndex],true);
+                  setState(() {});
+                },
+                icon: const Icon(Icons.add_business_outlined),
+                label: const Text("镜头+"),
+              )
             ],
           );
         });
@@ -392,14 +419,15 @@ class _SceneSchedulePageState extends State<SceneSchedulePage>
     await showModalBottomSheet(
       context: context,
       builder: (BuildContext context) {
+        var isShot = selectedIndex != null && shotIndex != null;
         return SizedBox(
             height: MediaQuery.of(context).size.height * 0.6,
-            child: (selectedIndex != null && shotIndex != null)
+            child: (isShot)
                 ? NoteEditor(
                     context: context,
                     scenes: scenes,
                     index: index,
-                    selectedIndex: selectedIndex,
+                    scnIndex: selectedIndex,
                     shotIndex: shotIndex,
                   )
                 : NoteEditor(
