@@ -4,19 +4,18 @@ import '../../models/slate_schedule.dart';
 class NoteEditor extends StatefulWidget {
   final BuildContext context;
   final List<SceneSchedule> scenes;
-  final int index;
-  final int? scnIndex;
+  final int scnIndex;
   final int? shotIndex;
+  final bool? isRecordPage;
 
   const NoteEditor({
     super.key,
     required this.context,
     required this.scenes,
-    required this.index,
-    this.scnIndex,
+    required this.scnIndex,
     this.shotIndex,
-  }) : assert((shotIndex == null && scnIndex == null) ||
-            (shotIndex != null && scnIndex != null));
+    this.isRecordPage,
+  }); 
 
   @override
   // ignore: library_private_types_in_public_api
@@ -45,14 +44,14 @@ class _NoteEditorState extends State<NoteEditor> {
     super.initState();
     isScene = widget.shotIndex == null;
     note = (isScene)
-        ? widget.scenes[widget.index].info.note
-        : widget.scenes[widget.index][widget.shotIndex!].note;
+        ? widget.scenes[widget.scnIndex].info.note
+        : widget.scenes[widget.scnIndex][widget.shotIndex!].note;
     editedKey = (isScene)
-        ? widget.scenes[widget.index].info.key
-        : widget.scenes[widget.index][widget.shotIndex!].key;
+        ? widget.scenes[widget.scnIndex].info.key
+        : widget.scenes[widget.scnIndex][widget.shotIndex!].key;
     editedFix = (isScene)
-        ? widget.scenes[widget.index].info.fix
-        : widget.scenes[widget.index][widget.shotIndex!].fix;
+        ? widget.scenes[widget.scnIndex].info.fix
+        : widget.scenes[widget.scnIndex][widget.shotIndex!].fix;
     fixs = List.generate(26, (index) => String.fromCharCode(index + 65));
     fixs = [''] + fixs;
     editedObjects = List.from(note.objects);
@@ -134,14 +133,14 @@ class _NoteEditorState extends State<NoteEditor> {
     var newInfo = ScheduleItem(editedKey, editedFix, newNote);
     ScheduleUtils util = ScheduleUtils(
       scenes: widget.scenes,
-      currentIndex: widget.index,
-      selectedScnIndex: widget.scnIndex,
-      selectedShtIndex: widget.shotIndex,
+      currentScnIndex: widget.scnIndex,
+      currentShtIndex: widget.shotIndex,
     );
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        ElevatedButton(
+        (widget.isRecordPage == null || widget.isRecordPage == false) 
+        ? ElevatedButton(
           onPressed: () {
             util.addItem(newInfo, false);
             Navigator.of(context).pop();
@@ -152,7 +151,8 @@ class _NoteEditorState extends State<NoteEditor> {
               Text('向前添加'),
             ],
           ),
-        ),
+        )
+        : const SizedBox(),
         ElevatedButton(
           onPressed: () {
             util.saveChanges(newInfo);
@@ -160,7 +160,8 @@ class _NoteEditorState extends State<NoteEditor> {
           },
           child: const Text('保存'),
         ),
-        ElevatedButton(
+        (widget.isRecordPage == null || widget.isRecordPage == false) 
+        ? ElevatedButton(
           onPressed: () {
             util.addItem(newInfo, true);
             Navigator.of(context).pop();
@@ -171,7 +172,8 @@ class _NoteEditorState extends State<NoteEditor> {
               Icon(Icons.arrow_downward),
             ],
           ),
-        ),
+        )
+        : const SizedBox(),
       ],
     );
   }
@@ -406,19 +408,16 @@ class _NoteEditorState extends State<NoteEditor> {
 
 class ScheduleUtils {
   final List<SceneSchedule> scenes;
-  final int currentIndex;
-  final int? selectedScnIndex;
-  final int? selectedShtIndex;
+  final int currentScnIndex;
+  final int? currentShtIndex;
   late bool isScene;
 
   ScheduleUtils({
     required this.scenes,
-    required this.currentIndex,
-    this.selectedScnIndex,
-    this.selectedShtIndex,
-  }) : assert((selectedShtIndex == null && selectedScnIndex == null) ||
-            (selectedShtIndex != null && selectedScnIndex != null)) {
-    isScene = selectedScnIndex == null;
+    required this.currentScnIndex,
+    this.currentShtIndex,
+  }) {
+    isScene = currentShtIndex == null;
   }
 
   void _dupSceneDetect(SceneSchedule newScene) {
@@ -432,7 +431,7 @@ class ScheduleUtils {
 
   void _dupShotDetect(ScheduleItem newShot) {
     var detectorList =
-        scenes[selectedScnIndex!].data.map((shot) => shot.name).toList();
+        scenes[currentScnIndex].data.map((shot) => shot.name).toList();
     for (var name in detectorList) {
       if (newShot.name == name) {
         throw DuplicateItemException('本镜号已存在');
@@ -446,6 +445,7 @@ class ScheduleUtils {
     alphas =
         alphas.where((element) => element.contains(RegExp(r'[A-Z]'))).toList();
     alphas.sort();
+    if (alphas.isEmpty) return '';
     String someLetterMax = alphas.last;
     if (someLetterMax == 'Z') {
       int maxGap = 0;
@@ -462,19 +462,20 @@ class ScheduleUtils {
   }
 
   String _findKey(List<int> keys, int index, bool after) {
-    if (!after) {
-      return (index == 0) ? keys[0].toString() : keys[index - 1].toString();
-    }
     keys.sort();
     int maxKey = keys.last;
+    if (!after) {
+      int minKey = keys.first;
+      return (minKey - 1).toString();
+    }
     return (maxKey + 1).toString();
   }
 
   void saveChanges(ScheduleItem newInfo) {
       if (isScene) {
-        scenes[currentIndex].info = newInfo;
+        scenes[currentScnIndex].info = newInfo;
       } else {
-        scenes[currentIndex].data[selectedShtIndex!] = newInfo;
+        scenes[currentScnIndex].data[currentShtIndex!] = newInfo;
       }
   }
 
@@ -491,7 +492,7 @@ class ScheduleUtils {
       } on DuplicateItemException {
         List<int> keys =
             scenes.map((scene) => int.tryParse(scene.info.key) ?? 0).toList();
-        newInfo.key = _findKey(keys, currentIndex, after);
+        newInfo.key = _findKey(keys, currentScnIndex, after);
         List<String> fixs = scenes
             .where((scene) => scene.info.key == newInfo.key)
             .map((scene) => scene.info.fix)
@@ -499,42 +500,47 @@ class ScheduleUtils {
         newInfo.fix = _findFix(fixs, after);
         newScene.info = newInfo;
       }
-      (currentIndex == scenes.length - 1 && after)
+      (currentScnIndex == scenes.length - 1 && after)
           ? scenes.add(newScene)
-          : scenes.insert(currentIndex + plusIndex, newScene);
+          : scenes.insert(currentScnIndex + plusIndex, newScene);
     } else {
       try {
         _dupShotDetect(newInfo);
       } on Exception catch (e) {
         debugPrint(e.toString());
-        List<int> keys = scenes[currentIndex]
+        List<int> keys = scenes[currentScnIndex]
             .data
             .map((shot) => int.tryParse(shot.key) ?? 0)
             .toList();
-        newInfo.key = _findKey(keys, currentIndex, after);
-        List<String> fixs = scenes[currentIndex]
+        newInfo.key = _findKey(keys, currentScnIndex, after);
+        List<String> fixs = scenes[currentScnIndex]
             .data
             .where((shot) => shot.key == newInfo.key)
             .map((shot) => shot.fix)
             .toList();
         newInfo.fix = _findFix(fixs, after);
       }
-      scenes[currentIndex].add(newInfo);
+      (currentScnIndex == scenes.length - 1 && after)
+          ? scenes[currentScnIndex].add(newInfo)
+          : scenes[currentScnIndex].insert(currentShtIndex! + plusIndex,newInfo);
     }
   }
 
   void addNewAtLast()
   {
-    // List<int> keys = scenes[currentIndex]
-    //     .data
-    //     .map((shot) => int.tryParse(shot.key) ?? 0)
-    //     .toList();
-    // newInfo.key = _findKey(keys, currentIndex, after);
-    // List<String> fixs = scenes[currentIndex]
-    //     .data
-    //     .where((shot) => shot.key == newInfo.key)
-    //     .map((shot) => shot.fix)
-    //     .toList();
-    // newInfo.fix = _findFix(fixs, after);
+    var currentShot = scenes[currentScnIndex].data.last;
+    var newInfo = ScheduleItem(currentShot.key, currentShot.fix, currentShot.note);
+    List<int> keys = scenes[currentScnIndex]
+        .data
+        .map((shot) => int.tryParse(shot.key) ?? 0)
+        .toList();
+    newInfo.key = _findKey(keys, currentScnIndex, true);
+    List<String> fixs = scenes[currentScnIndex]
+        .data
+        .where((shot) => shot.key == newInfo.key)
+        .map((shot) => shot.fix)
+        .toList();
+    newInfo.fix = _findFix(fixs, true);
+    scenes[currentScnIndex].add(newInfo);
   }
 }

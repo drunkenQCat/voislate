@@ -1,9 +1,14 @@
 import 'dart:async';
 
 class RecordFileNum {
-  late String customPrefix;
+  String customPrefix = "custom";
+  String recorderType = "default";
   String get prefix {
-    if (customPrefix.isNotEmpty) return customPrefix;
+    if (recorderType == "custom") 
+      {
+        return customPrefix;
+      }
+    if (recorderType == "sound devices") return soundDevicesToday;
     return today;
   }
 
@@ -52,9 +57,9 @@ class RecordFileNum {
   int prevFileNum() => _number - 1;
 
   RecordFileNum({
-    String? prefix,
+    this.recorderType = "default",
     this.intervalSymbol = '-T',
-  }) : customPrefix = prefix ?? '';
+  });
 
   // a function to get the date of today
   // to be used as the defualt prefix of the file name
@@ -64,5 +69,12 @@ class RecordFileNum {
     var month = now.month.toString().padLeft(2, '0');
     var day = now.day.toString().padLeft(2, '0');
     return '$year$month$day';
+  }
+  static String get soundDevicesToday {
+    var now = DateTime.now();
+    var year = now.year.toString().substring(2);
+    var month = now.month.toString().padLeft(2, '0');
+    var day = now.day.toString().padLeft(2, '0');
+    return '${year}Y${month}M$day';
   }
 }

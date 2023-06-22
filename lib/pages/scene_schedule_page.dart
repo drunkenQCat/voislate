@@ -214,7 +214,7 @@ class _SceneSchedulePageState extends State<SceneSchedulePage>
                   return false;
                 } else if (direction == DismissDirection.startToEnd) {
                   showNoteEditor(
-                      context, scenes, selectedSceneIndex, selectedSceneIndex, index);
+                      context, scenes, selectedSceneIndex, index);
                   return false;
                 }
                 return null;
@@ -230,7 +230,7 @@ class _SceneSchedulePageState extends State<SceneSchedulePage>
               child: GestureDetector(
                 onDoubleTap: () {
                   showNoteEditor(
-                      context, scenes, selectedSceneIndex, selectedSceneIndex, index);
+                      context, scenes, selectedSceneIndex, index);
                 },
                 child: ListTileTheme(
                   tileColor: Colors.white,
@@ -381,11 +381,10 @@ class _SceneSchedulePageState extends State<SceneSchedulePage>
                 onPressed: () {
                   var util = ScheduleUtils(
                     scenes: scenes,
-                    currentIndex: selectedSceneIndex,
-                    selectedScnIndex: selectedSceneIndex,
-                    selectedShtIndex: selectedShotIndex
+                    currentScnIndex: selectedSceneIndex,
+                    currentShtIndex: selectedShotIndex
                     );
-                  util.addItem(scenes[selectedSceneIndex][selectedShotIndex],true);
+                  util.addNewAtLast();
                   setState(() {});
                 },
                 icon: const Icon(Icons.add_business_outlined),
@@ -414,27 +413,27 @@ class _SceneSchedulePageState extends State<SceneSchedulePage>
   }
 
   void showNoteEditor(
-      BuildContext context, List<SceneSchedule> scenes, int index,
-      [int? selectedIndex, int? shotIndex]) async {
+      BuildContext context, List<SceneSchedule> scenes, int currentScn,
+      [int? currentSht]) async {
     await showModalBottomSheet(
       context: context,
       builder: (BuildContext context) {
-        var isShot = selectedIndex != null && shotIndex != null;
+        var isScene = currentSht == null;
         return SizedBox(
             height: MediaQuery.of(context).size.height * 0.6,
-            child: (isShot)
+            child: (isScene)
                 ? NoteEditor(
                     context: context,
                     scenes: scenes,
-                    index: index,
-                    scnIndex: selectedIndex,
-                    shotIndex: shotIndex,
+                    scnIndex: currentScn,
                   )
                 : NoteEditor(
                     context: context,
                     scenes: scenes,
-                    index: index,
-                  ));
+                    scnIndex: currentScn,
+                    shotIndex: currentSht,
+                  )
+                );
       },
     );
     _saveBox();

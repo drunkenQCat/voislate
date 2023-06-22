@@ -55,7 +55,7 @@ class SlateRecord extends StatefulWidget {
 }
 
 class _SlateRecordState extends State<SlateRecord>
-    with WidgetsBindingObserver, AutomaticKeepAliveClientMixin {
+    with WidgetsBindingObserver{
   // Some variables don't need to be in the state
 
   late List<SceneSchedule> totalScenes;
@@ -83,6 +83,8 @@ class _SlateRecordState extends State<SlateRecord>
   /// 0: not checked, 1: ok, 2: not ok
   var okTk = TkStatus.notChecked;
   var okSht = ShtStatus.notChecked;
+  
+  bool shotChanged = false;
 
 //TODO:RecoverAndroid
   Future<void> _initVibrate() async {
@@ -149,10 +151,12 @@ class _SlateRecordState extends State<SlateRecord>
       var initSh = initValueProvider.selectedShotIndex;
       var initTk = initValueProvider.selectedTakeIndex;
       var initCount = initValueProvider.recordCount;
+      var initRecordLinker = initValueProvider.recordLinker;
       sceneCol.init(initS);
       shotCol.init(initSh);
       takeCol.init(initTk);
       num.setValue(initCount);
+      num.intervalSymbol = initRecordLinker;
     });
   }
 
@@ -264,6 +268,7 @@ class _SlateRecordState extends State<SlateRecord>
         ];
         pickerHistory.add(prevTakePickerData);
         setState(() {
+          shotChanged = false;
           num.increment();
           resetOkEnum();
 //TODO:RecoverAndroid
@@ -314,10 +319,12 @@ class _SlateRecordState extends State<SlateRecord>
           if (sceneCol.selectedIndex != slateNotifier.selectedSceneIndex) {
             shotCol.init(0, shotList);
             takeCol.init();
+            shotChanged = true;
           }
           // if the shot is changed manually
           if (shotCol.selectedIndex != slateNotifier.selectedShotIndex) {
             takeCol.init();
+            shotChanged = true;
           }
           slateNotifier.setIndex(
             scene: sceneCol.selectedIndex,
@@ -358,36 +365,44 @@ class _SlateRecordState extends State<SlateRecord>
                 ),
                 GestureDetector(
                   onTap: () {},
-                  onLongPress: () => showModalBottomSheet(
+                  onLongPress: () {
+                    showModalBottomSheet(
                     context: context, 
                     builder:(context){
                       return NoteEditor(
                         context: context,
                         scenes: totalScenes, 
-                        index: shotCol.selectedIndex,
                         scnIndex: sceneCol.selectedIndex,
                         shotIndex: shotCol.selectedIndex,
+                        isRecordPage: true
                         );
-                    } ,),
-                  child: SlatePicker(
-                    titles: titles,
-                    stateOne: sceneCol,
-                    stateTwo: shotCol,
-                    stateThree: takeCol,
-                    width: screenWidth - 2 * horizonPadding,
-                    height: screenHeight * 0.17,
-                    itemHeight: screenHeight * 0.13 - 48,
-                    resultChanged: ({v1, v2, v3}) {
-                      if (v3.toString() == "2") {
-                        shotNoteController.text =
-                            totalScenes[sceneCol.selectedIndex]
-                                    [shotCol.selectedIndex]
-                                .note
-                                .append;
-                      }
-                      pickerNumSync();
-                      debugPrint('v1: , v2: , v3: ');
-                    },
+                    } ,);
+                    Hive.box('scenes_box').putAt(sceneCol.selectedIndex, totalScenes[sceneCol.selectedIndex]);
+                  },
+                  child: Column(
+                    children: [
+                      Text((shotChanged)?"长按修改当前镜":""),
+                      SlatePicker(
+                        titles: titles,
+                        stateOne: sceneCol,
+                        stateTwo: shotCol,
+                        stateThree: takeCol,
+                        width: screenWidth - 2 * horizonPadding,
+                        height: screenHeight * 0.17,
+                        itemHeight: screenHeight * 0.13 - 48,
+                        resultChanged: ({v1, v2, v3}) {
+                          if (v3.toString() == "2") {
+                            shotNoteController.text =
+                                totalScenes[sceneCol.selectedIndex]
+                                        [shotCol.selectedIndex]
+                                    .note
+                                    .append;
+                          }
+                          pickerNumSync();
+                          debugPrint('v1: , v2: , v3: ');
+                        },
+                      ),
+                    ],
                   ),
                 ),
                 // add an input box to have a note about the number
@@ -569,6 +584,6 @@ class _SlateRecordState extends State<SlateRecord>
     });
   }
 
-  @override
-  bool get wantKeepAlive => true;
+  // @override
+  // bool get wantKeepAlive => true;
 }
