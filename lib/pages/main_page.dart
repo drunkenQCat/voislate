@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:voislate/models/slate_log_item.dart';
-import 'package:voislate/data/dummy_data.dart';
 
 import 'package:voislate/pages/slate_log_tabs.dart';
 // import 'package:voislate/pages/voice_recg_test.dart';
@@ -51,7 +50,7 @@ class _MyHomePageState extends State<MyHomePage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(vsync: this, length: 3, initialIndex: 0);
+    _tabController = TabController(vsync: this, length: 3, initialIndex: 1);
   }
 
   @override
