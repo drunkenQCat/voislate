@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 // import 'package:simple_speed_dial/simple_speed_dial.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+import 'package:provider/provider.dart';
+import 'package:voislate/providers/slate_status_notifier.dart';
 
 import '../../models/slate_log_item.dart';
 
@@ -10,6 +12,7 @@ class TakeOkDial extends StatefulWidget {
 
   TakeOkDial({super.key, 
     required this.context,
+    required this.tkStatus
   });
 
   final BuildContext context;
@@ -45,6 +48,8 @@ class _TakeOkDialState extends State<TakeOkDial> {
   }
   @override
   Widget build(BuildContext context) {
+    var enumProvider =
+        Provider.of<SlateStatusNotifier>(context, listen: false);
     return SpeedDial(
       key: widget.key,
       heroTag: 'tkStatus',
@@ -57,6 +62,7 @@ class _TakeOkDialState extends State<TakeOkDial> {
           onTap: () {
             setState(() {
               widget.tkStatus = TkStatus.bad;
+              enumProvider.setOkStatus(okTk: widget.tkStatus);
             });
 
           },
@@ -68,6 +74,7 @@ class _TakeOkDialState extends State<TakeOkDial> {
           onTap: () {
             setState(() {
               widget.tkStatus = TkStatus.ok;
+              enumProvider.setOkStatus(okTk: widget.tkStatus);
             });
           },
           label: '声音可',

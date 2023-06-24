@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
+import 'package:voislate/models/slate_log_item.dart';
 import '../models/recorder_file_num.dart';
 
 class SlateStatusNotifier extends ChangeNotifier {
@@ -25,6 +26,12 @@ class SlateStatusNotifier extends ChangeNotifier {
   String _currentNote =
       Hive.box('scn_sht_tk').get('note', defaultValue: "") as String;
 
+  TkStatus _okTk = 
+      Hive.box('scn_sht_tk').get('oktk', defaultValue: TkStatus.notChecked) as TkStatus;
+  ShtStatus _okSht = 
+      Hive.box('scn_sht_tk').get('oksht', defaultValue: ShtStatus.notChecked) as ShtStatus;
+
+
   int get selectedSceneIndex => _selectedSceneIndex;
   int get selectedShotIndex => _selectedShotIndex;
   int get selectedTakeIndex => _selectedTakeIndex;
@@ -34,6 +41,8 @@ class SlateStatusNotifier extends ChangeNotifier {
   String get recordLinker => _recordLinker;
   String get currentDesc => _currentDesc;
   String get currentNote => _currentNote;
+  TkStatus get okTk => _okTk;
+  ShtStatus get okSht => _okSht;
   void setIndex({int? scene, int? shot, int? take, int? count}) {
     if (scene != null) {
       _selectedSceneIndex = scene;
@@ -74,6 +83,13 @@ class SlateStatusNotifier extends ChangeNotifier {
   void setRecordLinker(String linker) {
     _recordLinker = linker;
     Hive.box('scn_sht_tk').put('recordLinker', _recordLinker);
+    notifyListeners();
+  }
+  void setOkStatus({TkStatus okTk = TkStatus.notChecked, ShtStatus oksht = ShtStatus.notChecked}) {
+    _okTk = okTk;
+    Hive.box('scn_sht_tk').put('oktk', _okTk);
+    _okSht = okSht;
+    Hive.box('scn_sht_tk').put('oksht', _okSht);
     notifyListeners();
   }
 }

@@ -139,6 +139,8 @@ class _SlateRecordState extends State<SlateRecord>
         .toList();
     var takeList = List.generate(200, (index) => (index + 1).toString());
     isLinked = initValueProvider.isLinked;
+    okTk = initValueProvider.okTk;
+    okSht = initValueProvider.okSht;
     sceneCol.init(0, sceneList);
     shotCol.init(0, shotList);
     takeCol.init(0, takeList);
@@ -178,9 +180,11 @@ class _SlateRecordState extends State<SlateRecord>
 
     var takeOkDial = TakeOkDial(
       context: context,
+      tkStatus: okTk,
     );
     var shotOkDial = ShotOkDial(
       context: context,
+      shtStatus: okSht,
     );
     var prevTakeEditor = PrevTakeEditor(
       num: num,
