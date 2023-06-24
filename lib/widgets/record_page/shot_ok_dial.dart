@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 // import 'package:simple_speed_dial/simple_speed_dial.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+import 'package:provider/provider.dart';
+import 'package:voislate/providers/slate_status_notifier.dart';
 
 import '../../models/slate_log_item.dart';
 
@@ -10,6 +12,7 @@ class ShotOkDial extends StatefulWidget {
 
   ShotOkDial({super.key, 
     required this.context,
+    required this.shtStatus
   });
 
   final BuildContext context;
@@ -44,6 +47,8 @@ class _ShotOkDialState extends State<ShotOkDial> {
   }
   @override
   Widget build(BuildContext context) {
+    var enumProvider =
+        Provider.of<SlateStatusNotifier>(context, listen: false);
     return SpeedDial(
       key: widget.key,
       backgroundColor: _getShtStatusColor(widget.shtStatus),
@@ -52,6 +57,7 @@ class _ShotOkDialState extends State<ShotOkDial> {
           onTap: () {
             setState(() {
               widget.shtStatus = ShtStatus.ok;
+              enumProvider.setOkStatus(oksht: widget.shtStatus);
             });
           },
           backgroundColor: Colors.blue,
@@ -62,6 +68,7 @@ class _ShotOkDialState extends State<ShotOkDial> {
           onTap: () {
             setState(() {
               widget.shtStatus = ShtStatus.nice;
+              enumProvider.setOkStatus(oksht: widget.shtStatus);
             });
 
           },
