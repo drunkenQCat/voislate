@@ -57,7 +57,7 @@ class _ShotOkDialState extends State<ShotOkDial> {
           onTap: () {
             setState(() {
               widget.shtStatus = ShtStatus.ok;
-              enumProvider.setOkStatus(oksht: widget.shtStatus);
+              enumProvider.setOkStatus(currentSht: widget.shtStatus);
             });
           },
           backgroundColor: Colors.blue,
@@ -68,7 +68,7 @@ class _ShotOkDialState extends State<ShotOkDial> {
           onTap: () {
             setState(() {
               widget.shtStatus = ShtStatus.nice;
-              enumProvider.setOkStatus(oksht: widget.shtStatus);
+              enumProvider.setOkStatus(currentSht: widget.shtStatus);
             });
 
           },

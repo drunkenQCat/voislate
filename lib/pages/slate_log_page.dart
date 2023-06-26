@@ -129,6 +129,17 @@ class _SlateLogState extends State<SlateLog> {
   }
 
   Container logViewItem(MapEntry<int, SlateLogItem> item) {
+    var shtNotePreParse = item.value.shtNote.split('<');
+    var shtNote = shtNotePreParse[0];
+    List<String> trackList = [];
+    if (shtNotePreParse.length > 1) {
+      shtNotePreParse.removeAt(0);
+      for (var element in shtNotePreParse) { // iterate through the remaining elements
+        trackList.add(element.replaceAll('/>', '')); // strip "/>" and add to trackList
+      }
+    }
+    var tracks = trackList.join(","); // concate trackList with ","
+
     return Container(
       color: _getTkStatusColor(item.value.okTk),
       child: ListTile(
@@ -169,7 +180,7 @@ class _SlateLogState extends State<SlateLog> {
         // ),
         title: Text(
           item.value.fileName,
-          style:const TextStyle(
+          style: const TextStyle(
             fontWeight: FontWeight.bold,
             color: Colors.black,
           ),
@@ -178,7 +189,7 @@ class _SlateLogState extends State<SlateLog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('TK Note: ${item.value.tkNote}'),
-            Text('Shot Note: ${item.value.shtNote}'),
+            Text('Shot Note: $shtNote\ntracks:$tracks'),
             Text('Scene Note: ${item.value.scnNote}'),
           ],
         ),

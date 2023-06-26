@@ -62,7 +62,7 @@ class _TakeOkDialState extends State<TakeOkDial> {
           onTap: () {
             setState(() {
               widget.tkStatus = TkStatus.bad;
-              enumProvider.setOkStatus(okTk: widget.tkStatus);
+              enumProvider.setOkStatus(currentTk: widget.tkStatus);
             });
 
           },
@@ -74,7 +74,7 @@ class _TakeOkDialState extends State<TakeOkDial> {
           onTap: () {
             setState(() {
               widget.tkStatus = TkStatus.ok;
-              enumProvider.setOkStatus(okTk: widget.tkStatus);
+              enumProvider.setOkStatus(currentTk: widget.tkStatus);
             });
           },
           label: '声音可',
