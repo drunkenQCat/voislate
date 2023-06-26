@@ -54,8 +54,7 @@ class SlateRecord extends StatefulWidget {
   State<SlateRecord> createState() => _SlateRecordState();
 }
 
-class _SlateRecordState extends State<SlateRecord>
-    with WidgetsBindingObserver{
+class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
   // Some variables don't need to be in the state
 
   late List<SceneSchedule> totalScenes;
@@ -83,7 +82,7 @@ class _SlateRecordState extends State<SlateRecord>
   /// 0: not checked, 1: ok, 2: not ok
   var okTk = TkStatus.notChecked;
   var okSht = ShtStatus.notChecked;
-  
+
   bool shotChanged = false;
 
 //TODO:RecoverAndroid
@@ -168,6 +167,10 @@ class _SlateRecordState extends State<SlateRecord>
     super.dispose();
 //TODO:RecoverAndroid
     stopListening();
+    var linkTest = Hive.box('scn_sht_tk').get('oktk') as TkStatus;
+    debugPrint(linkTest.toString());
+    var linkTest2 = Hive.box('scn_sht_tk').get('oksht') as ShtStatus;
+    debugPrint(linkTest2.toString());
   }
 
   @override
@@ -209,9 +212,21 @@ class _SlateRecordState extends State<SlateRecord>
           .addListener(() => slateNotifier.setNote(desc: descController.text));
       shotNoteController.addListener(
           () => slateNotifier.setNote(note: shotNoteController.text));
+
       void resetOkEnum() {
-        takeOkDial.tkStatus = TkStatus.notChecked;
-        shotOkDial.shtStatus = ShtStatus.notChecked;
+        setState(() {
+          okTk = TkStatus.notChecked;
+          okSht = ShtStatus.notChecked;
+          // takeOkDial = TakeOkDial(
+          //   context: context,
+          //   tkStatus: okTk,
+          // );
+          // shotOkDial = ShotOkDial(
+          //   context: context,
+          //   shtStatus: okSht,
+          // );
+        });
+        slateNotifier.setOkStatus(doReset: true);
       }
 
       void drawBackItem() {
@@ -244,6 +259,15 @@ class _SlateRecordState extends State<SlateRecord>
           String currentTk = pickerHistory.isNotEmpty
               ? pickerHistory.getAt(pickerHistory.length - 1)[2]
               : '0';
+          String trackLogs = "";
+          var objList = totalScenes[sceneCol.selectedIndex]
+                  [shotCol.selectedIndex]
+              .note
+              .objects;
+          for (var obj in objList) {
+            obj = "<$obj/>";
+            trackLogs += obj;
+          }
           var newLogItem = SlateLogItem(
             scn: prevTake[0],
             sht: prevTake[1],
@@ -256,13 +280,15 @@ class _SlateRecordState extends State<SlateRecord>
                     ? 'S$currentScn Sh$currentSht Tk$currentTk'
                     : descController.text)
                 : 'Fake Take',
-            shtNote: shotNoteController.text,
+            shtNote: "${shotNoteController.text}$trackLogs",
             scnNote: totalScenes[sceneCol.selectedIndex].info.note.append,
             okTk: !isFake ? takeOkDial.tkStatus : TkStatus.bad,
             okSht: !isFake ? shotOkDial.shtStatus : ShtStatus.notChecked,
           );
-          if (!isLinked)
+
+          if (!isLinked) {
             newLogItem.tkNote = "wild track after ${newLogItem.tkNote}";
+          }
           logNotifier.add(num.prevName(), newLogItem);
         }
         List<String> prevTakePickerData = [
@@ -275,6 +301,7 @@ class _SlateRecordState extends State<SlateRecord>
           shotChanged = false;
           num.increment();
           resetOkEnum();
+          slateNotifier.setIndex(count: num.number);
 //TODO:RecoverAndroid
           if (_canVibrate) {
             isFake
@@ -334,7 +361,6 @@ class _SlateRecordState extends State<SlateRecord>
             scene: sceneCol.selectedIndex,
             shot: shotCol.selectedIndex,
             take: takeCol.selectedIndex,
-            count: num.number,
           );
         });
       }
@@ -371,21 +397,22 @@ class _SlateRecordState extends State<SlateRecord>
                   onTap: () {},
                   onLongPress: () {
                     showModalBottomSheet(
-                    context: context, 
-                    builder:(context){
-                      return NoteEditor(
-                        context: context,
-                        scenes: totalScenes, 
-                        scnIndex: sceneCol.selectedIndex,
-                        shotIndex: shotCol.selectedIndex,
-                        isRecordPage: true
-                        );
-                    } ,);
-                    Hive.box('scenes_box').putAt(sceneCol.selectedIndex, totalScenes[sceneCol.selectedIndex]);
+                      context: context,
+                      builder: (context) {
+                        return NoteEditor(
+                            context: context,
+                            scenes: totalScenes,
+                            scnIndex: sceneCol.selectedIndex,
+                            shotIndex: shotCol.selectedIndex,
+                            isRecordPage: true);
+                      },
+                    );
+                    Hive.box('scenes_box').putAt(sceneCol.selectedIndex,
+                        totalScenes[sceneCol.selectedIndex]);
                   },
                   child: Column(
                     children: [
-                      Text((shotChanged)?"长按修改当前镜":""),
+                      Text((shotChanged) ? "长按修改当前镜" : ""),
                       SlatePicker(
                         titles: titles,
                         stateOne: sceneCol,

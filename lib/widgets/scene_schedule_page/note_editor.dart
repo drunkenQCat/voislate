@@ -256,7 +256,7 @@ class _NoteEditorState extends State<NoteEditor> {
     return Column(
       children: [
         const Text(
-          '拍摄对象:',
+          '录音轨道:',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         SingleChildScrollView(

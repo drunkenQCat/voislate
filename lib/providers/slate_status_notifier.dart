@@ -12,10 +12,9 @@ class SlateStatusNotifier extends ChangeNotifier {
       Hive.box('scn_sht_tk').get('tkIndex', defaultValue: 0) as int;
   bool _isLinked =
       Hive.box('scn_sht_tk').get('isLinked', defaultValue: true) as bool;
-  String _date =
-      Hive.box('scn_sht_tk').get('date', defaultValue: RecordFileNum.today) as String;
-  late int _recordCount = 
-      (RecordFileNum.today == _date) 
+  String _date = Hive.box('scn_sht_tk')
+      .get('date', defaultValue: RecordFileNum.today) as String;
+  late int _recordCount = (RecordFileNum.today == _date)
       ? Hive.box('scn_sht_tk').get('recordCount', defaultValue: 1) as int
       : 1;
   String _recordLinker =
@@ -26,11 +25,10 @@ class SlateStatusNotifier extends ChangeNotifier {
   String _currentNote =
       Hive.box('scn_sht_tk').get('note', defaultValue: "") as String;
 
-  TkStatus _okTk = 
-      Hive.box('scn_sht_tk').get('oktk', defaultValue: TkStatus.notChecked) as TkStatus;
-  ShtStatus _okSht = 
-      Hive.box('scn_sht_tk').get('oksht', defaultValue: ShtStatus.notChecked) as ShtStatus;
-
+  TkStatus _okTk = Hive.box('scn_sht_tk')
+      .get('oktk', defaultValue: TkStatus.notChecked) as TkStatus;
+  ShtStatus _okSht = Hive.box('scn_sht_tk')
+      .get('oksht', defaultValue: ShtStatus.notChecked) as ShtStatus;
 
   int get selectedSceneIndex => _selectedSceneIndex;
   int get selectedShotIndex => _selectedShotIndex;
@@ -76,6 +74,7 @@ class SlateStatusNotifier extends ChangeNotifier {
   }
 
   void setLink(bool link) {
+    _isLinked = link;
     Hive.box('scn_sht_tk').put('isLinked', link);
     notifyListeners();
   }
@@ -85,10 +84,19 @@ class SlateStatusNotifier extends ChangeNotifier {
     Hive.box('scn_sht_tk').put('recordLinker', _recordLinker);
     notifyListeners();
   }
-  void setOkStatus({TkStatus okTk = TkStatus.notChecked, ShtStatus oksht = ShtStatus.notChecked}) {
-    _okTk = okTk;
+
+  void setOkStatus(
+      {TkStatus? currentTk,
+      ShtStatus? currentSht,
+      bool? doReset}) {
+    _okTk = currentTk ?? _okTk;
+    _okSht = currentSht ?? _okSht;
+    doReset = doReset??false;
+    if (doReset) {
+      _okTk = TkStatus.notChecked;
+      _okSht = ShtStatus.notChecked;
+    }
     Hive.box('scn_sht_tk').put('oktk', _okTk);
-    _okSht = okSht;
     Hive.box('scn_sht_tk').put('oksht', _okSht);
     notifyListeners();
   }
