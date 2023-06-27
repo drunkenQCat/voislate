@@ -499,7 +499,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
                               onPressed: () {
                                 addItem(true);
                               },
-                              icon: Icon(Icons.redo),
+                              icon: const Icon(Icons.redo),
                             ),
                           ),
                         ),
@@ -542,7 +542,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
                           col3DecBtn,
                           ElevatedButton(
                               onPressed: () {
-                                Placeholder();
+                                const Placeholder();
                               },
                               style: bottomButtonStyleFrom,
                               child: const Icon(Icons.check_rounded))

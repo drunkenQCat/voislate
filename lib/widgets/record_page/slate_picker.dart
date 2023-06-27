@@ -1,5 +1,4 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 
 import '../../providers/slate_picker_notifier.dart';
 
@@ -115,7 +114,7 @@ class _SlatePickerState extends State<SlatePicker> {
 
   _buildPicker(List data, String unit, ValueChanged valueChanged,
       FixedExtentScrollController controller) {
-    return Container(
+    return SizedBox(
       height: widget.height + 10,
       width: widget.width / 3.4,
       child: Column(

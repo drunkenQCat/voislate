@@ -5,7 +5,7 @@ class DisplayNotesButton extends StatelessWidget {
   final List<MapEntry<String, String>> notes;
   final RecordFileNum num;
 
-  DisplayNotesButton({
+  const DisplayNotesButton({
     super.key,
     required this.notes,
     required this.num,

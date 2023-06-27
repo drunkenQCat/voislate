@@ -50,7 +50,7 @@ class SettingsConfiguePage extends StatelessWidget {
       appBar: AppBar(
         title: const Text('VoiSlate 设置'),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -63,7 +63,7 @@ class SettingsConfiguePage extends StatelessWidget {
             ),
           ),
           ListTile(
-            title: Text('操作模式'),
+            title: const Text('操作模式'),
             trailing: DropdownButton<String>(
               value: '左手',
               onChanged: (newValue) {},

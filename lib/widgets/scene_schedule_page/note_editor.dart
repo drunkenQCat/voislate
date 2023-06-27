@@ -200,7 +200,7 @@ class _NoteEditorState extends State<NoteEditor> {
       children: [
         Text(
           typeText,
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         if (isScene)
           TextField(
@@ -354,7 +354,7 @@ class _NoteEditorState extends State<NoteEditor> {
             },
             child: Text(
               object,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 14,
               ),
             )),

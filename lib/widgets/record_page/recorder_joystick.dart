@@ -337,7 +337,7 @@ class RecorderJoystickState extends MountedState<RecorderJoystick> {
             size: 48,
             color: Colors.green[300],
           ),
-          SizedBox(
+          const SizedBox(
             height: 10,
           ),
           Icon(
@@ -362,7 +362,7 @@ class RecorderJoystickState extends MountedState<RecorderJoystick> {
           borderRadius: widget.backgroundShape ??
               BorderRadius.all(Radius.circular(widget.height)),
           color: widget.backgroundColorEnd != null
-              ? this.calculateBackground()
+              ? calculateBackground()
               : widget.backgroundColor,
         ),
       ),

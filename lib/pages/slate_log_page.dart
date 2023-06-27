@@ -39,13 +39,13 @@ class _SlateLogState extends State<SlateLog> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     WidgetsBinding.instance.endOfFrame.then((_) {
       widget.controller.jumpTo(widget.controller.position.maxScrollExtent);
     });
   }
 
+  @override
   Widget build(BuildContext context) {
     return Consumer2<SlateLogNotifier, SlateStatusNotifier>(
       builder: (context, slateLogs, slateStatus, child) {

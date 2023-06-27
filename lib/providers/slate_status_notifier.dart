@@ -12,7 +12,7 @@ class SlateStatusNotifier extends ChangeNotifier {
       Hive.box('scn_sht_tk').get('tkIndex', defaultValue: 0) as int;
   bool _isLinked =
       Hive.box('scn_sht_tk').get('isLinked', defaultValue: true) as bool;
-  String _date = Hive.box('scn_sht_tk')
+  final String _date = Hive.box('scn_sht_tk')
       .get('date', defaultValue: RecordFileNum.today) as String;
   late int _recordCount = (RecordFileNum.today == _date)
       ? Hive.box('scn_sht_tk').get('recordCount', defaultValue: 1) as int
