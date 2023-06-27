@@ -85,7 +85,7 @@ class _SlateLogState extends State<SlateLog> {
                   backgroundColor: Colors.grey,
                   initiallyExpanded: (scn == currentScn),
                   title: Center(child: Text(scn)),
-                  subtitle: Center(child: Text('场')),
+                  subtitle: const Center(child: Text('场')),
                   children: shtItems.keys.map((sht) {
                     Map<int, SlateLogItem> items = shtItems[sht]!;
 
@@ -93,7 +93,7 @@ class _SlateLogState extends State<SlateLog> {
                       backgroundColor: Colors.grey[200],
                       initiallyExpanded: (sht == currentShot),
                       title: Text(sht),
-                      subtitle: Text('镜'),
+                      subtitle: const Text('镜'),
                       children: items.entries.map((item) {
                         return logViewItem(item);
                       }).toList(),

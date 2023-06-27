@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'slate_num_notifier.dart';
+import 'slate_picker_notifier.dart';
 
 // the button to increment the counter for every column， add and scroll different columns
 // especiallly for volume key control

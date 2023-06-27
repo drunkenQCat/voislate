@@ -13,7 +13,7 @@ import 'package:voislate/providers/slate_log_notifier.dart';
 import 'package:voislate/models/slate_schedule.dart';
 import 'package:voislate/widgets/scene_schedule_page/note_editor.dart';
 
-import '../providers/slate_num_notifier.dart';
+import '../providers/slate_picker_notifier.dart';
 import '../providers/value_scroll_control.dart';
 import '../models/recorder_file_num.dart';
 import '../providers/slate_status_notifier.dart';
@@ -250,23 +250,22 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
             ? pickerHistory.getAt(pickerHistory.length - 1) as List<String>
             : [];
         if (num.prevName().isNotEmpty) {
-          String currentScn = pickerHistory.isNotEmpty
-              ? pickerHistory.getAt(pickerHistory.length - 1)[0]
-              : '0';
-          String currentSht = pickerHistory.isNotEmpty
-              ? pickerHistory.getAt(pickerHistory.length - 1)[1]
-              : '0';
-          String currentTk = pickerHistory.isNotEmpty
-              ? pickerHistory.getAt(pickerHistory.length - 1)[2]
-              : '0';
+          String currentScn = prevTake.isNotEmpty ? prevTake[0] : '0';
+          String currentSht = prevTake.isNotEmpty ? prevTake[1] : '0';
+          String currentTk = prevTake.isNotEmpty ? prevTake[2] : '0';
           String trackLogs = "";
-          var objList = totalScenes[sceneCol.selectedIndex]
-                  [shotCol.selectedIndex]
-              .note
-              .objects;
+          // obj list is the rest part of prevTake
+          var objList = prevTake.length > 3 ? prevTake.sublist(3) : [];
           for (var obj in objList) {
             obj = "<$obj/>";
             trackLogs += obj;
+          }
+          // check if the shot is changed
+          if (sceneCol.selected != currentSht) {
+            // if changed, the status of current take 
+            // automatically turn to best 
+            okTk = TkStatus.ok;
+            okSht = ShtStatus.nice;
           }
           var newLogItem = SlateLogItem(
             scn: prevTake[0],
@@ -296,6 +295,10 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
           shotCol.selected,
           takeCol.selected
         ];
+        var objList = totalScenes[sceneCol.selectedIndex][shotCol.selectedIndex]
+            .note
+            .objects;
+        prevTakePickerData.addAll(objList);
         pickerHistory.add(prevTakePickerData);
         setState(() {
           shotChanged = false;
@@ -538,7 +541,9 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
                         children: [
                           col3DecBtn,
                           ElevatedButton(
-                              onPressed: () {},
+                              onPressed: () {
+                                Placeholder();
+                              },
                               style: bottomButtonStyleFrom,
                               child: const Icon(Icons.check_rounded))
                         ],
@@ -576,41 +581,6 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
             ),
           ],
         ),
-        // floatingActionButtonLocation: FloatingActionButtonLocation.startDocked,
-        // floatingActionButton: Row(
-        //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        //   children: [
-        //     DisplayNotesButton(
-        //       notes: exportQuickNotes(),
-        //       num: num,
-        //     ),
-        //     // takeOkDial,
-        //     shotOkDial,
-        //     AnimatedToggleSwitch.dual(
-        //       dif: 5,
-        //       current: _isAbsorbing,
-        //       first: false,
-        //       second: true,
-        //       onChanged: (value) {
-        //         setState(() => _isAbsorbing = value);
-        //       },
-        //       colorBuilder: (bool isLocked) =>
-        //           !isLocked ? Colors.green : Colors.red,
-        //       iconBuilder: (bool isLocked) =>
-        //           Icon(!isLocked ? Icons.lock_open : Icons.lock),
-        //       textBuilder: (bool isLocked) => Text(!isLocked ? '触控' : '锁定'),
-        //     ),
-        //   ],
-        // ),
-        //   Stack(alignment: AlignmentDirectional.bottomStart, children: [
-        //   Positioned(
-        //     top: MediaQuery.of(context).size.height * 0.3,
-        //     child: DisplayNotesButton(
-        //       notes: exportQuickNotes(),
-        //       num: num,
-        //     ),
-        //   ),
-        // ]),
       );
     });
   }

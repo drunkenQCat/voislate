@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import '../../providers/slate_num_notifier.dart';
+import '../../providers/slate_picker_notifier.dart';
 
 /// 自定义结果回调函数
 /// V1:第一列选中的值
