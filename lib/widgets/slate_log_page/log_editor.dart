@@ -2,7 +2,6 @@ import 'package:dart_json_mapper/dart_json_mapper.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:share_plus/share_plus.dart';
-import '../../models/slate_schedule.dart';
 import '../../models/slate_log_item.dart';
 
 class LogEditor extends StatefulWidget {

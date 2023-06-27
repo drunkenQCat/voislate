@@ -58,7 +58,7 @@ class _FileNameDisplayCardState extends State<FileNameDisplayCard> {
       padding: const EdgeInsets.only(left: 25, right: 25),
       child: Card(
         color: Colors.blueGrey[100],
-        margin: EdgeInsets.fromLTRB(21, 5, 16, 5),
+        margin: const EdgeInsets.fromLTRB(21, 5, 16, 5),
         child: GestureDetector(
           onLongPress: () {
             showDialog(context: context, builder: prefixEditor);

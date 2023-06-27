@@ -245,15 +245,15 @@ class _SceneSchedulePageState extends State<SceneSchedulePage>
                           child: Row(
                             children: item.note.objects
                                 .map((object) => Container(
-                                      margin: EdgeInsets.only(right: 5),
-                                      padding: EdgeInsets.all(3),
+                                      margin: const EdgeInsets.only(right: 5),
+                                      padding: const EdgeInsets.all(3),
                                       decoration: BoxDecoration(
                                         borderRadius: BorderRadius.circular(20),
                                         color: Colors.purple[300],
                                       ),
                                       child: Text(
                                         object,
-                                        style: TextStyle(fontSize: 14),
+                                        style: const TextStyle(fontSize: 14),
                                       ),
                                     ))
                                 .toList(),

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class MapToTabs extends StatefulWidget {
   final Map<String, Widget> tabs;
 
-  MapToTabs({required this.tabs});
+  const MapToTabs({super.key, required this.tabs});
 
   @override
   _MapToTabsState createState() => _MapToTabsState();
