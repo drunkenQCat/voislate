@@ -46,6 +46,7 @@ import '../widgets/record_page/recorder_joystick.dart';
 16x 保存配置的功能
 17x *****场景次与文件名的逻辑
 18. 思考音量键/录音信号绑定情况下跑条的设置
+19. 修复Prefix相关问题
 */
 class SlateRecord extends StatefulWidget {
   const SlateRecord({super.key});
@@ -153,11 +154,15 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
       var initTk = initValueProvider.selectedTakeIndex;
       var initCount = initValueProvider.recordCount;
       var initRecordLinker = initValueProvider.recordLinker;
+      var initPrefixType = initValueProvider.prefixType;
+      var initCustomPrefix = initValueProvider.customPrefix;
       sceneCol.init(initS);
       shotCol.init(initSh);
       takeCol.init(initTk);
       num.setValue(initCount);
       num.intervalSymbol = initRecordLinker;
+      num.recorderType = initPrefixType;
+      num.customPrefix = initCustomPrefix;
     });
   }
 
@@ -245,50 +250,55 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
         });
       }
 
+      void addNewLog(List<String> prevTake, bool isFake, {bool isEnd = false}) {
+        String prevScn = prevTake.isNotEmpty ? prevTake[0] : '0';
+        String prevSht = prevTake.isNotEmpty ? prevTake[1] : '0';
+        String prevTk = prevTake.isNotEmpty ? prevTake[2] : '0';
+        if (prevTk == 'OK') return;
+        String trackLogs = "";
+        // obj list is the rest part of prevTake
+        var objList = prevTake.length > 3 ? prevTake.sublist(3) : [];
+        for (var obj in objList) {
+          obj = "<$obj/>";
+          trackLogs += obj;
+        }
+        // check if the shot is changed
+        if (shotCol.selected != prevSht || isEnd) {
+          // if changed, the status of current take
+          // automatically turn to best
+          takeOkDial.tkStatus = TkStatus.ok;
+          shotOkDial.shtStatus = ShtStatus.nice;
+        }
+        var newLogItem = SlateLogItem(
+          scn: prevTake[0],
+          sht: prevTake[1],
+          tk: int.parse(prevTake[2]),
+          filenamePrefix: num.prefix,
+          filenameLinker: num.intervalSymbol,
+          filenameNum: num.prevFileNum(),
+          tkNote: !isFake
+              ? (descController.text.isEmpty
+                  ? 'S$prevScn Sh$prevSht Tk$prevTk'
+                  : descController.text)
+              : 'Fake Take',
+          shtNote: "${shotNoteController.text}$trackLogs",
+          scnNote: totalScenes[sceneCol.selectedIndex].info.note.append,
+          okTk: !isFake ? takeOkDial.tkStatus : TkStatus.bad,
+          okSht: !isFake ? shotOkDial.shtStatus : ShtStatus.notChecked,
+        );
+
+        if (!isLinked) {
+          newLogItem.tkNote = "wild track after ${newLogItem.tkNote}";
+        }
+        logNotifier.add(num.prevName(), newLogItem);
+      }
+
       void addItem([bool isFake = false]) {
         List<String> prevTake = (pickerHistory.isNotEmpty)
             ? pickerHistory.getAt(pickerHistory.length - 1) as List<String>
             : [];
-        if (num.prevName().isNotEmpty) {
-          String currentScn = prevTake.isNotEmpty ? prevTake[0] : '0';
-          String currentSht = prevTake.isNotEmpty ? prevTake[1] : '0';
-          String currentTk = prevTake.isNotEmpty ? prevTake[2] : '0';
-          String trackLogs = "";
-          // obj list is the rest part of prevTake
-          var objList = prevTake.length > 3 ? prevTake.sublist(3) : [];
-          for (var obj in objList) {
-            obj = "<$obj/>";
-            trackLogs += obj;
-          }
-          // check if the shot is changed
-          if (sceneCol.selected != currentSht) {
-            // if changed, the status of current take 
-            // automatically turn to best 
-            okTk = TkStatus.ok;
-            okSht = ShtStatus.nice;
-          }
-          var newLogItem = SlateLogItem(
-            scn: prevTake[0],
-            sht: prevTake[1],
-            tk: int.parse(prevTake[2]),
-            filenamePrefix: num.prefix,
-            filenameLinker: num.intervalSymbol,
-            filenameNum: num.prevFileNum(),
-            tkNote: !isFake
-                ? (descController.text.isEmpty
-                    ? 'S$currentScn Sh$currentSht Tk$currentTk'
-                    : descController.text)
-                : 'Fake Take',
-            shtNote: "${shotNoteController.text}$trackLogs",
-            scnNote: totalScenes[sceneCol.selectedIndex].info.note.append,
-            okTk: !isFake ? takeOkDial.tkStatus : TkStatus.bad,
-            okSht: !isFake ? shotOkDial.shtStatus : ShtStatus.notChecked,
-          );
-
-          if (!isLinked) {
-            newLogItem.tkNote = "wild track after ${newLogItem.tkNote}";
-          }
-          logNotifier.add(num.prevName(), newLogItem);
+        if (num.prevName().isNotEmpty && prevTake.isNotEmpty) {
+          addNewLog(prevTake, isFake);
         }
         List<String> prevTakePickerData = [
           sceneCol.selected,
@@ -320,18 +330,24 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
             addItem();
             takeCol.scrollToNext(isLinked);
           },
-          style: ElevatedButton.styleFrom(minimumSize: const Size(70, 60)),
-          child: const Icon(Icons.add));
+          style: ElevatedButton.styleFrom(
+              minimumSize: const Size(70, 60),
+              foregroundColor: Colors.purple[100],
+              ),
+          child: const Icon(Icons.add)
+        );
 
-      var bottomButtonStyleFrom =
-          ElevatedButton.styleFrom(minimumSize: const Size(87, 50));
       var col3DecBtn = ElevatedButton(
-        onPressed: () {
+        onPressed: (){},
+        onLongPress: () {
           drawBackItem();
           prevTakeEditor.descEditingController.clear();
           takeCol.scrollToPrev(isLinked);
         },
-        style: bottomButtonStyleFrom,
+        style: ElevatedButton.styleFrom(
+          minimumSize: const Size(87, 50),
+          foregroundColor: Colors.red,
+        ),
         child: const Icon(Icons.remove),
       );
 
@@ -542,9 +558,34 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
                           col3DecBtn,
                           ElevatedButton(
                               onPressed: () {
-                                Placeholder();
+                                List<String> prevTake =
+                                    (pickerHistory.isNotEmpty)
+                                        ? pickerHistory
+                                                .getAt(pickerHistory.length - 1)
+                                            as List<String>
+                                        : [];
+                                if (num.prevName().isEmpty ||
+                                    prevTake.isEmpty || prevTake[2] == 'OK') return;
+                                addNewLog(prevTake, false, isEnd: true);
+                                List<String> prevTakePickerData = [
+                                  sceneCol.selected,
+                                  shotCol.selected,
+                                  'OK'
+                                ];
+                                pickerHistory.add(prevTakePickerData);
+                                setState(() {
+                                  resetOkEnum();
+                                  descController.clear();
+                                  shotNoteController.text = "收工了,这一镜结束了";
+                                });
+                                if (_canVibrate) {
+                                  Vibrate.feedback(FeedbackType.success);
+                                }
                               },
-                              style: bottomButtonStyleFrom,
+                              style: ElevatedButton.styleFrom(
+                                  minimumSize: const Size(87, 50),
+                                  foregroundColor: Colors.green,
+                                  ),
                               child: const Icon(Icons.check_rounded))
                         ],
                       ),
@@ -584,6 +625,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
       );
     });
   }
+
 
   // @override
   // bool get wantKeepAlive => true;
