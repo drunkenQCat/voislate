@@ -48,6 +48,7 @@ void main() async {
   if (!Hive.box('dates').containsKey(today)) {
     Hive.box('dates').put(today, today);
     Hive.box('picker_history').clear();
+    Hive.box('scn_sht_tk').put('recordCount', 1);
   }
 
   var dates = Hive.box('dates').values.map((e) => e as String).toList();

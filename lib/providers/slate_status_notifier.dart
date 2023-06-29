@@ -19,6 +19,10 @@ class SlateStatusNotifier extends ChangeNotifier {
       : 1;
   String _recordLinker =
       Hive.box('scn_sht_tk').get('recordLinker', defaultValue: "-T") as String;
+  String _prefixType = 
+      Hive.box('scn_sht_tk').get('prefixType', defaultValue: "default") as String;
+  String _customPrefix = 
+      Hive.box('scn_sht_tk').get('customPrefix', defaultValue: "custom") as String;
 
   String _currentDesc =
       Hive.box('scn_sht_tk').get('desc', defaultValue: "") as String;
@@ -29,6 +33,7 @@ class SlateStatusNotifier extends ChangeNotifier {
       .get('oktk', defaultValue: TkStatus.notChecked) as TkStatus;
   ShtStatus _okSht = Hive.box('scn_sht_tk')
       .get('oksht', defaultValue: ShtStatus.notChecked) as ShtStatus;
+      
 
   int get selectedSceneIndex => _selectedSceneIndex;
   int get selectedShotIndex => _selectedShotIndex;
@@ -37,6 +42,8 @@ class SlateStatusNotifier extends ChangeNotifier {
   String get date => _date;
   int get recordCount => _recordCount;
   String get recordLinker => _recordLinker;
+  String get prefixType => _prefixType;
+  String get customPrefix => _customPrefix;
   String get currentDesc => _currentDesc;
   String get currentNote => _currentNote;
   TkStatus get okTk => _okTk;
@@ -82,6 +89,18 @@ class SlateStatusNotifier extends ChangeNotifier {
   void setRecordLinker(String linker) {
     _recordLinker = linker;
     Hive.box('scn_sht_tk').put('recordLinker', _recordLinker);
+    notifyListeners();
+  }
+
+  void setPrefixType(String newValue) {
+    _prefixType = newValue;
+    Hive.box('scn_sht_tk').put('prefixType', newValue);
+    notifyListeners();
+  }
+
+  void setCustomPrefix(String newValue) {
+    _customPrefix = newValue;
+    Hive.box('scn_sht_tk').put('customPrefix', newValue);
     notifyListeners();
   }
 

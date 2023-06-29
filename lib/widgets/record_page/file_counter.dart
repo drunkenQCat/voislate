@@ -47,6 +47,13 @@ class FileNameDisplayCard extends StatefulWidget {
 }
 
 class _FileNameDisplayCardState extends State<FileNameDisplayCard> {
+  late String type;
+
+  @override
+  void initState() {
+    super.initState();
+    type = widget.num.recorderType;
+  }
   @override
   Widget build(BuildContext context) {
     const TextStyle tagStyle = TextStyle(
@@ -61,7 +68,7 @@ class _FileNameDisplayCardState extends State<FileNameDisplayCard> {
         margin: EdgeInsets.fromLTRB(21, 5, 16, 5),
         child: GestureDetector(
           onLongPress: () {
-            showDialog(context: context, builder: prefixEditor);
+            showDialog(context: context, builder: (context)=>prefixEditor());
           },
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -77,7 +84,9 @@ class _FileNameDisplayCardState extends State<FileNameDisplayCard> {
                   ),
                   Text(
                     widget.num.prefix,
-                    style: widget.style,
+                    style: widget.num.prefix.length > 6 ? 
+                      TextStyle(fontSize: 20) : 
+                      widget.style,
                   ),
                 ],
               ),
@@ -171,16 +180,20 @@ class _FileNameDisplayCardState extends State<FileNameDisplayCard> {
     );
   }
 
-  Widget prefixEditor(BuildContext context) {
+  Widget prefixEditor() {
     String value = widget.num.prefix;
-    String type = widget.num.recorderType;
-    List<bool> selections = [
-      type == "default",
-      type == "sound devices",
-      type == "custom"
-    ];
     var editCon = TextEditingController(text: value);
-    bool editable = type == "custom";
+    var prefixEditField = TextField(
+      onSubmitted: (newValue) {
+        widget.num.customPrefix = newValue;
+        Provider.of<SlateStatusNotifier>(context,
+                listen: false)
+            .setCustomPrefix(newValue);
+        setState(() {});
+        Navigator.of(context).pop();
+      },
+      controller: editCon,
+    );
     return AlertDialog(
       title: const Text('请选择前缀形式'),
       content: SizedBox(
@@ -189,43 +202,36 @@ class _FileNameDisplayCardState extends State<FileNameDisplayCard> {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             ToggleButtons(
-                isSelected: selections,
-                onPressed: (int index) {
-                  setState(() {
-                    for (int i = 0; i < selections.length; i++) {
-                      selections[i] = i == index;
-                    }
-                    if (selections[0]) {
-                      widget.num.recorderType = "default";
+              isSelected: [
+                type == "default",
+                type == "sound devices",
+                type == "custom"
+              ],
+              onPressed: (int index) {
+                  switch (index) {
+                    case 0:
                       type = "default";
-                    } else if (selections[1]) {
-                      widget.num.recorderType = "sound devices";
+                      break;
+                    case 1:
                       type = "sound devices";
-                    } else if (selections[2]) {
-                      widget.num.recorderType = "custom";
+                      break;
+                    case 2:
                       type = "custom";
-                    }
+                      break;
+                  }
+                  widget.num.recorderType = type;
+                  Provider.of<SlateStatusNotifier>(context, listen: false)
+                      .setPrefixType(type);
+                  setState(() {
                     editCon.text = widget.num.prefix;
-                    editable = type == "custom";
                   });
-                },
-                children: const [
-                  Text("Date"),
-                  Text("Sound Devices"),
-                  Text("Custom")
-                ]),
-            TextField(
-              enabled: editable,
-              keyboardType: TextInputType.number,
-              onChanged: (newValue) {
-                value = newValue;
               },
-              onSubmitted: (newValue) {
-                widget.num.customPrefix = newValue;
-                Navigator.of(context).pop();
-              },
-              controller: editCon,
-            ),
+              children: const [
+                Text("Date"),
+                Text("Sound Devices"),
+                Text("Custom")
+              ]),
+              prefixEditField,
           ],
         ),
       ),
