@@ -331,14 +331,13 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
             takeCol.scrollToNext(isLinked);
           },
           style: ElevatedButton.styleFrom(
-              minimumSize: const Size(70, 60),
-              foregroundColor: Colors.purple[100],
-              ),
-          child: const Icon(Icons.add)
-        );
+            minimumSize: const Size(70, 60),
+            foregroundColor: Colors.purple[100],
+          ),
+          child: const Icon(Icons.add));
 
       var col3DecBtn = ElevatedButton(
-        onPressed: (){},
+        onPressed: () {},
         onLongPress: () {
           drawBackItem();
           prevTakeEditor.descEditingController.clear();
@@ -426,6 +425,11 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
                             isRecordPage: true);
                       },
                     );
+                    var shotList = totalScenes[sceneCol.selectedIndex]
+                        .data
+                        .map((e) => e.name.toString())
+                        .toList();
+                    setState(() => shotCol.init(shotCol.selectedIndex,shotList));
                     Hive.box('scenes_box').putAt(sceneCol.selectedIndex,
                         totalScenes[sceneCol.selectedIndex]);
                   },
@@ -494,7 +498,8 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: <Widget>[
                     AbsorbPointer(
-                        absorbing: _isAbsorbing, child: nextTakeMonitor),
+                        absorbing: _isAbsorbing, 
+                        child: nextTakeMonitor),
                     Stack(
                       children: [
                         Row(
@@ -565,7 +570,8 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
                                             as List<String>
                                         : [];
                                 if (num.prevName().isEmpty ||
-                                    prevTake.isEmpty || prevTake[2] == 'OK') return;
+                                    prevTake.isEmpty ||
+                                    prevTake[2] == 'OK') return;
                                 addNewLog(prevTake, false, isEnd: true);
                                 List<String> prevTakePickerData = [
                                   sceneCol.selected,
@@ -576,16 +582,16 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
                                 setState(() {
                                   resetOkEnum();
                                   descController.clear();
-                                  shotNoteController.text = "收工了,这一镜结束了";
+                                  descController.text = "收工了,这一镜结束了";
                                 });
                                 if (_canVibrate) {
                                   Vibrate.feedback(FeedbackType.success);
                                 }
                               },
                               style: ElevatedButton.styleFrom(
-                                  minimumSize: const Size(87, 50),
-                                  foregroundColor: Colors.green,
-                                  ),
+                                minimumSize: const Size(87, 50),
+                                foregroundColor: Colors.green,
+                              ),
                               child: const Icon(Icons.check_rounded))
                         ],
                       ),
@@ -625,7 +631,6 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
       );
     });
   }
-
 
   // @override
   // bool get wantKeepAlive => true;
