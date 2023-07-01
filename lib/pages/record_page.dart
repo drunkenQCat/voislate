@@ -424,14 +424,15 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
                             shotIndex: shotCol.selectedIndex,
                             isRecordPage: true);
                       },
-                    );
-                    var shotList = totalScenes[sceneCol.selectedIndex]
-                        .data
-                        .map((e) => e.name.toString())
-                        .toList();
-                    setState(() => shotCol.init(shotCol.selectedIndex,shotList));
-                    Hive.box('scenes_box').putAt(sceneCol.selectedIndex,
-                        totalScenes[sceneCol.selectedIndex]);
+                    ).then((value) {
+                      var shotList = totalScenes[sceneCol.selectedIndex]
+                          .data
+                          .map((e) => e.name.toString())
+                          .toList();
+                      setState(() => shotCol.init(shotCol.selectedIndex,shotList));
+                      Hive.box('scenes_box').putAt(sceneCol.selectedIndex,
+                          totalScenes[sceneCol.selectedIndex]);
+                    });
                   },
                   child: Column(
                     children: [
