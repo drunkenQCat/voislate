@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import '../../models/slate_schedule.dart';
 
 class NoteEditor extends StatefulWidget {
@@ -15,7 +17,7 @@ class NoteEditor extends StatefulWidget {
     required this.scnIndex,
     this.shotIndex,
     this.isRecordPage,
-  }); 
+  });
 
   @override
   // ignore: library_private_types_in_public_api
@@ -139,20 +141,20 @@ class _NoteEditorState extends State<NoteEditor> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        (widget.isRecordPage == null || widget.isRecordPage == false) 
-        ? ElevatedButton(
-          onPressed: () {
-            util.addItem(newInfo, false);
-            Navigator.of(context).pop();
-          },
-          child: const Row(
-            children: [
-              Icon(Icons.arrow_upward),
-              Text('向前添加'),
-            ],
-          ),
-        )
-        : const SizedBox(),
+        (widget.isRecordPage == null || widget.isRecordPage == false)
+            ? ElevatedButton(
+                onPressed: () {
+                  util.addItem(newInfo, false);
+                  Navigator.of(context).pop();
+                },
+                child: const Row(
+                  children: [
+                    Icon(Icons.arrow_upward),
+                    Text('向前添加'),
+                  ],
+                ),
+              )
+            : const SizedBox(),
         ElevatedButton(
           onPressed: () {
             util.saveChanges(newInfo);
@@ -160,20 +162,20 @@ class _NoteEditorState extends State<NoteEditor> {
           },
           child: const Text('保存'),
         ),
-        (widget.isRecordPage == null || widget.isRecordPage == false) 
-        ? ElevatedButton(
-          onPressed: () {
-            util.addItem(newInfo, true);
-            Navigator.of(context).pop();
-          },
-          child: const Row(
-            children: [
-              Text('向后添加'),
-              Icon(Icons.arrow_downward),
-            ],
-          ),
-        )
-        : const SizedBox(),
+        (widget.isRecordPage == null || widget.isRecordPage == false)
+            ? ElevatedButton(
+                onPressed: () {
+                  util.addItem(newInfo, true);
+                  Navigator.of(context).pop();
+                },
+                child: const Row(
+                  children: [
+                    Text('向后添加'),
+                    Icon(Icons.arrow_downward),
+                  ],
+                ),
+              )
+            : const SizedBox(),
       ],
     );
   }
@@ -320,6 +322,17 @@ class _NoteEditorState extends State<NoteEditor> {
       chipList.add(Chip(
         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
         label: TextButton(
+            onLongPress: () {
+              Clipboard.setData(ClipboardData(text: object));
+              Fluttertoast.showToast(
+                msg: "话筒信息已复制",
+                toastLength: Toast.LENGTH_SHORT,
+                timeInSecForIosWeb: 1,
+                backgroundColor: Colors.black,
+                textColor: Colors.white,
+                fontSize: 16.0,
+              );
+            },
             onPressed: () {
               showDialog(
                 context: context,
@@ -328,6 +341,7 @@ class _NoteEditorState extends State<NoteEditor> {
                   return AlertDialog(
                     title: const Text('Edit Object'),
                     content: TextField(
+                      controller: TextEditingController(text: object),
                       onChanged: (value) {
                         newObject = value;
                       },
@@ -472,11 +486,11 @@ class ScheduleUtils {
   }
 
   void saveChanges(ScheduleItem newInfo) {
-      if (isScene) {
-        scenes[currentScnIndex].info = newInfo;
-      } else {
-        scenes[currentScnIndex].data[currentShtIndex!] = newInfo;
-      }
+    if (isScene) {
+      scenes[currentScnIndex].info = newInfo;
+    } else {
+      scenes[currentScnIndex].data[currentShtIndex!] = newInfo;
+    }
   }
 
   void addItem(ScheduleItem inputInfo, bool after) {
@@ -522,14 +536,15 @@ class ScheduleUtils {
       }
       (currentScnIndex == scenes.length - 1 && after)
           ? scenes[currentScnIndex].add(newInfo)
-          : scenes[currentScnIndex].insert(currentShtIndex! + plusIndex,newInfo);
+          : scenes[currentScnIndex]
+              .insert(currentShtIndex! + plusIndex, newInfo);
     }
   }
 
-  void addNewAtLast()
-  {
+  void addNewAtLast() {
     var currentShot = scenes[currentScnIndex].data.last;
-    var newInfo = ScheduleItem(currentShot.key, currentShot.fix, currentShot.note);
+    var newInfo =
+        ScheduleItem(currentShot.key, currentShot.fix, currentShot.note);
     List<int> keys = scenes[currentScnIndex]
         .data
         .map((shot) => int.tryParse(shot.key) ?? 0)
