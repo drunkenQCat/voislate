@@ -299,6 +299,7 @@ class _LogEditorState extends State<LogEditor> {
 
   Widget tkNumPicker() {
     return Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+      // TODO: 修改场镜的功能
       Row(children: [
         Text(_scn, style: fixedWordsStyle),
         Text('场', style: textStyle),

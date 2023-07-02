@@ -44,6 +44,8 @@ dependencies:
   hive_generator: ^2.0.0
   ifly_speech_recognition:
     path: ../ifly_speech_recognition
+  # add this line to your dependencies
+  fluttertoast: ^8.2.2
   permission_handler: ^10.2.0
   provider: ^6.0.5
   record: ^4.4.4
