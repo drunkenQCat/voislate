@@ -1,8 +1,17 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:provider/provider.dart';
+import 'package:voislate/models/slate_log_item.dart';
 
 import 'package:voislate/providers/slate_log_notifier.dart';
+import 'package:flutter/services.dart';
+
+void quitApp() {
+  // Check if the platform is Android or iOS
+  SystemChannels.platform.invokeMethod('SystemNavigator.pop');
+}
 
 class SettingsConfiguePage extends StatelessWidget {
   const SettingsConfiguePage({super.key});
@@ -13,7 +22,7 @@ class SettingsConfiguePage extends StatelessWidget {
       child: const Text(
         "取消",
         style: TextStyle(color: Colors.red),
-        ),
+      ),
       onPressed: () => Navigator.pop(context),
     );
 
@@ -24,7 +33,7 @@ class SettingsConfiguePage extends StatelessWidget {
       onPressed: () {
         var logProvider = Provider.of<SlateLogNotifier>(context, listen: false);
         logProvider.clear();
-        Navigator.pop(context); 
+        Navigator.pop(context);
       },
     );
 
@@ -37,12 +46,16 @@ class SettingsConfiguePage extends StatelessWidget {
         logProvider.clear();
         var dateBox = Hive.box('dates');
         for (String date in dateBox.values.toList().cast()) {
-          if(date != logProvider.today) Hive.box(date).deleteFromDisk();
+          if (date != logProvider.today) {
+            Hive.box<SlateLogItem>(date).close();
+            Hive.box<SlateLogItem>(date).deleteFromDisk();
+          }
         }
         // if dates are more than one, delete all except the last one(today)
         dateBox.clear();
         dateBox.put(logProvider.today, logProvider.today);
-        Navigator.pop(context); 
+        quitApp();
+        Navigator.pop(context);
       },
     );
 

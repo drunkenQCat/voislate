@@ -3,27 +3,31 @@ import 'package:provider/provider.dart';
 import 'package:voislate/providers/slate_status_notifier.dart';
 
 import '../../models/recorder_file_num.dart';
-
-class FileCounter extends StatelessWidget {
+class FileCounter extends StatefulWidget {
   final RecordFileNum num;
-  final int _initCounter;
+  final int initCounter;
   const FileCounter({
     super.key,
     required int init,
     required this.num,
-  }) : _initCounter = init;
+  }) : initCounter = init;
 
+  @override
+  _FileCounterState createState() => _FileCounterState();
+}
+
+class _FileCounterState extends State<FileCounter> {
   @override
   Widget build(BuildContext context) {
     final TextStyle? textStyle = Theme.of(context).textTheme.headlineMedium;
 
     return StreamBuilder<int>(
-      stream: num.value,
-      initialData: _initCounter,
+      stream: widget.num.value,
+      initialData: widget.initCounter,
       builder: (context, snapshot) {
         return Center(
           child: FileNameDisplayCard(
-              num: num, snapshot: snapshot, style: textStyle),
+              num: widget.num, snapshot: snapshot, style: textStyle),
         );
       },
     );
@@ -47,6 +51,14 @@ class FileNameDisplayCard extends StatefulWidget {
 }
 
 class _FileNameDisplayCardState extends State<FileNameDisplayCard> {
+  late String type;
+
+  @override
+  void initState() {
+    super.initState();
+    type = widget.num.recorderType;
+  }
+
   @override
   Widget build(BuildContext context) {
     const TextStyle tagStyle = TextStyle(
@@ -61,7 +73,7 @@ class _FileNameDisplayCardState extends State<FileNameDisplayCard> {
         margin: const EdgeInsets.fromLTRB(21, 5, 16, 5),
         child: GestureDetector(
           onLongPress: () {
-            showDialog(context: context, builder: prefixEditor);
+            showDialog(context: context, builder: (context) => prefixEditor());
           },
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -77,7 +89,9 @@ class _FileNameDisplayCardState extends State<FileNameDisplayCard> {
                   ),
                   Text(
                     widget.num.prefix,
-                    style: widget.style,
+                    style: widget.num.prefix.length > 6
+                        ? TextStyle(fontSize: 20)
+                        : widget.style,
                   ),
                 ],
               ),
@@ -101,11 +115,12 @@ class _FileNameDisplayCardState extends State<FileNameDisplayCard> {
                                 value = newValue;
                               },
                               onSubmitted: (newValue) {
-                                widget.num.intervalSymbol = newValue;
+                                setState(() {
+                                  widget.num.intervalSymbol = newValue;
+                                });
                                 Provider.of<SlateStatusNotifier>(context,
                                         listen: false)
                                     .setRecordLinker(newValue);
-                                setState(() {});
                                 Navigator.of(context).pop();
                               },
                               controller: TextEditingController(text: value),
@@ -148,7 +163,11 @@ class _FileNameDisplayCardState extends State<FileNameDisplayCard> {
                                 value = newValue;
                               },
                               onSubmitted: (newValue) {
-                                widget.num.setValue(int.parse(newValue));
+                                value = newValue;
+                                var newNum = int.parse(newValue);
+                                widget.num.setValue(newNum);
+                                Provider.of<SlateStatusNotifier>(context,listen: false)
+                                    .setIndex(count: newNum);
                                 Navigator.of(context).pop();
                               },
                               controller: TextEditingController(text: value),
@@ -171,16 +190,20 @@ class _FileNameDisplayCardState extends State<FileNameDisplayCard> {
     );
   }
 
-  Widget prefixEditor(BuildContext context) {
+  Widget prefixEditor() {
     String value = widget.num.prefix;
-    String type = widget.num.recorderType;
-    List<bool> selections = [
-      type == "default",
-      type == "sound devices",
-      type == "custom"
-    ];
     var editCon = TextEditingController(text: value);
-    bool editable = type == "custom";
+    var prefixEditField = TextField(
+      onSubmitted: (newValue) {
+        setState(() {
+          widget.num.customPrefix = newValue;
+        });
+        Provider.of<SlateStatusNotifier>(context, listen: false)
+            .setCustomPrefix(newValue);
+        Navigator.of(context).pop();
+      },
+      controller: editCon,
+    );
     return AlertDialog(
       title: const Text('请选择前缀形式'),
       content: SizedBox(
@@ -189,24 +212,28 @@ class _FileNameDisplayCardState extends State<FileNameDisplayCard> {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             ToggleButtons(
-                isSelected: selections,
+                isSelected: [
+                  type == "default",
+                  type == "sound devices",
+                  type == "custom"
+                ],
                 onPressed: (int index) {
-                  setState(() {
-                    for (int i = 0; i < selections.length; i++) {
-                      selections[i] = i == index;
-                    }
-                    if (selections[0]) {
-                      widget.num.recorderType = "default";
+                  switch (index) {
+                    case 0:
                       type = "default";
-                    } else if (selections[1]) {
-                      widget.num.recorderType = "sound devices";
+                      break;
+                    case 1:
                       type = "sound devices";
-                    } else if (selections[2]) {
-                      widget.num.recorderType = "custom";
+                      break;
+                    case 2:
                       type = "custom";
-                    }
+                      break;
+                  }
+                  widget.num.recorderType = type;
+                  Provider.of<SlateStatusNotifier>(context, listen: false)
+                      .setPrefixType(type);
+                  setState(() {
                     editCon.text = widget.num.prefix;
-                    editable = type == "custom";
                   });
                 },
                 children: const [
@@ -214,18 +241,7 @@ class _FileNameDisplayCardState extends State<FileNameDisplayCard> {
                   Text("Sound Devices"),
                   Text("Custom")
                 ]),
-            TextField(
-              enabled: editable,
-              keyboardType: TextInputType.number,
-              onChanged: (newValue) {
-                value = newValue;
-              },
-              onSubmitted: (newValue) {
-                widget.num.customPrefix = newValue;
-                Navigator.of(context).pop();
-              },
-              controller: editCon,
-            ),
+            prefixEditField,
           ],
         ),
       ),
