@@ -18,6 +18,7 @@ TODO：
 2x 日期的TabView
 3x 解决不能自动刷新的bug
 4. 优化界面
+5. 多选修改的功能
 */
 // ignore: must_be_immutable
 class SlateLog extends StatefulWidget {
@@ -155,6 +156,7 @@ class _SlateLogState extends State<SlateLog> {
               ),
             ),
           ).then((value) => setState(
+          // TODO:不要整页刷新
                 () => {},
               ));
         },

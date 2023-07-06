@@ -45,3 +45,4 @@ app.*.map.json
 # The Counter will place build artifacts here
 .VSCodeCounter 
 lib/data/my_ifly_key.dart
+pubspec.lock
