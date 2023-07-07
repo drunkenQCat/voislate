@@ -3,7 +3,7 @@ import 'package:voislate/models/recorder_file_num.dart';
 
 class PrevTakeEditor extends StatelessWidget {
   /// This is the Description Editor for the previous record file.
-  PrevTakeEditor({
+  const PrevTakeEditor({
     Key? key,
     required this.num,
     required this.descEditingController,
@@ -11,7 +11,6 @@ class PrevTakeEditor extends StatelessWidget {
 
   final TextEditingController descEditingController;
   final RecordFileNum num;
-  var note = '';
 
   @override
   Widget build(BuildContext context) {
@@ -34,9 +33,7 @@ class PrevTakeEditor extends StatelessWidget {
               // bind the input to the note variable
               maxLines: 3,
               controller: descEditingController,
-              onChanged: (text) {
-                note = text;
-              },
+              onChanged: (text) {},
               decoration: InputDecoration(
                 // contentPadding: EdgeInsets.symmetric(vertical: 20),
                 border: const OutlineInputBorder(),
@@ -51,7 +48,7 @@ class PrevTakeEditor extends StatelessWidget {
 }
 
 class PrevShotNote extends StatelessWidget {
-  PrevShotNote({
+  const PrevShotNote({
     Key? key,
     required this.currentScn,
     required this.currentSht,
@@ -62,22 +59,7 @@ class PrevShotNote extends StatelessWidget {
   final String currentScn;
   final String currentSht;
   final String currentTk;
-  String shotNote = '';
   final TextEditingController controller;
-
-//   @override
-//   State<PrevShotNote> createState() => _PrevShotNoteState();
-// }
-
-// class _PrevShotNoteState extends State<PrevShotNote> {
-//   late final TextEditingController noteEditingController;
-
-//   @override
-//   void initState() {
-//     // TODO: implement initState
-//     super.initState();
-//     noteEditingController = widget.controller;
-//   }
 
   @override
   build(BuildContext context) {
@@ -101,9 +83,7 @@ class PrevShotNote extends StatelessWidget {
               // bind the input to the note variable
               maxLines: 3,
               controller: controller,
-              onChanged: (text) {
-                shotNote = text;
-              },
+              onChanged: (text) {},
               decoration: const InputDecoration(
                 // contentPadding: EdgeInsets.symmetric(vertical: 20),
                 border: OutlineInputBorder(),

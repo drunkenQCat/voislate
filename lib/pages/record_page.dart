@@ -4,8 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:voislate/models/slate_log_item.dart';
-//TODO:RecoverAndroid
-// when just build for web, disable this package
 import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:flutter_android_volume_keydown/flutter_android_volume_keydown.dart';
 import 'package:animated_toggle_switch/animated_toggle_switch.dart';
@@ -27,7 +25,7 @@ import '../widgets/record_page/file_counter.dart';
 import '../widgets/record_page/recorder_joystick.dart';
 
 /* 
-这一页要做的事：
+TODO:
 1x 轮盘绑定拍摄计划
 2x 调整UI布局，删除一些输入框
 3x 删除场镜相关悬浮按钮（本来就是用来验证功能的）
@@ -87,7 +85,6 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
 
   bool shotChanged = false;
 
-//TODO:RecoverAndroid
   Future<void> _initVibrate() async {
     // init the vibration
     bool canVibrate = await Vibrate.canVibrate;
@@ -103,11 +100,8 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
   void startListening() {
     subscription = FlutterAndroidVolumeKeydown.stream.listen((event) {
       if (event == HardwareButton.volume_down) {
-        // debugPrint("Volume down received");
         scrl3.valueDec(isLinked);
       } else if (event == HardwareButton.volume_up) {
-        // debugPrint("Volume up received");
-        // drawbackItem();
         scrl3.valueInc(isLinked);
       }
     });
@@ -121,12 +115,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
   void initState() {
     WidgetsBinding.instance.addObserver(this);
     super.initState();
-//TODO:RecoverAndroid
     _initVibrate();
-    // AndroidPhysicalButtons.listen((key) {
-    //   debugPrint(key.toString());
-    //   });
-//TODO:RecoverAndroid
     startListening();
     var box = Hive.box('scenes_box');
     totalScenes = box.values.toList().cast();
@@ -171,7 +160,6 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
-//TODO:RecoverAndroid
     stopListening();
     var linkTest = Hive.box('scn_sht_tk').get('oktk') as TkStatus;
     debugPrint(linkTest.toString());
@@ -187,69 +175,54 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
     var pickerHistory = Hive.box('picker_history');
     // everytime setState, the build method will be called again
 
-    var takeOkDial = TakeOkDial(
-      context: context,
-      tkStatus: okTk,
-    );
-    var shotOkDial = ShotOkDial(
-      context: context,
-      shtStatus: okSht,
-    );
-    var prevTakeEditor = PrevTakeEditor(
-      num: num,
-      descEditingController: descController,
-    );
-    var prevShotNote = PrevShotNote(
-      currentScn: pickerHistory.isNotEmpty
-          ? pickerHistory.getAt(pickerHistory.length - 1)[0]
-          : '0',
-      currentSht: pickerHistory.isNotEmpty
-          ? pickerHistory.getAt(pickerHistory.length - 1)[1]
-          : '0',
-      currentTk: pickerHistory.isNotEmpty
-          ? pickerHistory.getAt(pickerHistory.length - 1)[2]
-          : '0',
-      controller: shotNoteController,
-    );
-
     return Consumer2<SlateStatusNotifier, SlateLogNotifier>(
         builder: (context, slateNotifier, logNotifier, child) {
+
+      /// Subscribe the notes on this page
       descController
           .addListener(() => slateNotifier.setNote(desc: descController.text));
       shotNoteController.addListener(
           () => slateNotifier.setNote(note: shotNoteController.text));
 
+      /// The IconButtons on bottom area to pending last take
+      var takeOkDial = TakeOkDial(
+        context: context,
+        tkStatus: okTk,
+      );
+      var shotOkDial = ShotOkDial(
+        context: context,
+        shtStatus: okSht,
+      );
       void resetOkEnum() {
         setState(() {
           okTk = TkStatus.notChecked;
           okSht = ShtStatus.notChecked;
-          // takeOkDial = TakeOkDial(
-          //   context: context,
-          //   tkStatus: okTk,
-          // );
-          // shotOkDial = ShotOkDial(
-          //   context: context,
-          //   shtStatus: okSht,
-          // );
         });
         slateNotifier.setOkStatus(doReset: true);
       }
 
-      void drawBackItem() {
-        setState(() {
-          num.decrement();
-          try {
-            logNotifier.removeLast();
-            pickerHistory.deleteAt(pickerHistory.length - 1);
-            // ignore: empty_catches
-          } catch (e) {}
-          // remove the last note
-//TODO:RecoverAndroid
-          if (_canVibrate) {
-            Vibrate.feedback(FeedbackType.warning);
-          }
-        });
+      /// The desc/note editor area 
+      List<String> getPrevTake() {
+        List<String> prevTake =
+            (pickerHistory.isNotEmpty) ? pickerHistory.getAt(pickerHistory.length - 1) : [];
+        return prevTake;
       }
+      var prevTakeEditor = PrevTakeEditor(
+        num: num,
+        descEditingController: descController,
+      );
+      var prevShotNote = PrevShotNote(
+        currentScn: pickerHistory.isNotEmpty
+            ? getPrevTake()[0]
+            : '0',
+        currentSht: pickerHistory.isNotEmpty
+            ? getPrevTake()[1]
+            : '0',
+        currentTk: pickerHistory.isNotEmpty
+            ? getPrevTake()[2]
+            : '0',
+        controller: shotNoteController,
+      );
 
       void addNewLog(
         List<String> prevTake, {
@@ -293,8 +266,8 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
               : 'Fake Take',
           shtNote: "${shotNoteController.text}$trackLogs",
           scnNote: totalScenes[sceneCol.selectedIndex].info.note.append,
-          okTk: !isFake ? takeOkDial.tkStatus : TkStatus.bad,
-          okSht: !isFake ? shotOkDial.shtStatus : ShtStatus.notChecked,
+          currentOkTk: !isFake ? takeOkDial.tkStatus : TkStatus.bad,
+          currentOkSht: !isFake ? shotOkDial.shtStatus : ShtStatus.notChecked,
         );
 
         if (isWild) {
@@ -303,18 +276,12 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
         logNotifier.add(num.prevName(), newLogItem);
       }
 
-      List<String> getPrevTake() {
-        List<String> prevTake = (pickerHistory.isNotEmpty)
-            ? pickerHistory.getAt(pickerHistory.length - 1) as List<String>
-            : [];
-        return prevTake;
-      }
-
       void addItem({bool isFake = false, bool isEnd = false}) {
         List<String> prevTake = getPrevTake();
         if (num.prevName().isNotEmpty && prevTake.isNotEmpty) {
           addNewLog(prevTake, isEnd: isEnd);
         }
+        //TODO: F、W、OK状态对应操作
         prevTake = [
           sceneCol.selected,
           shotCol.selected,
@@ -342,7 +309,6 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
                   ? descController.text = "收工了,这一镜结束了"
                   : descController.clear();
         });
-        //TODO:RecoverAndroid
         if (_canVibrate) {
           isFake
               ? Vibrate.feedback(FeedbackType.error)
@@ -350,7 +316,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
         }
       }
 
-      var col3IncBtn = ElevatedButton(
+      ElevatedButton col3IncBtn = ElevatedButton(
           onPressed: () {
             addItem();
             takeCol.scrollToNext(isLinked);
@@ -361,7 +327,33 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
           ),
           child: const Icon(Icons.add));
 
-      var col3DecBtn = ElevatedButton(
+      void drawBackItem() {
+        if (getPrevTake()[2] == "OK") {
+          logNotifier.removeLast();
+          pickerHistory.deleteAt(pickerHistory.length - 1);
+        }
+        setState(() {
+          num.decrement();
+        });
+        slateNotifier.setIndex(count: num.number);
+        try {
+          setState(() {
+            descController.text = logNotifier.logToday.last.tkNote;
+            var lastShtNote =
+                logNotifier.logToday.last.shtNote.split('<').first;
+            shotNoteController.text = lastShtNote;
+          });
+          logNotifier.removeLast();
+          pickerHistory.deleteAt(pickerHistory.length - 1);
+          // ignore: empty_catches
+        } catch (e) {}
+        // remove the last note
+        if (_canVibrate) {
+          Vibrate.feedback(FeedbackType.warning);
+        }
+      }
+
+      ElevatedButton col3DecBtn = ElevatedButton(
         onPressed: () {},
         onLongPress: () {
           drawBackItem();
@@ -374,8 +366,18 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
         ),
         child: const Icon(Icons.remove),
       );
+      
+      /// The function of volumekey
+      scrl3 = ScrollValueController<SlateColumnThree>(
+        context: context,
+        textCon: descController,
+        inc: () => addItem(),
+        dec: () => drawBackItem(),
+        col: takeCol,
+      );
 
-      var shotEndBtn = ElevatedButton(
+
+      ElevatedButton shotEndBtn = ElevatedButton(
           onPressed: () {
             List<String> prevTake = getPrevTake();
             if (num.prevName().isEmpty ||
@@ -388,15 +390,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
             minimumSize: const Size(87, 50),
             foregroundColor: Colors.green,
           ),
-          child: Icon(Icons.check_rounded));
-
-      scrl3 = ScrollValueController<SlateColumnThree>(
-        context: context,
-        textCon: descController,
-        inc: () => addItem(),
-        dec: () => drawBackItem(),
-        col: takeCol,
-      );
+          child: const Icon(Icons.check_rounded));
 
       void pickerNumSync() {
         setState(() {
@@ -432,7 +426,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
         return notes;
       }
 
-      var nextTakeMonitor = Stack(
+      Widget nextTakeMonitor = Stack(
         alignment: AlignmentDirectional.centerStart,
         children: [
           Card(
@@ -527,6 +521,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
           ),
         ],
       );
+
       return Scaffold(
         body: CustomScrollView(
           scrollDirection: Axis.vertical,
