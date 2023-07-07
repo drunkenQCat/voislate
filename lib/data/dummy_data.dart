@@ -102,8 +102,8 @@ List<SlateLogItem> slateLogItems = [
     tkNote: 'TK Note 1',
     shtNote: 'Shot Note 1',
     scnNote: 'Scene Note 1',
-    okTk: TkStatus.ok,
-    okSht: ShtStatus.ok,
+    currentOkTk: TkStatus.ok,
+    currentOkSht: ShtStatus.ok,
   ),
   SlateLogItem(
     scn: 'Scene 1',
@@ -115,8 +115,8 @@ List<SlateLogItem> slateLogItems = [
     tkNote: 'TK Note 2',
     shtNote: 'Shot Note 2',
     scnNote: 'Scene Note 2',
-    okTk: TkStatus.ok,
-    okSht: ShtStatus.ok,
+    currentOkTk: TkStatus.ok,
+    currentOkSht: ShtStatus.ok,
   ),
   SlateLogItem(
     scn: 'Scene 1',
@@ -128,8 +128,8 @@ List<SlateLogItem> slateLogItems = [
     tkNote: 'TK Note 3',
     shtNote: 'Shot Note 3',
     scnNote: 'Scene Note 3',
-    okTk: TkStatus.ok,
-    okSht: ShtStatus.ok,
+    currentOkTk: TkStatus.ok,
+    currentOkSht: ShtStatus.ok,
   ),
   SlateLogItem(
     scn: 'Scene 1',
@@ -141,8 +141,8 @@ List<SlateLogItem> slateLogItems = [
     tkNote: 'TK Note 4',
     shtNote: 'Shot Note 4',
     scnNote: 'Scene Note 4',
-    okTk: TkStatus.ok,
-    okSht: ShtStatus.ok,
+    currentOkTk: TkStatus.ok,
+    currentOkSht: ShtStatus.ok,
   ),
   SlateLogItem(
     scn: 'Scene 1',
@@ -154,8 +154,8 @@ List<SlateLogItem> slateLogItems = [
     tkNote: 'TK Note 5',
     shtNote: 'Shot Note 5',
     scnNote: 'Scene Note 5',
-    okTk: TkStatus.ok,
-    okSht: ShtStatus.ok,
+    currentOkTk: TkStatus.ok,
+    currentOkSht: ShtStatus.ok,
   ),
   // Scene 2 Shot2
   SlateLogItem(
@@ -168,8 +168,8 @@ List<SlateLogItem> slateLogItems = [
     tkNote: 'TK Note 2',
     shtNote: 'Shot Note 2',
     scnNote: 'Scene Note 2',
-    okTk: TkStatus.bad,
-    okSht: ShtStatus.nice,
+    currentOkTk: TkStatus.bad,
+    currentOkSht: ShtStatus.nice,
   ),
   SlateLogItem(
     scn: 'Scene 2',
@@ -181,8 +181,8 @@ List<SlateLogItem> slateLogItems = [
     tkNote: 'TK Note 3',
     shtNote: 'Shot Note 3',
     scnNote: 'Scene Note 3',
-    okTk: TkStatus.bad,
-    okSht: ShtStatus.nice,
+    currentOkTk: TkStatus.bad,
+    currentOkSht: ShtStatus.nice,
   ),
   SlateLogItem(
     scn: 'Scene 2',
@@ -194,8 +194,8 @@ List<SlateLogItem> slateLogItems = [
     tkNote: 'TK Note 4',
     shtNote: 'Shot Note 4',
     scnNote: 'Scene Note 4',
-    okTk: TkStatus.bad,
-    okSht: ShtStatus.nice,
+    currentOkTk: TkStatus.bad,
+    currentOkSht: ShtStatus.nice,
   ),
   SlateLogItem(
     scn: 'Scene 2',
@@ -207,7 +207,7 @@ List<SlateLogItem> slateLogItems = [
     tkNote: 'TK Note 3',
     shtNote: 'Shot Note 3',
     scnNote: 'Scene Note 3',
-    okTk: TkStatus.notChecked,
-    okSht: ShtStatus.ok,
+    currentOkTk: TkStatus.notChecked,
+    currentOkSht: ShtStatus.ok,
   ),
 ];

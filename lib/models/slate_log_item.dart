@@ -72,8 +72,8 @@ class SlateLogItem {
     required this.tkNote,
     required this.shtNote,
     required this.scnNote,
-    @JsonProperty(name: 'okTk') TkStatus okTk = TkStatus.notChecked,
-    @JsonProperty(name: 'okSht') ShtStatus okSht = ShtStatus.notChecked,
-  })  : okTk = okTk,
-        okSht = okSht;
+    @JsonProperty(name: 'okTk') TkStatus currentOkTk = TkStatus.notChecked,
+    @JsonProperty(name: 'okSht') ShtStatus currentOkSht = ShtStatus.notChecked,
+  })  : okTk = currentOkTk,
+        okSht = currentOkSht;
 }

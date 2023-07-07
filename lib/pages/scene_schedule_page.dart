@@ -10,14 +10,14 @@ class SceneSchedulePage extends StatefulWidget {
   const SceneSchedulePage({super.key});
 
   @override
-  _SceneSchedulePageState createState() => _SceneSchedulePageState();
+  SceneSchedulePageState createState() => SceneSchedulePageState();
 }
 
 /*
-接下来的这一页的规划：
+TODO:
 1x 一个左边的列表，右边的详情
 2x 左边的列表可以滑动，右边的详情可以滑动
-3. 撤回/重做按钮
+3x 撤回/重做按钮
 4x BottomSheet，可以编辑/删除/添加，添加的时候可以选择是添加到上边还是下边
 5. 悬浮的录音识别按钮，可以语音快速创建计划
 6. 上面的语音识别按钮，还是要暂时用输入框代替
@@ -29,7 +29,7 @@ class SceneSchedulePage extends StatefulWidget {
 4. 话筒信息可以根据通告自动生成
 5. 可以考虑火星大数据的接入 
 */
-class _SceneSchedulePageState extends State<SceneSchedulePage>
+class SceneSchedulePageState extends State<SceneSchedulePage>
     with AutomaticKeepAliveClientMixin {
   List<SceneSchedule> scenes = [];
   int selectedSceneIndex = 0;

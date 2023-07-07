@@ -30,10 +30,10 @@ class SlateLog extends StatefulWidget {
   SlateLog(this.date, {super.key});
 
   @override
-  _SlateLogState createState() => _SlateLogState();
+  SlateLogState createState() => SlateLogState();
 }
 
-class _SlateLogState extends State<SlateLog> {
+class SlateLogState extends State<SlateLog> {
   late SceneSchedule currentSceneData;
   late Box<SlateLogItem> logBox;
   late List<SlateLogItem> logList;
@@ -135,8 +135,10 @@ class _SlateLogState extends State<SlateLog> {
     List<String> trackList = [];
     if (shtNotePreParse.length > 1) {
       shtNotePreParse.removeAt(0);
-      for (var element in shtNotePreParse) { // iterate through the remaining elements
-        trackList.add(element.replaceAll('/>', '')); // strip "/>" and add to trackList
+      for (var element in shtNotePreParse) {
+        // iterate through the remaining elements
+        trackList.add(
+            element.replaceAll('/>', '')); // strip "/>" and add to trackList
       }
     }
     var tracks = trackList.join(","); // concate trackList with ","
@@ -156,8 +158,8 @@ class _SlateLogState extends State<SlateLog> {
               ),
             ),
           ).then((value) => setState(
-          // TODO:不要整页刷新
-                () => {},
+                // TODO:不要整页刷新
+                () {},
               ));
         },
         leading: CircleAvatar(
