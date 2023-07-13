@@ -5,10 +5,10 @@ class DateChecker extends StatefulWidget {
   const DateChecker({super.key});
 
   @override
-  _DateCheckerState createState() => _DateCheckerState();
+  DateCheckerState createState() => DateCheckerState();
 }
 
-class _DateCheckerState extends State<DateChecker> {
+class DateCheckerState extends State<DateChecker> {
   late DateTime _lastDate;
 
   @override
@@ -18,7 +18,7 @@ class _DateCheckerState extends State<DateChecker> {
     Timer.periodic(const Duration(minutes: 1), (timer) {
       if (_lastDate.day != DateTime.now().day) {
         // Do something here
-        print('The date has changed!');
+        debugPrint('The date has changed!');
       }
       _lastDate = DateTime.now();
     });

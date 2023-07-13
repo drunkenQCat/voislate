@@ -13,10 +13,10 @@ class FileCounter extends StatefulWidget {
   }) : initCounter = init;
 
   @override
-  _FileCounterState createState() => _FileCounterState();
+  FileCounterState createState() => FileCounterState();
 }
 
-class _FileCounterState extends State<FileCounter> {
+class FileCounterState extends State<FileCounter> {
   @override
   Widget build(BuildContext context) {
     final TextStyle? textStyle = Theme.of(context).textTheme.headlineMedium;
@@ -47,10 +47,10 @@ class FileNameDisplayCard extends StatefulWidget {
   });
 
   @override
-  State<FileNameDisplayCard> createState() => _FileNameDisplayCardState();
+  State<FileNameDisplayCard> createState() => FileNameDisplayCardState();
 }
 
-class _FileNameDisplayCardState extends State<FileNameDisplayCard> {
+class FileNameDisplayCardState extends State<FileNameDisplayCard> {
   late String type;
 
   @override
@@ -90,7 +90,7 @@ class _FileNameDisplayCardState extends State<FileNameDisplayCard> {
                   Text(
                     widget.num.prefix,
                     style: widget.num.prefix.length > 6
-                        ? TextStyle(fontSize: 20)
+                        ? const TextStyle(fontSize: 20)
                         : widget.style,
                   ),
                 ],

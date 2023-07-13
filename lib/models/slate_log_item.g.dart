@@ -26,8 +26,8 @@ class SlateLogItemAdapter extends TypeAdapter<SlateLogItem> {
       tkNote: fields[6] as String,
       shtNote: fields[7] as String,
       scnNote: fields[8] as String,
-      okTk: fields[9] as TkStatus,
-      okSht: fields[10] as ShtStatus,
+      currentOkTk: fields[9] as TkStatus,
+      currentOkSht: fields[10] as ShtStatus,
     );
   }
 
