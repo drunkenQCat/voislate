@@ -177,7 +177,6 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
 
     return Consumer2<SlateStatusNotifier, SlateLogNotifier>(
         builder: (context, slateNotifier, logNotifier, child) {
-
       /// Subscribe the notes on this page
       descController
           .addListener(() => slateNotifier.setNote(desc: descController.text));
@@ -200,49 +199,49 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
         });
         slateNotifier.setOkStatus(doReset: true);
       }
+      String getCurrentTakeKeyWord(TakeType type) {
+        if (type == TakeType.normal) return takeCol.selected;
+        if (type == TakeType.fake) return 'F';
+        if (type == TakeType.end) return 'OK';
+        if (!isLinked) return 'W';
+        return 'F';
+      }
 
-      /// The desc/note editor area 
-      List<String> getPrevTake() {
-        List<String> prevTake =
-            (pickerHistory.isNotEmpty) ? pickerHistory.getAt(pickerHistory.length - 1) : [];
+      /// The desc/note editor area
+      List<String> getPrevTakeInfo() {
+        List<String> prevTake = (pickerHistory.isNotEmpty)
+            ? pickerHistory.getAt(pickerHistory.length - 1)
+            : [];
         return prevTake;
       }
+
       var prevTakeEditor = PrevTakeEditor(
         num: num,
         descEditingController: descController,
       );
       var prevShotNote = PrevShotNote(
-        currentScn: pickerHistory.isNotEmpty
-            ? getPrevTake()[0]
-            : '0',
-        currentSht: pickerHistory.isNotEmpty
-            ? getPrevTake()[1]
-            : '0',
-        currentTk: pickerHistory.isNotEmpty
-            ? getPrevTake()[2]
-            : '0',
+        currentScn: pickerHistory.isNotEmpty ? getPrevTakeInfo()[0] : '0',
+        currentSht: pickerHistory.isNotEmpty ? getPrevTakeInfo()[1] : '0',
+        currentTk: pickerHistory.isNotEmpty ? getPrevTakeInfo()[2] : '0',
         controller: shotNoteController,
       );
 
-      void addNewLog(
-        List<String> prevTake, {
-        bool isEnd = false,
-      }) {
-        String prevScn = prevTake.isNotEmpty ? prevTake[0] : '0';
-        String prevSht = prevTake.isNotEmpty ? prevTake[1] : '0';
-        String prevTk = prevTake.isNotEmpty ? prevTake[2] : '0';
+      void addNewLog(List<String> prevTakeInfo, [TakeType type = TakeType.normal]) {
+        String prevScn = prevTakeInfo.isNotEmpty ? prevTakeInfo[0] : '0';
+        String prevSht = prevTakeInfo.isNotEmpty ? prevTakeInfo[1] : '0';
+        String prevTk = prevTakeInfo.isNotEmpty ? prevTakeInfo[2] : '0';
         if (prevTk == 'OK') return;
         var isFake = prevTk == 'F';
         var isWild = prevTk == 'W';
         String trackLogs = "";
         // obj list is the rest part of prevTake
-        var objList = prevTake.length > 3 ? prevTake.sublist(3) : [];
+        var objList = prevTakeInfo.length > 3 ? prevTakeInfo.sublist(3) : [];
         for (var obj in objList) {
           obj = "<$obj/>";
           trackLogs += obj;
         }
         // check if the shot is changed
-        if (shotCol.selected != prevSht || isEnd) {
+        if (shotCol.selected != prevSht || type == TakeType.end) {
           // if changed, the status of current take
           // automatically turn to best
           takeOkDial.tkStatus = TkStatus.ok;
@@ -273,44 +272,36 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
         if (isWild) {
           newLogItem.tkNote = "wild track ${newLogItem.tkNote}";
         }
-        logNotifier.add(num.prevName(), newLogItem);
+        logNotifier.add(num.prevFileName(), newLogItem);
       }
 
-      void addItem({bool isFake = false, bool isEnd = false}) {
-        List<String> prevTake = getPrevTake();
-        if (num.prevName().isNotEmpty && prevTake.isNotEmpty) {
-          addNewLog(prevTake, isEnd: isEnd);
+      // void addItem({bool isFake = false, bool isEnd = false}) {
+      void addItem([TakeType type = TakeType.normal]) {
+        if (num.prevFileName().isNotEmpty) {
+          addNewLog(getPrevTakeInfo(), type);
         }
-        //TODO: F、W、OK状态对应操作
-        prevTake = [
-          sceneCol.selected,
-          shotCol.selected,
-          isFake
-              ? 'F'
-              : !isLinked
-                  ? 'W'
-                  : isEnd
-                      ? 'OK'
-                      : takeCol.selected
-        ];
+        List currentTakeInfo = [
+          sceneCol.selected, 
+          shotCol.selected, 
+          getCurrentTakeKeyWord(type)];
         var objList = totalScenes[sceneCol.selectedIndex][shotCol.selectedIndex]
             .note
             .objects;
-        prevTake.addAll(objList);
-        pickerHistory.add(prevTake);
+        currentTakeInfo.addAll(objList);
+        pickerHistory.add(currentTakeInfo);
         setState(() {
           shotChanged = false;
           num.increment();
           resetOkEnum();
           slateNotifier.setIndex(count: num.number);
-          isFake
+          type == TakeType.fake
               ? descController.text = "跑条"
-              : isEnd
+              : type == TakeType.end
                   ? descController.text = "收工了,这一镜结束了"
                   : descController.clear();
         });
         if (_canVibrate) {
-          isFake
+          type == TakeType.fake
               ? Vibrate.feedback(FeedbackType.error)
               : Vibrate.feedback(FeedbackType.heavy);
         }
@@ -328,7 +319,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
           child: const Icon(Icons.add));
 
       void drawBackItem() {
-        if (getPrevTake()[2] == "OK") {
+        if (getPrevTakeInfo()[2] == "OK") {
           logNotifier.removeLast();
           pickerHistory.deleteAt(pickerHistory.length - 1);
         }
@@ -366,7 +357,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
         ),
         child: const Icon(Icons.remove),
       );
-      
+
       /// The function of volumekey
       scrl3 = ScrollValueController<SlateColumnThree>(
         context: context,
@@ -376,15 +367,14 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
         col: takeCol,
       );
 
-
       ElevatedButton shotEndBtn = ElevatedButton(
           onPressed: () {
-            List<String> prevTake = getPrevTake();
-            if (num.prevName().isEmpty ||
+            List<String> prevTake = getPrevTakeInfo();
+            if (num.prevFileName().isEmpty ||
                 prevTake.isEmpty ||
                 prevTake[2] == 'OK' ||
                 prevTake[2] == 'F') return;
-            addItem(isEnd: true);
+            addItem(TakeType.end);
           },
           style: ElevatedButton.styleFrom(
             minimumSize: const Size(87, 50),
@@ -555,7 +545,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
                             ),
                             child: IconButton(
                               onPressed: () {
-                                addItem(isFake: true);
+                                addItem(TakeType.fake);
                               },
                               icon: const Icon(Icons.redo),
                             ),
@@ -639,6 +629,9 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
     });
   }
 
+
   // @override
   // bool get wantKeepAlive => true;
 }
+
+enum TakeType { normal, fake, end, wild }

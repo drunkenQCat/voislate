@@ -96,7 +96,7 @@ class _LogQuickViewerState extends State<LogQuickViewer> {
     var promptIndicator = Container(
       color: Colors.blue[100],
       child: itemRow(
-          MapEntry(widget.num.prevName(), '等待输入...'), widget.notes.length),
+          MapEntry(widget.num.prevFileName(), '等待输入...'), widget.notes.length),
     );
 
     return SizedBox(

@@ -37,7 +37,7 @@ class PrevTakeEditor extends StatelessWidget {
               decoration: InputDecoration(
                 // contentPadding: EdgeInsets.symmetric(vertical: 20),
                 border: const OutlineInputBorder(),
-                hintText: '${num.prevName()}\n 录音标注...',
+                hintText: '${num.prevFileName()}\n 录音标注...',
               ),
             ),
           ),
