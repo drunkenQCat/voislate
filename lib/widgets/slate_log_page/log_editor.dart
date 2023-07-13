@@ -62,7 +62,6 @@ class _LogEditorState extends State<LogEditor> {
 
   @override
   void didChangeDependencies() {
-    // TODO: implement didChangeDependencies
     super.didChangeDependencies();
     textStyle = Theme.of(context).textTheme.titleLarge;
     fixedWordsStyle = TextStyle(
