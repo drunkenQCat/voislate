@@ -48,7 +48,7 @@ class RecordFileNum {
     return '$prefix$intervalSymbol$numberPad';
   }
 
-  String prevName() {
+  String prevFileName() {
     if (_number == 1) return '';
     var numberPad = (_number - 1).toString().padLeft(3, '0');
     return '$prefix$intervalSymbol$numberPad';
