@@ -117,8 +117,8 @@ class SettingsConfiguePage extends StatelessWidget {
                     context: context,
                     builder: (context) {
                       return AlertDialog(
-                        title: const Text('清除场记'),
-                        content: const Text('是否确认要清除场记？'),
+                        title: const Text('重置场记'),
+                        content: const Text('是否确认要清除场记？之后需手动重启App'),
                         actions: [
                           cancelButton,
                           clearAllConfirmButton,
