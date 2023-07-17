@@ -23,7 +23,8 @@ class VoiSlate extends StatelessWidget {
       child: MaterialApp(
         title: 'Voislate',
         theme: ThemeData(
-          primarySwatch: Colors.deepPurple,
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+          useMaterial3: true,
         ),
         home: const MyHomePage(title: 'Voislate Home Page'),
         builder: EasyLoading.init(),

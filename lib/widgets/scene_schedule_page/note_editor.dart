@@ -70,7 +70,7 @@ class _NoteEditorState extends State<NoteEditor> {
     scnIndex = widget.scnIndex;
   }
 
-  void _updateObjects(List<String> newObjects) {
+  void updateObjects(List<String> newObjects) {
     setState(() {
       editedObjects = newObjects;
     });
@@ -88,7 +88,7 @@ class _NoteEditorState extends State<NoteEditor> {
               slivers: [
                 SliverToBoxAdapter(
                   child: Container(
-                    height: MediaQuery.of(context).size.height * 1.2,
+                    height: MediaQuery.of(context).size.height * 1.7,
                     padding: const EdgeInsets.all(16.0),
                     child: contentEditor(setState, context),
                   ),
@@ -264,13 +264,122 @@ class _NoteEditorState extends State<NoteEditor> {
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
-            children: tagChips(editedObjects, context, _updateObjects)
+            children: tagChips(context)
                 .map((chip) => Transform.scale(scale: 1, child: chip))
                 .toList(),
           ),
         ),
       ],
     );
+  }
+
+  List<Chip> tagChips(BuildContext context) {
+    var chipList = List<Chip>.empty(growable: true);
+    String object = '';
+    String newObject = '';
+
+    AlertDialog editOrAddTagDialog(String dialogType, Function onConfirm) {
+      var cancelButton = TextButton(
+        child: const Text('Cancel'),
+        onPressed: () {
+          Navigator.of(context).pop();
+        },
+      );
+
+      var confirmButton = TextButton(
+        child: Text(dialogType),
+        onPressed: () {
+          onConfirm();
+          Navigator.of(context).pop();
+        },
+      );
+
+      var tagEditField = TextField(
+          controller: TextEditingController(text: object),
+          onChanged: (value) {
+            newObject = value;
+          },
+        );
+
+      var editingDialog = AlertDialog(
+        title: Text('$dialogType Object'),
+        content: tagEditField,
+        actions: [cancelButton, confirmButton],
+      );
+
+      return editingDialog;
+    }
+
+    for (int index = 0; index < editedObjects.length; index++) {
+      object = editedObjects[index];
+
+      void copyTag(String object) {
+        Clipboard.setData(ClipboardData(text: object));
+        Fluttertoast.showToast(
+          msg: "话筒信息已复制",
+          toastLength: Toast.LENGTH_SHORT,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.black,
+          textColor: Colors.white,
+          fontSize: 16.0,
+        );
+      }
+
+      void editTagText() {
+        editedObjects[index] = newObject;
+        updateObjects(editedObjects);
+      }
+
+      var editDialog = editOrAddTagDialog('Edit', editTagText);
+      showEditDialog()=>showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          newObject = '';
+          return editDialog;
+        },
+      );
+
+      chipList.add(Chip(
+        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        label: TextButton(
+            onLongPress: () {
+              copyTag(object);
+            },
+            onPressed: showEditDialog,
+            child: Text(
+              object,
+              style: const TextStyle(
+                fontSize: 14,
+              ),
+            )),
+        onDeleted: () {
+          updateObjects(editedObjects..remove(object));
+        },
+      ));
+    }
+
+    void addNewTag() {
+      updateObjects(editedObjects..add(newObject));
+    }
+
+    object = '';
+    var addTagDialog = editOrAddTagDialog('Add', addNewTag);
+    chipList.add(Chip(
+        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        label: TextButton(
+          onPressed: () => showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                newObject = '';
+                return addTagDialog;
+              },
+            ),
+          child: const Icon(
+            Icons.add,
+            size: 30,
+          ),
+        )));
+    return chipList;
   }
 
   Row keyFixPicker(StateSetter setState) {
@@ -314,110 +423,8 @@ class _NoteEditorState extends State<NoteEditor> {
     );
   }
 
-  List<Chip> tagChips(List<String> editedObjects, BuildContext context,
-      void Function(List<String> newObjects) updateObjects) {
-    var chipList = List<Chip>.empty(growable: true);
-    for (int index = 0; index < editedObjects.length; index++) {
-      String object = editedObjects[index];
-      chipList.add(Chip(
-        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        label: TextButton(
-            onLongPress: () {
-              Clipboard.setData(ClipboardData(text: object));
-              Fluttertoast.showToast(
-                msg: "话筒信息已复制",
-                toastLength: Toast.LENGTH_SHORT,
-                timeInSecForIosWeb: 1,
-                backgroundColor: Colors.black,
-                textColor: Colors.white,
-                fontSize: 16.0,
-              );
-            },
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  String newObject = '';
-                  return AlertDialog(
-                    title: const Text('Edit Object'),
-                    content: TextField(
-                      controller: TextEditingController(text: object),
-                      onChanged: (value) {
-                        newObject = value;
-                      },
-                    ),
-                    actions: [
-                      TextButton(
-                        child: const Text('Cancel'),
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                      ),
-                      TextButton(
-                        child: const Text('Edit'),
-                        onPressed: () {
-                          editedObjects[index] = newObject;
-                          updateObjects(editedObjects);
-                          Navigator.of(context).pop();
-                        },
-                      ),
-                    ],
-                  );
-                },
-              );
-            },
-            child: Text(
-              object,
-              style: const TextStyle(
-                fontSize: 14,
-              ),
-            )),
-        onDeleted: () {
-          updateObjects(editedObjects..remove(object));
-        },
-      ));
-    }
-    chipList.add(Chip(
-        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        label: TextButton(
-          onPressed: () {
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                String newObject = '';
-                return AlertDialog(
-                  title: const Text('Add Object'),
-                  content: TextField(
-                    onChanged: (value) {
-                      newObject = value;
-                    },
-                  ),
-                  actions: [
-                    TextButton(
-                      child: const Text('Cancel'),
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                    ),
-                    TextButton(
-                      child: const Text('Add'),
-                      onPressed: () {
-                        updateObjects(editedObjects..add(newObject));
-                        Navigator.of(context).pop();
-                      },
-                    ),
-                  ],
-                );
-              },
-            );
-          },
-          child: const Icon(
-            Icons.add,
-            size: 30,
-          ),
-        )));
-    return chipList;
-  }
+
+
 }
 
 class ScheduleUtils {
