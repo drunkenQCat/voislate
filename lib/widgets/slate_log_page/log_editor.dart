@@ -352,14 +352,14 @@ class _LogEditorState extends State<LogEditor> {
   }
 }
 
-class SlateLogList extends StatefulWidget {
-  const SlateLogList({Key? key}) : super(key: key);
+class TestSlateLogList extends StatefulWidget {
+  const TestSlateLogList({Key? key}) : super(key: key);
 
   @override
-  State<SlateLogList> createState() => _SlateLogListState();
+  State<TestSlateLogList> createState() => _TestSlateLogListState();
 }
 
-class _SlateLogListState extends State<SlateLogList> {
+class _TestSlateLogListState extends State<TestSlateLogList> {
   final String boxName = 'test';
 
   @override

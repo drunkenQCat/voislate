@@ -107,11 +107,13 @@ class SlateLogState extends State<SlateLog> {
               onPressed: () {
                 var json = JsonMapper.serialize(logList);
                 final tempDir = Directory.systemTemp.createTempSync();
-                final timeStamp = DateTime.now()
-                    .millisecondsSinceEpoch
-                    .toString(); // get current time stamp
+                final String projectName = Hive.box("settings").get("project");
+                final timeStamp = DateTime.timestamp()
+                    .toLocal()
+                    .toString()
+                    .split('.')[0]; // get current time stamp
                 final slateLogDestiny = File(
-                    '${tempDir.path}/slateLog_$timeStamp.json'); // create file with time stamp suffix
+                    '${tempDir.path}/${projectName}_$timeStamp.json'); // create file with time stamp suffix
                 slateLogDestiny.writeAsStringSync(json);
                 // Share.share(json);
                 Share.shareXFiles([XFile(slateLogDestiny.path)]);

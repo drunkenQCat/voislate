@@ -1,28 +1,27 @@
 import 'dart:async';
 
+import 'package:animated_toggle_switch/animated_toggle_switch.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_android_volume_keydown/flutter_android_volume_keydown.dart';
+import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:voislate/models/slate_log_item.dart';
-import 'package:flutter_vibrate/flutter_vibrate.dart';
-import 'package:flutter_android_volume_keydown/flutter_android_volume_keydown.dart';
-import 'package:animated_toggle_switch/animated_toggle_switch.dart';
-import 'package:voislate/providers/slate_log_notifier.dart';
 import 'package:voislate/models/slate_schedule.dart';
+import 'package:voislate/providers/slate_log_notifier.dart';
 import 'package:voislate/widgets/scene_schedule_page/note_editor.dart';
 
-import '../providers/slate_picker_notifier.dart';
-import '../providers/value_scroll_control.dart';
 import '../models/recorder_file_num.dart';
+import '../providers/slate_picker_notifier.dart';
 import '../providers/slate_status_notifier.dart';
-
+import '../providers/value_scroll_control.dart';
+import '../widgets/record_page/file_counter.dart';
 import '../widgets/record_page/prev_note_editor.dart';
+import '../widgets/record_page/quick_view_log_dialog.dart';
+import '../widgets/record_page/recorder_joystick.dart';
+import '../widgets/record_page/shot_ok_dial.dart';
 import '../widgets/record_page/slate_picker.dart';
 import '../widgets/record_page/take_ok_dial.dart';
-import '../widgets/record_page/shot_ok_dial.dart';
-import '../widgets/record_page/quick_view_log_dialog.dart';
-import '../widgets/record_page/file_counter.dart';
-import '../widgets/record_page/recorder_joystick.dart';
 
 /* 
 TODO:
@@ -52,6 +51,8 @@ class SlateRecord extends StatefulWidget {
   @override
   State<SlateRecord> createState() => _SlateRecordState();
 }
+
+enum TakeType { normal, fake, end, wild }
 
 class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
   // Some variables don't need to be in the state
@@ -85,87 +86,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
 
   bool shotChanged = false;
 
-  Future<void> _initVibrate() async {
-    // init the vibration
-    bool canVibrate = await Vibrate.canVibrate;
-    setState(() {
-      _canVibrate = canVibrate;
-      _canVibrate
-          ? debugPrint('This device can vibrate')
-          : debugPrint('This device cannot vibrate');
-    });
-  }
-
   StreamSubscription<HardwareButton>? subscription;
-  void startListening() {
-    subscription = FlutterAndroidVolumeKeydown.stream.listen((event) {
-      if (event == HardwareButton.volume_down) {
-        scrl3.valueDec(isLinked);
-      } else if (event == HardwareButton.volume_up) {
-        scrl3.valueInc(isLinked);
-      }
-    });
-  }
-
-  void stopListening() {
-    subscription?.cancel();
-  }
-
-  @override
-  void initState() {
-    WidgetsBinding.instance.addObserver(this);
-    super.initState();
-    _initVibrate();
-    startListening();
-    var box = Hive.box('scenes_box');
-    totalScenes = box.values.toList().cast();
-
-    var initValueProvider =
-        Provider.of<SlateStatusNotifier>(context, listen: false);
-    var sceneList = totalScenes.map((e) => e.info.name.toString()).toList();
-    var shotList = totalScenes[initValueProvider.selectedSceneIndex]
-        .data
-        .map((e) => e.name.toString())
-        .toList();
-    var takeList = List.generate(200, (index) => (index + 1).toString());
-    isLinked = initValueProvider.isLinked;
-    okTk = initValueProvider.okTk;
-    okSht = initValueProvider.okSht;
-    sceneCol.init(0, sceneList);
-    shotCol.init(0, shotList);
-    takeCol.init(0, takeList);
-    String initDesc = initValueProvider.currentDesc;
-    String initNote = initValueProvider.currentNote;
-    descController = TextEditingController(text: initDesc);
-    shotNoteController = TextEditingController(text: initNote);
-    WidgetsBinding.instance.endOfFrame.then((_) {
-      var initS = initValueProvider.selectedSceneIndex;
-      var initSh = initValueProvider.selectedShotIndex;
-      var initTk = initValueProvider.selectedTakeIndex;
-      var initCount = initValueProvider.recordCount;
-      var initRecordLinker = initValueProvider.recordLinker;
-      var initPrefixType = initValueProvider.prefixType;
-      var initCustomPrefix = initValueProvider.customPrefix;
-      sceneCol.init(initS);
-      shotCol.init(initSh);
-      takeCol.init(initTk);
-      num.setValue(initCount);
-      num.intervalSymbol = initRecordLinker;
-      num.recorderType = initPrefixType;
-      num.customPrefix = initCustomPrefix;
-    });
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-    stopListening();
-    var linkTest = Hive.box('scn_sht_tk').get('oktk') as TkStatus;
-    debugPrint(linkTest.toString());
-    var linkTest2 = Hive.box('scn_sht_tk').get('oksht') as ShtStatus;
-    debugPrint(linkTest2.toString());
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -201,10 +122,10 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
       }
 
       String getCurrentTakeKeyWord(TakeType type) {
+        if (type == TakeType.end) return 'OK';
         if (type == TakeType.normal) return takeCol.selected;
         if (type == TakeType.fake) return 'F';
         if (type == TakeType.wild) return 'W';
-        if (type == TakeType.end) return 'OK';
         return 'F';
       }
 
@@ -290,7 +211,9 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
         if (num.prevFileName().isNotEmpty) {
           addNewLog(currentTkType);
         }
-        if (!isLinked) currentTkType = TakeType.wild;
+        if (!isLinked && currentTkType != TakeType.end) {
+          currentTkType = TakeType.wild;
+        }
         List currentTakeInfo = [
           sceneCol.selected,
           shotCol.selected,
@@ -320,10 +243,12 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
             takeCol.scrollToNext(isLinked);
           },
           style: ElevatedButton.styleFrom(
-            minimumSize: const Size(70, 60),
-            foregroundColor: Colors.purple[100],
-          ),
-          child: const Icon(Icons.add));
+              minimumSize: const Size(56, 58),
+              foregroundColor: Colors.white,
+              backgroundColor: Colors.purple.shade900),
+          child: const Icon(
+            Icons.add,
+          ));
 
       Future<void> removeLastPickerHistory() =>
           pickerHistory.deleteAt(pickerHistory.length - 1);
@@ -435,6 +360,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
         alignment: AlignmentDirectional.centerStart,
         children: [
           Card(
+            color: Colors.grey.shade100,
             child: Column(
               children: [
                 const ListTile(
@@ -644,8 +570,90 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
     });
   }
 
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+    stopListening();
+    var linkTest = Hive.box('scn_sht_tk').get('oktk') as TkStatus;
+    debugPrint(linkTest.toString());
+    var linkTest2 = Hive.box('scn_sht_tk').get('oksht') as ShtStatus;
+    debugPrint(linkTest2.toString());
+  }
+
+  @override
+  void initState() {
+    WidgetsBinding.instance.addObserver(this);
+    super.initState();
+    _initVibrate();
+    startListening();
+    var box = Hive.box('scenes_box');
+    totalScenes = box.values.toList().cast();
+
+    var initValueProvider =
+        Provider.of<SlateStatusNotifier>(context, listen: false);
+    var sceneList = totalScenes.map((e) => e.info.name.toString()).toList();
+    var shotList = totalScenes[initValueProvider.selectedSceneIndex]
+        .data
+        .map((e) => e.name.toString())
+        .toList();
+    var takeList = List.generate(200, (index) => (index + 1).toString());
+    isLinked = initValueProvider.isLinked;
+    okTk = initValueProvider.okTk;
+    okSht = initValueProvider.okSht;
+    sceneCol.init(0, sceneList);
+    shotCol.init(0, shotList);
+    takeCol.init(0, takeList);
+    String initDesc = initValueProvider.currentDesc;
+    String initNote = initValueProvider.currentNote;
+    descController = TextEditingController(text: initDesc);
+    shotNoteController = TextEditingController(text: initNote);
+    WidgetsBinding.instance.endOfFrame.then((_) {
+      var initS = initValueProvider.selectedSceneIndex;
+      var initSh = initValueProvider.selectedShotIndex;
+      var initTk = initValueProvider.selectedTakeIndex;
+      var initCount = initValueProvider.recordCount;
+      var initRecordLinker = initValueProvider.recordLinker;
+      var initPrefixType = initValueProvider.prefixType;
+      var initCustomPrefix = initValueProvider.customPrefix;
+      sceneCol.init(initS);
+      shotCol.init(initSh);
+      takeCol.init(initTk);
+      num.setValue(initCount);
+      num.intervalSymbol = initRecordLinker;
+      num.recorderType = initPrefixType;
+      num.customPrefix = initCustomPrefix;
+    });
+  }
+
+  void startListening() {
+    subscription = FlutterAndroidVolumeKeydown.stream.listen((event) {
+      if (event == HardwareButton.volume_down) {
+        scrl3.valueDec(isLinked);
+      } else if (event == HardwareButton.volume_up) {
+        scrl3.valueInc(isLinked);
+      }
+    });
+  }
+
+  void stopListening() {
+    subscription?.cancel();
+  }
+
+  Future<void> _initVibrate() async {
+    // init the vibration
+    bool canVibrate = await Vibrate.canVibrate;
+    setState(() {
+      _canVibrate = canVibrate;
+      _canVibrate
+          ? debugPrint('This device can vibrate')
+          : debugPrint('This device cannot vibrate');
+    });
+  }
+
   // @override
   // bool get wantKeepAlive => true;
 }
-
-enum TakeType { normal, fake, end, wild }
+/*
+ * 
+ */
