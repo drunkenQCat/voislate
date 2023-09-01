@@ -1,6 +1,10 @@
+import 'dart:io';
+
+import 'package:dart_json_mapper/dart_json_mapper.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:voislate/models/slate_log_item.dart';
 
 import 'package:voislate/providers/slate_log_notifier.dart';
@@ -12,7 +16,9 @@ void quitApp() {
 }
 
 class SettingsConfiguePage extends StatelessWidget {
-  const SettingsConfiguePage({super.key});
+  final TextEditingController projectNameController =
+      TextEditingController(text: Hive.box("settings").get("project"));
+  SettingsConfiguePage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -57,6 +63,19 @@ class SettingsConfiguePage extends StatelessWidget {
       },
     );
 
+    String exoprtAllLogs() {
+      var dateBox = Hive.box('dates');
+      var allLogs = "";
+      List<SlateLogItem> logItems = [];
+      for (String date in dateBox.values.toList().cast()) {
+        var box = Hive.box<SlateLogItem>(date);
+        logItems += box.values.toList();
+      }
+      var json = JsonMapper.serialize(logItems);
+      allLogs += json;
+      return allLogs;
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('VoiSlate 设置'),
@@ -67,10 +86,12 @@ class SettingsConfiguePage extends StatelessWidget {
       ),
       body: Column(
         children: [
-          const ListTile(
-            leading: Text('工程名'),
+          ListTile(
+            leading: const Text('工程名'),
             title: TextField(
-              decoration: InputDecoration(),
+              controller: projectNameController,
+              decoration: const InputDecoration(),
+              onChanged: (value) => Hive.box("settings").put("project", value),
             ),
           ),
           ListTile(
@@ -92,6 +113,24 @@ class SettingsConfiguePage extends StatelessWidget {
             value: true,
             onChanged: (bool value) {},
           ),
+          TextButton(
+              onPressed: () {
+                var logs = exoprtAllLogs();
+                final tempDir = Directory.systemTemp.createTempSync();
+                final timeStamp = DateTime.timestamp()
+                    .toLocal()
+                    .toString()
+                    .split('.')[0]; // get current time stamp
+                final slateLogDestiny = File(
+                    '${tempDir.path}/${projectNameController.text}_all_$timeStamp.json'); // create file with time stamp suffix
+                slateLogDestiny.writeAsStringSync(logs);
+                // Share.share(json);
+                Share.shareXFiles([XFile(slateLogDestiny.path)]);
+              },
+              child: const Text(
+                '导出所有场记',
+                style: TextStyle(color: Colors.blue),
+              )),
           TextButton(
               onPressed: () {
                 showDialog(

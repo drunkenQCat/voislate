@@ -33,6 +33,8 @@ dependencies:
   build_runner: ^2.4.4
   cupertino_icons: ^1.0.2
   dart_json_mapper: ^2.2.9
+  flex_color_scheme: ^7.2.0
+  flex_seed_scheme: ^1.4.0
   flutter:
     sdk: flutter
   flutter_android_volume_keydown: ^1.0.0
@@ -45,9 +47,6 @@ dependencies:
   hive_generator: ^2.0.0
   ifly_speech_recognition:
     path: ../ifly_speech_recognition
-    # git:
-    #   url: https://github.com/drunkenQCat/ifly_speech_recognition.git
-    #   ref: dev
   permission_handler: ^10.2.0
   provider: ^6.0.5
   record: ^4.4.4

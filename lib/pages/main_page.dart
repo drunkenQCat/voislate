@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:flex_color_scheme/flex_color_scheme.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 
 import 'package:voislate/pages/slate_log_tabs.dart';
@@ -9,6 +12,8 @@ import 'package:voislate/pages/scene_schedule_page.dart';
 import 'package:voislate/pages/record_page.dart';
 import 'package:voislate/pages/settings_configue_page.dart';
 import 'package:voislate/providers/slate_status_notifier.dart';
+
+DateTime _lastPopTime = DateTime.now();
 
 class VoiSlate extends StatelessWidget {
   const VoiSlate({super.key});
@@ -22,10 +27,8 @@ class VoiSlate extends StatelessWidget {
       ],
       child: MaterialApp(
         title: 'Voislate',
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-          useMaterial3: true,
-        ),
+        theme: FlexThemeData.light(
+            scheme: FlexScheme.bahamaBlue, useMaterial3: true),
         home: const MyHomePage(title: 'Voislate Home Page'),
         builder: EasyLoading.init(),
       ),
@@ -62,8 +65,7 @@ class _MyHomePageState extends State<MyHomePage>
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                    builder: (context) => const SettingsConfiguePage()),
+                MaterialPageRoute(builder: (context) => SettingsConfiguePage()),
               );
             },
           ),

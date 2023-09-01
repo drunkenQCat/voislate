@@ -11,13 +11,10 @@ import 'models/recorder_file_num.dart';
 import 'main.mapper.g.dart';
 
 void main() async {
-  // initializations 
-  initializeJsonMapper(
-    adapters: [
-      JsonMapperAdapter(
-        converters: {Enum: EnumConverterShort()}
-      )
-    ]);
+  // initializations
+  initializeJsonMapper(adapters: [
+    JsonMapperAdapter(converters: {Enum: EnumConverterShort()})
+  ]);
   await Hive.initFlutter();
   Hive.registerAdapter(NoteAdapter());
   Hive.registerAdapter(ScheduleItemAdapter());
@@ -30,6 +27,10 @@ void main() async {
   await Hive.openBox('scenes_box');
   if (Hive.box('scenes_box').isEmpty) {
     await Hive.box('scenes_box').addAll([sceneSchedule, scene2ASchedule]);
+  }
+  await Hive.openBox('settings');
+  if (Hive.box('settings').isEmpty) {
+    await Hive.box('settings').put("project", "NewProject");
   }
   await Hive.openBox('scn_sht_tk');
   await Hive.openBox('dates');
