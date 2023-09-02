@@ -289,7 +289,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
           drawBackItem();
         },
         style: ElevatedButton.styleFrom(
-          minimumSize: const Size(87, 50),
+          maximumSize: const Size(87, 50),
           foregroundColor: Colors.red,
         ),
         child: const Icon(Icons.remove),
@@ -305,19 +305,22 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
       );
 
       ElevatedButton shotEndBtn = ElevatedButton(
-          onPressed: () {
-            List<String> prevTake = getPrevTakeInfo();
-            if (num.prevFileName().isEmpty ||
-                prevTake.isEmpty ||
-                prevTake[2] == 'OK' ||
-                prevTake[2] == 'F') return;
-            addItem(TakeType.end);
-          },
-          style: ElevatedButton.styleFrom(
-            minimumSize: const Size(87, 50),
-            foregroundColor: Colors.green,
-          ),
-          child: const Icon(Icons.check_rounded));
+        onPressed: () {
+          List<String> prevTake = getPrevTakeInfo();
+          if (num.prevFileName().isEmpty ||
+              prevTake.isEmpty ||
+              prevTake[2] == 'OK' ||
+              prevTake[2] == 'F') return;
+          addItem(TakeType.end);
+        },
+        style: ElevatedButton.styleFrom(
+          // minimumSize: const Size(87, 50),
+          maximumSize: const Size(87, 50),
+          foregroundColor: Colors.green,
+        ),
+        // child: const Image(image: AssetImage('lib/assets/bookmark.png')),
+        child: const Icon(Icons.save),
+      );
 
       void pickerNumSync() {
         setState(() {
@@ -356,6 +359,61 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
         return notes;
       }
 
+      const nextTakeTrailer = ListTile(
+        visualDensity: VisualDensity(vertical: -4),
+        leading: Icon(
+          Icons.fast_forward_outlined,
+          color: Colors.blue,
+        ),
+        title: Text('下一条:'),
+      );
+      var nextPicker = Column(
+        children: [
+          Text((shotChanged) ? "长按修改当前镜" : ""),
+          SlatePicker(
+            titles: titles,
+            stateOne: sceneCol,
+            stateTwo: shotCol,
+            stateThree: takeCol,
+            width: screenWidth - 2 * horizonPadding,
+            height: screenHeight * 0.17,
+            itemHeight: screenHeight * 0.13 - 48,
+            resultChanged: ({v1, v2, v3}) {
+              if (v3.toString() == "2") {
+                shotNoteController.text = totalScenes[sceneCol.selectedIndex]
+                        [shotCol.selectedIndex]
+                    .note
+                    .append;
+              }
+              pickerNumSync();
+              debugPrint('v1: , v2: , v3: ');
+            },
+          ),
+        ],
+      );
+      var nextTakeScrolls = GestureDetector(
+        onTap: () {},
+        onLongPress: () {
+          editCurrentShot(context);
+        },
+        child: Card(elevation: 3, child: nextPicker),
+      );
+      var scrollCounterLinkButton = Transform.rotate(
+        angle: 1.5708,
+        child: ElevatedButton(
+          onPressed: () {
+            setState(() {
+              isLinked = !isLinked;
+              slateNotifier.setLink(isLinked);
+            });
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: isLinked ? Colors.white60 : Colors.grey,
+            elevation: 5,
+          ),
+          child: Icon(isLinked ? Icons.link : Icons.link_off),
+        ),
+      );
       Widget nextTakeMonitor = Stack(
         alignment: AlignmentDirectional.centerStart,
         children: [
@@ -363,69 +421,8 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
             color: Colors.grey.shade100,
             child: Column(
               children: [
-                const ListTile(
-                  visualDensity: VisualDensity(vertical: -4),
-                  leading: Icon(
-                    Icons.fast_forward_outlined,
-                    color: Colors.blue,
-                  ),
-                  title: Text('下一条:'),
-                  // trailing: IconButton(
-                  //   icon: const Icon(Icons.list),
-                  //   onPressed: () {
-                  //   },
-                  // ),
-                ),
-                GestureDetector(
-                  onTap: () {},
-                  onLongPress: () {
-                    showModalBottomSheet(
-                      context: context,
-                      builder: (context) {
-                        return NoteEditor(
-                            context: context,
-                            scenes: totalScenes,
-                            scnIndex: sceneCol.selectedIndex,
-                            shotIndex: shotCol.selectedIndex,
-                            isRecordPage: true);
-                      },
-                    ).then((value) {
-                      var shotList = totalScenes[sceneCol.selectedIndex]
-                          .data
-                          .map((e) => e.name.toString())
-                          .toList();
-                      setState(
-                          () => shotCol.init(shotCol.selectedIndex, shotList));
-                      Hive.box('scenes_box').putAt(sceneCol.selectedIndex,
-                          totalScenes[sceneCol.selectedIndex]);
-                    });
-                  },
-                  child: Column(
-                    children: [
-                      Text((shotChanged) ? "长按修改当前镜" : ""),
-                      SlatePicker(
-                        titles: titles,
-                        stateOne: sceneCol,
-                        stateTwo: shotCol,
-                        stateThree: takeCol,
-                        width: screenWidth - 2 * horizonPadding,
-                        height: screenHeight * 0.17,
-                        itemHeight: screenHeight * 0.13 - 48,
-                        resultChanged: ({v1, v2, v3}) {
-                          if (v3.toString() == "2") {
-                            shotNoteController.text =
-                                totalScenes[sceneCol.selectedIndex]
-                                        [shotCol.selectedIndex]
-                                    .note
-                                    .append;
-                          }
-                          pickerNumSync();
-                          debugPrint('v1: , v2: , v3: ');
-                        },
-                      ),
-                    ],
-                  ),
-                ),
+                nextTakeTrailer,
+                nextTakeScrolls,
                 // add an input box to have a note about the number
                 const SizedBox(
                   height: 10,
@@ -437,18 +434,9 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
               ],
             ),
           ),
-          Transform.rotate(
-            angle: 1.5708,
-            child: IconButton(
-              onPressed: () {
-                setState(() {
-                  isLinked = !isLinked;
-                  slateNotifier.setLink(isLinked);
-                });
-              },
-              icon: Icon(isLinked ? Icons.link : Icons.link_off),
-              tooltip: '链接场次与录音编号',
-            ),
+          Padding(
+            padding: const EdgeInsets.only(top: 131.0),
+            child: scrollCounterLinkButton,
           ),
         ],
       );
@@ -567,6 +555,28 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
           ],
         ),
       );
+    });
+  }
+
+  void editCurrentShot(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return NoteEditor(
+            context: context,
+            scenes: totalScenes,
+            scnIndex: sceneCol.selectedIndex,
+            shotIndex: shotCol.selectedIndex,
+            isRecordPage: true);
+      },
+    ).then((value) {
+      var shotList = totalScenes[sceneCol.selectedIndex]
+          .data
+          .map((e) => e.name.toString())
+          .toList();
+      setState(() => shotCol.init(shotCol.selectedIndex, shotList));
+      Hive.box('scenes_box')
+          .putAt(sceneCol.selectedIndex, totalScenes[sceneCol.selectedIndex]);
     });
   }
 

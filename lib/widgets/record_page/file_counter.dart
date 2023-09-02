@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:voislate/providers/slate_status_notifier.dart';
 
 import '../../models/recorder_file_num.dart';
+
 class FileCounter extends StatefulWidget {
   final RecordFileNum num;
   final int initCounter;
@@ -63,8 +64,83 @@ class FileNameDisplayCardState extends State<FileNameDisplayCard> {
   Widget build(BuildContext context) {
     const TextStyle tagStyle = TextStyle(
       fontSize: 16,
-      color: Colors.black45,
-      fontWeight: FontWeight.w100,
+      color: Colors.white70,
+      fontWeight: FontWeight.w400,
+    );
+    var prefixCard = Card(
+      color: Colors.white,
+      shape: const RoundedRectangleBorder(),
+      elevation: 5,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: Text(
+          widget.num.prefix,
+          style: widget.num.prefix.length > 6
+              ? const TextStyle(fontSize: 20)
+              : widget.style,
+        ),
+      ),
+    );
+    var prefixSegment = Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          widget.num.prefix.contains(RegExp(r'^[0-9]+$')) ? 'Date' : 'Custom',
+          style: tagStyle,
+        ),
+        prefixCard,
+      ],
+    );
+    var diviCard = Card(
+      color: Colors.white,
+      shape: const RoundedRectangleBorder(),
+      elevation: 5,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 11),
+        child: Text(
+          widget.num.intervalSymbol,
+          style: const TextStyle(
+            fontSize: 26,
+            color: Colors.black45,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+      ),
+    );
+    var dividerSegment = Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Text(
+          'Divider',
+          style: tagStyle,
+        ),
+        GestureDetector(
+          onLongPress: () => editNameDivider(context),
+          child: diviCard,
+        ),
+      ],
+    );
+    var numCard = Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7.0)),
+      elevation: 3,
+      color: Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 7),
+        child: Text(
+          widget.snapshot.data.toString().padLeft(3, '0'),
+          style: widget.style,
+        ),
+      ),
+    );
+    var fileNumSegment = Column(
+      children: [
+        const Text(
+          'Num',
+          style: tagStyle,
+        ),
+        GestureDetector(
+            onLongPress: () => editFileNum(context), child: numCard),
+      ],
     );
     return Padding(
       padding: const EdgeInsets.only(left: 25, right: 25),
@@ -78,115 +154,69 @@ class FileNameDisplayCardState extends State<FileNameDisplayCard> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    widget.num.prefix.contains(RegExp(r'^[0-9]+$'))
-                        ? 'Date'
-                        : 'Custom',
-                    style: tagStyle,
-                  ),
-                  Text(
-                    widget.num.prefix,
-                    style: widget.num.prefix.length > 6
-                        ? const TextStyle(fontSize: 20)
-                        : widget.style,
-                  ),
-                ],
-              ),
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    'Devider',
-                    style: tagStyle,
-                  ),
-                  GestureDetector(
-                    onLongPress: () {
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          String value = widget.num.intervalSymbol;
-                          return AlertDialog(
-                            title: const Text('Edit Devider'),
-                            content: TextField(
-                              onChanged: (newValue) {
-                                value = newValue;
-                              },
-                              onSubmitted: (newValue) {
-                                setState(() {
-                                  widget.num.intervalSymbol = newValue;
-                                });
-                                Provider.of<SlateStatusNotifier>(context,
-                                        listen: false)
-                                    .setRecordLinker(newValue);
-                                Navigator.of(context).pop();
-                              },
-                              controller: TextEditingController(text: value),
-                            ),
-                          );
-                        },
-                      );
-                    },
-                    child: Text(
-                      widget.num.intervalSymbol,
-                      style: const TextStyle(
-                        fontSize: 32,
-                        color: Colors.black45,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+              prefixSegment,
+              dividerSegment,
               const SizedBox(
                 width: 10,
               ),
-              Column(
-                children: [
-                  const Text(
-                    'Num',
-                    style: tagStyle,
-                  ),
-                  GestureDetector(
-                    onLongPress: () {
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          String value = widget.snapshot.data.toString();
-                          return AlertDialog(
-                            title: const Text('编辑录音编号（不需要输入0）'),
-                            content: TextField(
-                              keyboardType: TextInputType.number,
-                              onChanged: (newValue) {
-                                value = newValue;
-                              },
-                              onSubmitted: (newValue) {
-                                value = newValue;
-                                var newNum = int.parse(newValue);
-                                widget.num.setValue(newNum);
-                                Provider.of<SlateStatusNotifier>(context,listen: false)
-                                    .setIndex(count: newNum);
-                                Navigator.of(context).pop();
-                              },
-                              controller: TextEditingController(text: value),
-                            ),
-                          );
-                        },
-                      );
-                    },
-                    child: Text(
-                      widget.snapshot.data.toString().padLeft(3, '0'),
-                      style: widget.style,
-                    ),
-                  ),
-                ],
-              ),
+              fileNumSegment,
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Future<dynamic> editFileNum(BuildContext context) {
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        String value = widget.snapshot.data.toString();
+        return AlertDialog(
+          title: const Text('编辑录音编号（不需要输入0）'),
+          content: TextField(
+            keyboardType: TextInputType.number,
+            onChanged: (newValue) {
+              value = newValue;
+            },
+            onSubmitted: (newValue) {
+              value = newValue;
+              var newNum = int.parse(newValue);
+              widget.num.setValue(newNum);
+              Provider.of<SlateStatusNotifier>(context, listen: false)
+                  .setIndex(count: newNum);
+              Navigator.of(context).pop();
+            },
+            controller: TextEditingController(text: value),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<dynamic> editNameDivider(BuildContext context) {
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        String value = widget.num.intervalSymbol;
+        return AlertDialog(
+          title: const Text('Edit Divider'),
+          content: TextField(
+            onChanged: (newValue) {
+              value = newValue;
+            },
+            onSubmitted: (newValue) {
+              setState(() {
+                widget.num.intervalSymbol = newValue;
+              });
+              Provider.of<SlateStatusNotifier>(context, listen: false)
+                  .setRecordLinker(newValue);
+              Navigator.of(context).pop();
+            },
+            controller: TextEditingController(text: value),
+          ),
+        );
+      },
     );
   }
 
