@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:flex_color_scheme/flex_color_scheme.dart';
-import 'package:fluttertoast/fluttertoast.dart';
+import 'package:double_back_to_close_app/double_back_to_close_app.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 
 import 'package:voislate/pages/slate_log_tabs.dart';
@@ -97,16 +96,19 @@ class _MyHomePageState extends State<MyHomePage>
           // ),
         ],
       ),
-      body: TabBarView(
-        controller: _tabController,
-        physics: const NeverScrollableScrollPhysics(),
-        children: const [
-          SceneSchedulePage(),
-          SlateRecord(),
-          SlateLogTabs(),
-          // const SlateLogList()
-          // if (kDebugMode) const VoiceRecg(),
-        ],
+      body: DoubleBackToCloseApp(
+        snackBar: const SnackBar(content: Text("再按一次退出")),
+        child: TabBarView(
+          controller: _tabController,
+          physics: const NeverScrollableScrollPhysics(),
+          children: const [
+            SceneSchedulePage(),
+            SlateRecord(),
+            SlateLogTabs(),
+            // const SlateLogList()
+            // if (kDebugMode) const VoiceRecg(),
+          ],
+        ),
       ),
     );
   }
