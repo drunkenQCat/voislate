@@ -9,6 +9,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:voislate/models/slate_log_item.dart';
 import 'package:voislate/models/slate_schedule.dart';
+import 'package:voislate/models/tk_pending.dart';
 import 'package:voislate/providers/slate_log_notifier.dart';
 import 'package:voislate/widgets/scene_schedule_page/note_editor.dart';
 
@@ -73,21 +74,63 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
   final num = RecordFileNum();
   // controller for volume key
   late ScrollValueController<SlateColumnThree> scrl3;
-  // final TextEditingController descEditingController = TextEditingController();
   bool _isAbsorbing = false;
 
-  // 手动跑一条录音
-  // drawback the last note, and decrease the file number,but not the take number
-  // vibration feedback related
   bool _canVibrate = true;
 
   /// 0: not checked, 1: ok, 2: not ok
-  var okTk = TkStatus.notChecked;
-  var okSht = ShtStatus.notChecked;
+  var tkPending = TkPending()
+    ..tk = TkStatus.notChecked
+    ..sht = ShtStatus.notChecked;
 
   bool shotChanged = false;
 
   StreamSubscription<HardwareButton>? subscription;
+
+  @override
+  void initState() {
+    WidgetsBinding.instance.addObserver(this);
+    super.initState();
+    _initVibrate();
+    startListening();
+    var box = Hive.box('scenes_box');
+    totalScenes = box.values.toList().cast();
+
+    var initValueProvider =
+        Provider.of<SlateStatusNotifier>(context, listen: false);
+    var sceneList = totalScenes.map((e) => e.info.name.toString()).toList();
+    var shotList = totalScenes[initValueProvider.selectedSceneIndex]
+        .data
+        .map((e) => e.name.toString())
+        .toList();
+    var takeList = List.generate(200, (index) => (index + 1).toString());
+    isLinked = initValueProvider.isLinked;
+    tkPending.tk = initValueProvider.okTk;
+    tkPending.sht = initValueProvider.okSht;
+    sceneCol.init(0, sceneList);
+    shotCol.init(0, shotList);
+    takeCol.init(0, takeList);
+    String initDesc = initValueProvider.currentDesc;
+    String initNote = initValueProvider.currentNote;
+    descController = TextEditingController(text: initDesc);
+    shotNoteController = TextEditingController(text: initNote);
+    WidgetsBinding.instance.endOfFrame.then((_) {
+      var initS = initValueProvider.selectedSceneIndex;
+      var initSh = initValueProvider.selectedShotIndex;
+      var initTk = initValueProvider.selectedTakeIndex;
+      var initCount = initValueProvider.recordCount;
+      var initRecordLinker = initValueProvider.recordLinker;
+      var initPrefixType = initValueProvider.prefixType;
+      var initCustomPrefix = initValueProvider.customPrefix;
+      sceneCol.init(initS);
+      shotCol.init(initSh);
+      takeCol.init(initTk);
+      num.setValue(initCount);
+      num.intervalSymbol = initRecordLinker;
+      num.recorderType = initPrefixType;
+      num.customPrefix = initCustomPrefix;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -108,16 +151,16 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
       /// The IconButtons on bottom area to pending last take
       var takeOkDial = TakeOkDial(
         context: context,
-        tkStatus: okTk,
+        pending: tkPending,
       );
       var shotOkDial = ShotOkDial(
         context: context,
-        shtStatus: okSht,
+        pending: tkPending,
       );
       void resetOkEnum() {
         setState(() {
-          okTk = TkStatus.notChecked;
-          okSht = ShtStatus.notChecked;
+          tkPending.tk = TkStatus.notChecked;
+          tkPending.sht = ShtStatus.notChecked;
         });
         slateNotifier.setOkStatus(doReset: true);
       }
@@ -169,8 +212,11 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
         if (shotCol.selected != prevSht || currentTkType == TakeType.end) {
           // if shotCol changed, the status of current take
           // automatically turn to best
-          takeOkDial.tkStatus = TkStatus.ok;
-          shotOkDial.shtStatus = ShtStatus.nice;
+          setState(() {
+            tkPending
+              ..tk = TkStatus.ok
+              ..sht = ShtStatus.nice;
+          });
         }
         var newLogItem = SlateLogItem(
           scn: prevScn,
@@ -190,8 +236,8 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
               : 'Fake Take',
           shtNote: "${shotNoteController.text}$trackLogs",
           scnNote: totalScenes[sceneCol.selectedIndex].info.note.append,
-          currentOkTk: !isFake ? takeOkDial.tkStatus : TkStatus.bad,
-          currentOkSht: !isFake ? shotOkDial.shtStatus : ShtStatus.notChecked,
+          currentOkTk: !isFake ? tkPending.tk : TkStatus.bad,
+          currentOkSht: !isFake ? tkPending.sht : ShtStatus.notChecked,
         );
 
         if (isWild) {
@@ -282,7 +328,9 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
       }
 
       ElevatedButton col3DecBtn = ElevatedButton(
-        onPressed: () {},
+        onPressed: () {
+          Fluttertoast.showToast(msg: "长按撤回上一条场记");
+        },
         onLongPress: () {
           if (getPrevTk() != "OK") {
             takeCol.scrollToPrev(isLinked);
@@ -319,6 +367,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
           // minimumSize: const Size(87, 50),
           maximumSize: const Size(87, 50),
           foregroundColor: Colors.green,
+          elevation: 7,
         ),
         // child: const Image(image: AssetImage('lib/assets/bookmark.png')),
         child: const Icon(Icons.save),
@@ -440,7 +489,8 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
             });
           },
           style: ElevatedButton.styleFrom(
-            backgroundColor: isLinked ? Color.fromARGB(210, 255, 255, 255) : Colors.grey,
+            backgroundColor:
+                isLinked ? Color.fromARGB(210, 255, 255, 255) : Colors.grey,
             elevation: 5,
           ),
           child: Icon(isLinked ? Icons.link : Icons.link_off),
@@ -507,7 +557,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
               prevShotNote,
             ],
           ),
-        ),
+        ).greyscale(_isAbsorbing),
         Transform.scale(
           scale: 0.8,
           child: RecorderJoystick(
@@ -558,11 +608,12 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: <Widget>[
                     AbsorbPointer(
-                        absorbing: _isAbsorbing, child: nextTakeMonitor),
+                            absorbing: _isAbsorbing, child: nextTakeMonitor)
+                        .greyscale(_isAbsorbing),
                     const Divider(),
                     Stack(
                       children: addAndSkipButtons,
-                    ),
+                    ).greyscale(_isAbsorbing),
                     const Divider(),
                     Column(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -577,7 +628,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
                               shotEndBtn
                             ],
                           ),
-                        ),
+                        ).greyscale(_isAbsorbing),
                         Stack(
                           alignment: AlignmentDirectional.topCenter,
                           children: inputArea,
@@ -631,51 +682,6 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
     debugPrint(linkTest2.toString());
   }
 
-  @override
-  void initState() {
-    WidgetsBinding.instance.addObserver(this);
-    super.initState();
-    _initVibrate();
-    startListening();
-    var box = Hive.box('scenes_box');
-    totalScenes = box.values.toList().cast();
-
-    var initValueProvider =
-        Provider.of<SlateStatusNotifier>(context, listen: false);
-    var sceneList = totalScenes.map((e) => e.info.name.toString()).toList();
-    var shotList = totalScenes[initValueProvider.selectedSceneIndex]
-        .data
-        .map((e) => e.name.toString())
-        .toList();
-    var takeList = List.generate(200, (index) => (index + 1).toString());
-    isLinked = initValueProvider.isLinked;
-    okTk = initValueProvider.okTk;
-    okSht = initValueProvider.okSht;
-    sceneCol.init(0, sceneList);
-    shotCol.init(0, shotList);
-    takeCol.init(0, takeList);
-    String initDesc = initValueProvider.currentDesc;
-    String initNote = initValueProvider.currentNote;
-    descController = TextEditingController(text: initDesc);
-    shotNoteController = TextEditingController(text: initNote);
-    WidgetsBinding.instance.endOfFrame.then((_) {
-      var initS = initValueProvider.selectedSceneIndex;
-      var initSh = initValueProvider.selectedShotIndex;
-      var initTk = initValueProvider.selectedTakeIndex;
-      var initCount = initValueProvider.recordCount;
-      var initRecordLinker = initValueProvider.recordLinker;
-      var initPrefixType = initValueProvider.prefixType;
-      var initCustomPrefix = initValueProvider.customPrefix;
-      sceneCol.init(initS);
-      shotCol.init(initSh);
-      takeCol.init(initTk);
-      num.setValue(initCount);
-      num.intervalSymbol = initRecordLinker;
-      num.recorderType = initPrefixType;
-      num.customPrefix = initCustomPrefix;
-    });
-  }
-
   void startListening() {
     subscription = FlutterAndroidVolumeKeydown.stream.listen((event) {
       if (event == HardwareButton.volume_down) {
@@ -704,6 +710,16 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
   // @override
   // bool get wantKeepAlive => true;
 }
-/*
- * 
- */
+
+extension GreyScale on Widget {
+  Widget greyscale(bool isUnabled) {
+    return Container(
+        foregroundDecoration: BoxDecoration(
+          color: isUnabled
+              ? const Color.fromARGB(146, 255, 255, 255)
+              : const Color.fromARGB(0, 255, 255, 255),
+          backgroundBlendMode: BlendMode.saturation,
+        ),
+        child: this);
+  }
+}

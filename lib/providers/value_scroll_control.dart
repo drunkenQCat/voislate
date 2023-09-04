@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 
 import 'slate_picker_notifier.dart';
 
@@ -19,15 +20,24 @@ class ScrollValueController<T extends SlatePickerState> {
     required this.col,
   });
 
-  void valueInc(bool isLink) {
-    inc?.call();
-    textCon.clear();
-    col.scrollToNext(isLink);
+  String getPrevTk() {
+    var pickerHistory = Hive.box('picker_history');
+    if (pickerHistory.isEmpty) return "";
+    var prevTake = pickerHistory.getAt(pickerHistory.length - 1);
+    List<String> prevTakeList = prevTake.cast<String>();
+    return prevTakeList[2];
   }
 
-  void valueDec(bool isLink) {
-    dec?.call();
+  void valueInc(bool isLinked) {
+    inc?.call();
     textCon.clear();
-    col.scrollToPrev(isLink);
+    col.scrollToNext(isLinked);
+  }
+
+  void valueDec(bool isLinked) {
+    if (getPrevTk() != "OK") {
+      col.scrollToPrev(isLinked);
+    }
+    dec?.call();
   }
 }
