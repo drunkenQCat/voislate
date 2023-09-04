@@ -1,7 +1,8 @@
 import 'dart:async';
 
-import 'package:animated_toggle_switch/animated_toggle_switch.dart';
 import 'package:flutter/material.dart';
+import 'package:animated_toggle_switch/animated_toggle_switch.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:flutter_android_volume_keydown/flutter_android_volume_keydown.dart';
 import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -312,6 +313,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
               prevTake[2] == 'OK' ||
               prevTake[2] == 'F') return;
           addItem(TakeType.end);
+          Fluttertoast.showToast(msg: "镜头结束，画面与声音默认评价为优良");
         },
         style: ElevatedButton.styleFrom(
           // minimumSize: const Size(87, 50),
@@ -359,14 +361,6 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
         return notes;
       }
 
-      const nextTakeTrailer = ListTile(
-        visualDensity: VisualDensity(vertical: -4),
-        leading: Icon(
-          Icons.fast_forward_outlined,
-          color: Colors.blue,
-        ),
-        title: Text('下一条:'),
-      );
       var nextPicker = Column(
         children: [
           Text((shotChanged) ? "长按修改当前镜" : ""),
@@ -376,7 +370,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
             stateTwo: shotCol,
             stateThree: takeCol,
             width: screenWidth - 2 * horizonPadding,
-            height: screenHeight * 0.17,
+            height: screenHeight * 0.15,
             itemHeight: screenHeight * 0.13 - 48,
             resultChanged: ({v1, v2, v3}) {
               if (v3.toString() == "2") {
@@ -391,13 +385,43 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
           ),
         ],
       );
-      var nextTakeScrolls = GestureDetector(
-        onTap: () {},
-        onLongPress: () {
-          editCurrentShot(context);
-        },
-        child: Card(elevation: 3, child: nextPicker),
+      var nextTakeScrolls = Stack(
+        alignment: Alignment.centerLeft,
+        children: [
+          GestureDetector(
+            onTap: () {},
+            onLongPress: () {
+              editCurrentShot(context);
+            },
+            child: Card(
+                color: isLinked ? Colors.white : Colors.grey,
+                elevation: isLinked ? 3 : 0,
+                child: nextPicker),
+          ),
+          Padding(
+            padding: EdgeInsets.only(left: screenWidth / 20),
+            child: const Column(
+              children: [
+                Icon(
+                  Icons.fast_forward_outlined,
+                  color: Colors.blue,
+                ),
+                Text('下'),
+                Text('一'),
+                Text('条'),
+              ],
+            ),
+          )
+        ],
       );
+      // var nextTakeTrailer = ListTile(
+      //   visualDensity: VisualDensity(vertical: -4),
+      //   leading: Icon(
+      //     Icons.fast_forward_outlined,
+      //     color: Colors.blue,
+      //   ),
+      //   title: Text('下一条:'),
+      // );
       var scrollCounterLinkButton = Transform.rotate(
         angle: 1.5708,
         child: ElevatedButton(
@@ -405,10 +429,18 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
             setState(() {
               isLinked = !isLinked;
               slateNotifier.setLink(isLinked);
+              Fluttertoast.showToast(
+                msg: isLinked ? '已取消补录模式' : '进入补录模式，Take号与文件号解绑',
+                toastLength: Toast.LENGTH_SHORT,
+                timeInSecForIosWeb: 1,
+                backgroundColor: Colors.black,
+                textColor: Colors.white,
+                fontSize: 16.0,
+              );
             });
           },
           style: ElevatedButton.styleFrom(
-            backgroundColor: isLinked ? Colors.white60 : Colors.grey,
+            backgroundColor: isLinked ? Color.fromARGB(210, 255, 255, 255) : Colors.grey,
             elevation: 5,
           ),
           child: Icon(isLinked ? Icons.link : Icons.link_off),
@@ -421,7 +453,6 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
             color: Colors.grey.shade100,
             child: Column(
               children: [
-                nextTakeTrailer,
                 nextTakeScrolls,
                 // add an input box to have a note about the number
                 const SizedBox(
@@ -435,12 +466,85 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.only(top: 131.0),
+            padding: EdgeInsets.only(top: screenHeight * 0.1),
             child: scrollCounterLinkButton,
           ),
         ],
       );
 
+      var addAndSkipButtons = [
+        Row(
+          children: [
+            Expanded(
+                child:
+                    AbsorbPointer(absorbing: _isAbsorbing, child: col3IncBtn))
+          ],
+        ),
+        // A button to add Fake Take
+        AbsorbPointer(
+          absorbing: _isAbsorbing,
+          child: Container(
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.grey,
+            ),
+            child: IconButton(
+              onPressed: () {
+                addItem(TakeType.fake);
+              },
+              icon: const Icon(Icons.redo),
+            ),
+          ),
+        ),
+      ];
+      var inputArea = [
+        AbsorbPointer(
+          absorbing: _isAbsorbing,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              prevTakeEditor,
+              prevShotNote,
+            ],
+          ),
+        ),
+        Transform.scale(
+          scale: 0.8,
+          child: RecorderJoystick(
+            width: 120,
+            sliderButtonContent: const Icon(Icons.mic),
+            backgroundColor: Colors.red.shade200,
+            backgroundColorEnd: Colors.green.shade200,
+            foregroundColor: Colors.purple.shade50,
+            onLeftEdge: () {},
+            onRightEdge: () {},
+            leftTextController: descController,
+            rightTextController: shotNoteController,
+          ),
+        ),
+      ];
+      var bottomControlButtons = [
+        DisplayNotesButton(
+          notes: exportQuickNotes(),
+          num: num,
+        ),
+        takeOkDial,
+        shotOkDial,
+        AnimatedToggleSwitch.dual(
+          dif: 5,
+          current: _isAbsorbing,
+          first: false,
+          second: true,
+          onChanged: (value) {
+            setState(() => _isAbsorbing = value);
+          },
+          colorBuilder: (bool isLocked) =>
+              !isLocked ? Colors.green : Colors.red,
+          iconBuilder: (bool isLocked) =>
+              Icon(!isLocked ? Icons.lock_open : Icons.lock),
+          textBuilder: (bool isLocked) => Text(!isLocked ? '触控' : '锁定'),
+        ),
+      ];
       return Scaffold(
         body: CustomScrollView(
           scrollDirection: Axis.vertical,
@@ -451,100 +555,36 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
                 // the width of the card is 80% of the screen height
                 height: screenHeight * 0.85,
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  mainAxisAlignment: MainAxisAlignment.start,
                   children: <Widget>[
                     AbsorbPointer(
                         absorbing: _isAbsorbing, child: nextTakeMonitor),
+                    const Divider(),
                     Stack(
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                                child: AbsorbPointer(
-                                    absorbing: _isAbsorbing, child: col3IncBtn))
-                          ],
-                        ),
-                        // A button to add Fake Take
-                        AbsorbPointer(
-                          absorbing: _isAbsorbing,
-                          child: Container(
-                            decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.grey,
-                            ),
-                            child: IconButton(
-                              onPressed: () {
-                                addItem(TakeType.fake);
-                              },
-                              icon: const Icon(Icons.redo),
-                            ),
-                          ),
-                        ),
-                      ],
+                      children: addAndSkipButtons,
                     ),
-                    Stack(
-                      alignment: AlignmentDirectional.center,
+                    const Divider(),
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
                         AbsorbPointer(
                           absorbing: _isAbsorbing,
                           child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
-                              prevTakeEditor,
-                              prevShotNote,
+                              col3DecBtn,
+                              // Complish Button
+                              shotEndBtn
                             ],
                           ),
                         ),
-                        Transform.scale(
-                          scale: 0.8,
-                          child: RecorderJoystick(
-                            width: 120,
-                            sliderButtonContent: const Icon(Icons.mic),
-                            backgroundColor: Colors.red.shade200,
-                            backgroundColorEnd: Colors.green.shade200,
-                            foregroundColor: Colors.purple.shade50,
-                            onLeftEdge: () {},
-                            onRightEdge: () {},
-                            leftTextController: descController,
-                            rightTextController: shotNoteController,
-                          ),
+                        Stack(
+                          alignment: AlignmentDirectional.topCenter,
+                          children: inputArea,
                         ),
-                      ],
-                    ),
-                    AbsorbPointer(
-                      absorbing: _isAbsorbing,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          col3DecBtn,
-                          // Complish Button
-                          shotEndBtn
-                        ],
-                      ),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        DisplayNotesButton(
-                          notes: exportQuickNotes(),
-                          num: num,
-                        ),
-                        takeOkDial,
-                        shotOkDial,
-                        AnimatedToggleSwitch.dual(
-                          dif: 5,
-                          current: _isAbsorbing,
-                          first: false,
-                          second: true,
-                          onChanged: (value) {
-                            setState(() => _isAbsorbing = value);
-                          },
-                          colorBuilder: (bool isLocked) =>
-                              !isLocked ? Colors.green : Colors.red,
-                          iconBuilder: (bool isLocked) =>
-                              Icon(!isLocked ? Icons.lock_open : Icons.lock),
-                          textBuilder: (bool isLocked) =>
-                              Text(!isLocked ? '触控' : '锁定'),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: bottomControlButtons,
                         ),
                       ],
                     ),
