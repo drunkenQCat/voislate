@@ -295,11 +295,11 @@ class _NoteEditorState extends State<NoteEditor> {
       );
 
       var tagEditField = TextField(
-          controller: TextEditingController(text: object),
-          onChanged: (value) {
-            newObject = value;
-          },
-        );
+        controller: TextEditingController(text: object),
+        onChanged: (value) {
+          newObject = value;
+        },
+      );
 
       var editingDialog = AlertDialog(
         title: Text('$dialogType Object'),
@@ -331,13 +331,13 @@ class _NoteEditorState extends State<NoteEditor> {
       }
 
       var editDialog = editOrAddTagDialog('Edit', editTagText);
-      showEditDialog()=>showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          newObject = '';
-          return editDialog;
-        },
-      );
+      showEditDialog() => showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              newObject = '';
+              return editDialog;
+            },
+          );
 
       chipList.add(Chip(
         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -368,12 +368,12 @@ class _NoteEditorState extends State<NoteEditor> {
         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
         label: TextButton(
           onPressed: () => showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                newObject = '';
-                return addTagDialog;
-              },
-            ),
+            context: context,
+            builder: (BuildContext context) {
+              newObject = '';
+              return addTagDialog;
+            },
+          ),
           child: const Icon(
             Icons.add,
             size: 30,
@@ -422,9 +422,6 @@ class _NoteEditorState extends State<NoteEditor> {
       ],
     );
   }
-
-
-
 }
 
 class ScheduleUtils {

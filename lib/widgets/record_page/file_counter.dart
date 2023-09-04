@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:voislate/models/recorder_type.dart';
 import 'package:voislate/providers/slate_status_notifier.dart';
 
 import '../../models/recorder_file_num.dart';
@@ -52,12 +53,45 @@ class FileNameDisplayCard extends StatefulWidget {
 }
 
 class FileNameDisplayCardState extends State<FileNameDisplayCard> {
-  late String type;
+  Recorder recorder = Recorder();
 
   @override
   void initState() {
     super.initState();
-    type = widget.num.recorderType;
+    judgeRecorderType();
+  }
+
+  void judgeRecorderType() {
+    var type = RecorderType.defaultRecorder;
+    var typeText = widget.num.recorderType;
+    switch (typeText) {
+      case "default":
+        type = RecorderType.defaultRecorder;
+        break;
+      case "sound devices":
+        type = RecorderType.soundDevices;
+        break;
+      case "custom":
+        type = RecorderType.custom;
+        break;
+      default:
+        type = RecorderType.defaultRecorder;
+        break;
+    }
+    recorder.type = type;
+  }
+
+  String getRecorderTypeText(RecorderType type) {
+    switch (type) {
+      case RecorderType.defaultRecorder:
+        return "default";
+      case RecorderType.soundDevices:
+        return "sound devices";
+      case RecorderType.custom:
+        return "custom";
+      default:
+        return "default";
+    }
   }
 
   @override
@@ -243,25 +277,25 @@ class FileNameDisplayCardState extends State<FileNameDisplayCard> {
           children: [
             ToggleButtons(
                 isSelected: [
-                  type == "default",
-                  type == "sound devices",
-                  type == "custom"
+                  recorder.type == RecorderType.defaultRecorder,
+                  recorder.type == RecorderType.soundDevices,
+                  recorder.type == RecorderType.custom,
                 ],
                 onPressed: (int index) {
                   switch (index) {
                     case 0:
-                      type = "default";
+                      recorder.type = RecorderType.defaultRecorder;
                       break;
                     case 1:
-                      type = "sound devices";
+                      recorder.type = RecorderType.soundDevices;
                       break;
                     case 2:
-                      type = "custom";
+                      recorder.type = RecorderType.custom;
                       break;
                   }
-                  widget.num.recorderType = type;
+                  widget.num.recorderType = getRecorderTypeText(recorder.type);
                   Provider.of<SlateStatusNotifier>(context, listen: false)
-                      .setPrefixType(type);
+                      .setPrefixType(widget.num.recorderType);
                   setState(() {
                     editCon.text = widget.num.prefix;
                   });

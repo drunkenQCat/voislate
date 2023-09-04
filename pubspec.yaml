@@ -31,6 +31,7 @@ dependencies:
   android_physical_buttons: ^0.1.0
   animated_toggle_switch: ^0.6.2
   build_runner: ^2.4.4
+  csv: ^5.0.2
   cupertino_icons: ^1.0.2
   dart_json_mapper: ^2.2.9
   double_back_to_close_app: ^2.1.0

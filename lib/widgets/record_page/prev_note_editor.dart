@@ -33,6 +33,7 @@ class PrevTakeEditor extends StatelessWidget {
       children: [
         const Icon(
           Icons.radio_button_checked,
+          size: 19,
           color: Colors.red,
         ),
         Text('正在录制:T${num.prevFileNum().toString().padLeft(3, '0')}'),
@@ -82,6 +83,7 @@ class PrevShotNote extends StatelessWidget {
         ),
         const Icon(
           Icons.movie_creation_outlined,
+          size: 19,
           color: Colors.green,
         ),
       ],
