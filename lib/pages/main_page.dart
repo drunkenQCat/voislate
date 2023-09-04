@@ -12,8 +12,6 @@ import 'package:voislate/pages/record_page.dart';
 import 'package:voislate/pages/settings_configue_page.dart';
 import 'package:voislate/providers/slate_status_notifier.dart';
 
-DateTime _lastPopTime = DateTime.now();
-
 class VoiSlate extends StatelessWidget {
   const VoiSlate({super.key});
 
@@ -27,7 +25,9 @@ class VoiSlate extends StatelessWidget {
       child: MaterialApp(
         title: 'Voislate',
         theme: FlexThemeData.light(
-            scheme: FlexScheme.bahamaBlue, useMaterial3: true),
+          scheme: FlexScheme.bahamaBlue,
+          useMaterial3: true,
+        ),
         home: const MyHomePage(title: 'Voislate Home Page'),
         builder: EasyLoading.init(),
       ),
