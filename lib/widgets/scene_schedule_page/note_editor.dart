@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:fluttertoast/fluttertoast.dart';
+import 'package:voislate/widgets/scene_schedule_page/tag_chips.dart';
 import '../../models/slate_schedule.dart';
 
 class NoteEditor extends StatefulWidget {
@@ -68,12 +67,6 @@ class _NoteEditorState extends State<NoteEditor> {
     typeText = isScene ? '场地:' : '镜头类型:';
     appendText = isScene ? '概要' : '内容';
     scnIndex = widget.scnIndex;
-  }
-
-  void updateObjects(List<String> newObjects) {
-    setState(() {
-      editedObjects = newObjects;
-    });
   }
 
   @override
@@ -261,125 +254,9 @@ class _NoteEditorState extends State<NoteEditor> {
           '录音轨道:',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: tagChips(context)
-                .map((chip) => Transform.scale(scale: 1, child: chip))
-                .toList(),
-          ),
-        ),
+        TagChips(tagList: editedObjects, context: context)
       ],
     );
-  }
-
-  List<Chip> tagChips(BuildContext context) {
-    var chipList = List<Chip>.empty(growable: true);
-    String object = '';
-    String newObject = '';
-
-    AlertDialog editOrAddTagDialog(String dialogType, Function onConfirm) {
-      var cancelButton = TextButton(
-        child: const Text('Cancel'),
-        onPressed: () {
-          Navigator.of(context).pop();
-        },
-      );
-
-      var confirmButton = TextButton(
-        child: Text(dialogType),
-        onPressed: () {
-          onConfirm();
-          Navigator.of(context).pop();
-        },
-      );
-
-      var tagEditField = TextField(
-        controller: TextEditingController(text: object),
-        onChanged: (value) {
-          newObject = value;
-        },
-      );
-
-      var editingDialog = AlertDialog(
-        title: Text('$dialogType Object'),
-        content: tagEditField,
-        actions: [cancelButton, confirmButton],
-      );
-
-      return editingDialog;
-    }
-
-    for (int index = 0; index < editedObjects.length; index++) {
-      object = editedObjects[index];
-
-      void copyTag(String object) {
-        Clipboard.setData(ClipboardData(text: object));
-        Fluttertoast.showToast(
-          msg: "话筒信息已复制",
-          toastLength: Toast.LENGTH_SHORT,
-          timeInSecForIosWeb: 1,
-          backgroundColor: Colors.black,
-          textColor: Colors.white,
-          fontSize: 16.0,
-        );
-      }
-
-      void editTagText() {
-        editedObjects[index] = newObject;
-        updateObjects(editedObjects);
-      }
-
-      var editDialog = editOrAddTagDialog('Edit', editTagText);
-      showEditDialog() => showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              newObject = '';
-              return editDialog;
-            },
-          );
-
-      chipList.add(Chip(
-        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        label: TextButton(
-            onLongPress: () {
-              copyTag(object);
-            },
-            onPressed: showEditDialog,
-            child: Text(
-              object,
-              style: const TextStyle(
-                fontSize: 14,
-              ),
-            )),
-        onDeleted: () {
-          updateObjects(editedObjects..remove(object));
-        },
-      ));
-    }
-
-    void addNewTag() {
-      updateObjects(editedObjects..add(newObject));
-    }
-
-    object = '';
-    var addTagDialog = editOrAddTagDialog('Add', addNewTag);
-    chipList.add(Chip(
-        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        label: TextButton(
-          onPressed: () => showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              newObject = '';
-              return addTagDialog;
-            },
-          ),
-          child: const Icon(
-            Icons.add,
-            size: 30,
-          ),
-        )));
-    return chipList;
   }
 
   Row keyFixPicker(StateSetter setState) {

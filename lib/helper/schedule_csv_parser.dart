@@ -41,7 +41,7 @@ List<ScheduleItem> parseCSVData(String filePath) {
       ScheduleItem scheduleItem = ScheduleItem(key, fix, note);
       scheduleItems.add(scheduleItem);
     } else {
-      throw FormatException('Invalid keyFix format');
+      throw const FormatException('Invalid keyFix format');
     }
   }
 

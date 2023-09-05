@@ -489,8 +489,9 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
             });
           },
           style: ElevatedButton.styleFrom(
-            backgroundColor:
-                isLinked ? Color.fromARGB(210, 255, 255, 255) : Colors.grey,
+            backgroundColor: isLinked
+                ? const Color.fromARGB(210, 255, 255, 255)
+                : Colors.grey,
             elevation: 5,
           ),
           child: Icon(isLinked ? Icons.link : Icons.link_off),

@@ -55,6 +55,7 @@ dependencies:
   reflectable: ^4.0.5
   share_plus: ^7.0.2
   shared_preferences: ^2.1.1
+  tuple: ^2.0.2
 
 dev_dependencies:
   flutter_lints: ^2.0.0
