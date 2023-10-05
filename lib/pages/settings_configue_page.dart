@@ -30,7 +30,7 @@ class SettingsConfiguePage extends StatelessWidget {
       onPressed: () => Navigator.pop(context),
     );
 
-    Widget continueButton = TextButton(
+    Widget clearTodayLogsConfirmButton = TextButton(
       child: const Text(
         "确认",
       ),
@@ -41,6 +41,19 @@ class SettingsConfiguePage extends StatelessWidget {
       },
     );
 
+    Widget clearSchedulesButton = TextButton(
+      child: const Text(
+        "清空拍摄计划",
+      ),
+      onPressed: () {
+        var scheduleBox = Hive.box('scenes_box');
+        scheduleBox.clear();
+        Hive.box('scn_sht_tk').clear();
+        Hive.box('picker_history').clear();
+        quitApp();
+        Navigator.pop(context);
+      },
+    );
     Widget clearAllConfirmButton = TextButton(
       child: const Text(
         "确认",
@@ -141,7 +154,7 @@ class SettingsConfiguePage extends StatelessWidget {
                         content: const Text('是否确认要清除场记？'),
                         actions: [
                           cancelButton,
-                          continueButton,
+                          clearTodayLogsConfirmButton,
                         ],
                       );
                     });
@@ -167,6 +180,25 @@ class SettingsConfiguePage extends StatelessWidget {
               },
               child: const Text(
                 '清空所有场记',
+                style: TextStyle(color: Colors.red),
+              )),
+          TextButton(
+              onPressed: () {
+                showDialog(
+                    context: context,
+                    builder: (context) {
+                      return AlertDialog(
+                        title: const Text('重置拍摄计划'),
+                        content: const Text('是否确认要清除拍摄计划？之后需手动重启App'),
+                        actions: [
+                          cancelButton,
+                          clearSchedulesButton,
+                        ],
+                      );
+                    });
+              },
+              child: const Text(
+                '清空所有拍摄计划',
                 style: TextStyle(color: Colors.red),
               ))
         ],

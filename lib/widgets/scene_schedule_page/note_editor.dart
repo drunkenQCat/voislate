@@ -422,7 +422,7 @@ class ScheduleUtils {
     }
   }
 
-  void addNewAtLast() {
+  void addNewShotAtLast() {
     var currentShot = scenes[currentScnIndex].data.last;
     var newInfo =
         ScheduleItem(currentShot.key, currentShot.fix, currentShot.note);
@@ -438,5 +438,23 @@ class ScheduleUtils {
         .toList();
     newInfo.fix = _findFix(fixs, true);
     scenes[currentScnIndex].add(newInfo);
+  }
+
+  void addNewSceneAtLast() {
+    var currentScene = scenes[currentScnIndex];
+    var newInfo = ScheduleItem(
+        currentScene.info.key, currentScene.info.fix, currentScene.info.note);
+    List<int> keys =
+        scenes.map((scn) => int.tryParse(scn.info.key) ?? 0).toList();
+    newInfo.key = _findKey(keys, currentScnIndex, true);
+    List<String> fixes = scenes
+        .where((scn) => scn.info.key == newInfo.key)
+        .map((scn) => scn.info.fix)
+        .toList();
+    newInfo.fix = _findFix(fixes, true);
+    var newShot = ScheduleItem(
+        '1', '', Note(objects: newInfo.note.objects, type: '近景', append: ''));
+    var newScn = SceneSchedule([newShot], newInfo);
+    scenes.add(newScn);
   }
 }

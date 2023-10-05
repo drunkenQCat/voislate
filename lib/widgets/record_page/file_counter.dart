@@ -119,6 +119,7 @@ class FileNameDisplayCardState extends State<FileNameDisplayCard> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
+          // TODO: fix the display of prefix
           widget.num.prefix.contains(RegExp(r'^[0-9]+$')) ? 'Date' : 'Custom',
           style: tagStyle,
         ),
