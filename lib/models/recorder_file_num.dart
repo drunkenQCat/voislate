@@ -4,11 +4,11 @@ class RecordFileNum {
   String customPrefix = "custom";
   String recorderType = "default";
   String get prefix {
-    if (recorderType == "custom") 
-      {
-        return customPrefix;
-      }
+    if (recorderType == "custom") {
+      return customPrefix;
+    }
     if (recorderType == "sound devices") return soundDevicesToday;
+    // TODO: Date Changing
     return today;
   }
 
@@ -70,6 +70,7 @@ class RecordFileNum {
     var day = now.day.toString().padLeft(2, '0');
     return '$year$month$day';
   }
+
   static String get soundDevicesToday {
     var now = DateTime.now();
     var year = now.year.toString().substring(2);

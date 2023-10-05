@@ -68,7 +68,9 @@ class SceneSchedulePageState extends State<SceneSchedulePage>
                 selectedSceneIndex--;
                 selectedShotIndex = 0;
                 slateNotifier.setIndex(
-                    scene: selectedSceneIndex, shot: selectedShotIndex, take: 0);
+                    scene: selectedSceneIndex,
+                    shot: selectedShotIndex,
+                    take: 0);
               } else if (selectedSceneIndex > sceneIndex) {
                 selectedSceneIndex--;
                 slateNotifier.setIndex(scene: selectedSceneIndex);
@@ -89,7 +91,6 @@ class SceneSchedulePageState extends State<SceneSchedulePage>
               // if remove the last item, selectedShotIndex will be -1
               // selectedShotIndex = (shotIndex - 1 < 0) ? 0 : shotIndex - 1;
               if (selectedShotIndex < shotIndex) {
-
               } else if (selectedShotIndex == shotIndex &&
                   selectedShotIndex == scenes[selectedSceneIndex].length) {
                 setState(() {
@@ -213,8 +214,7 @@ class SceneSchedulePageState extends State<SceneSchedulePage>
                   }
                   return false;
                 } else if (direction == DismissDirection.startToEnd) {
-                  showNoteEditor(
-                      context, scenes, selectedSceneIndex, index);
+                  showNoteEditor(context, scenes, selectedSceneIndex, index);
                   return false;
                 }
                 return null;
@@ -229,8 +229,7 @@ class SceneSchedulePageState extends State<SceneSchedulePage>
               ),
               child: GestureDetector(
                 onDoubleTap: () {
-                  showNoteEditor(
-                      context, scenes, selectedSceneIndex, index);
+                  showNoteEditor(context, scenes, selectedSceneIndex, index);
                 },
                 child: ListTileTheme(
                   tileColor: Colors.white,
@@ -286,55 +285,65 @@ class SceneSchedulePageState extends State<SceneSchedulePage>
                 children: [
                   Flexible(
                     flex: 1,
-                    child: ReorderableListView.builder(
-                      // 左边的列表
-                      itemCount: scenes.length,
-                      onReorder: (int oldIndex, int newIndex) {
-                        setState(() {
-                          var shots = scenes[oldIndex];
-                          if (newIndex > oldIndex) {
-                            newIndex -= 1;
-                          }
-                          scenes.removeAt(oldIndex);
-                          // int index = newIndex > oldIndex ? newIndex - 1 : newIndex;
-                          scenes.insert(newIndex, shots);
-                          // make the selected item to be the dragged item
-                          selectedSceneIndex = newIndex;
-                          slateNotifier.setIndex(
-                              scene: newIndex, shot: 0, take: 0);
-                          _saveBox();
-                        });
-                        slateNotifier.setIndex(scene: newIndex);
-                      },
-                      itemBuilder: (BuildContext context, int index) {
-                        return ReorderableDelayedDragStartListener(
-                          key: ValueKey(
-                              scenes[index].info.name + index.toString()),
-                          index: index,
-                          child: leftList(index, context),
-                        );
-                      },
-                      proxyDecorator: (child, index, animation) {
-                        return Material(
-                          color: Colors.transparent,
-                          elevation: 10.0,
-                          child: child,
-                        );
-                      },
+                    child: Column(
+                      children: [
+                        Expanded(
+                          child: ReorderableListView.builder(
+                            // 左边的列表
+                            itemCount: scenes.length,
+                            onReorder: (int oldIndex, int newIndex) {
+                              setState(() {
+                                var shots = scenes[oldIndex];
+                                if (newIndex > oldIndex) {
+                                  newIndex -= 1;
+                                }
+                                scenes.removeAt(oldIndex);
+                                // int index = newIndex > oldIndex ? newIndex - 1 : newIndex;
+                                scenes.insert(newIndex, shots);
+                                // make the selected item to be the dragged item
+                                selectedSceneIndex = newIndex;
+                                slateNotifier.setIndex(
+                                    scene: newIndex, shot: 0, take: 0);
+                                _saveBox();
+                              });
+                              slateNotifier.setIndex(scene: newIndex);
+                            },
+                            itemBuilder: (BuildContext context, int index) {
+                              return ReorderableDelayedDragStartListener(
+                                key: ValueKey(
+                                    scenes[index].info.name + index.toString()),
+                                index: index,
+                                child: leftList(index, context),
+                              );
+                            },
+                            proxyDecorator: (child, index, animation) {
+                              return Material(
+                                color: Colors.transparent,
+                                elevation: 10.0,
+                                child: child,
+                              );
+                            },
+                          ),
+                        ),
+                        ListTile(
+                          title: const Icon(Icons.add),
+                          subtitle: const Text("场次+"),
+                          onTap: () {
+                            var util = ScheduleUtils(
+                                scenes: scenes,
+                                currentScnIndex: selectedSceneIndex);
+                            setState(() {
+                              util.addNewSceneAtLast();
+                            });
+                          },
+                        )
+                      ],
                     ),
                   ),
                   Flexible(
                     flex: 3,
                     child: Column(
                       children: [
-                        ListTile(
-                          // 用来显示场的基本信息，作为接下来创建的镜的计划
-                          tileColor: Colors.purple[50],
-                          title: Text(
-                              '${scenes[selectedSceneIndex].info.name}场，地点：${scenes[selectedSceneIndex].info.note.type}'),
-                          subtitle:
-                              Text(scenes[selectedSceneIndex].info.note.append),
-                        ),
                         Expanded(
                           child: ReorderableListView.builder(
                             // 右边的列表
@@ -344,10 +353,11 @@ class SceneSchedulePageState extends State<SceneSchedulePage>
                                 if (newIndex > oldIndex) {
                                   newIndex -= 1;
                                 }
-                                final item =
-                                    scenes[selectedSceneIndex].removeAt(oldIndex);
+                                final item = scenes[selectedSceneIndex]
+                                    .removeAt(oldIndex);
                                 // int index = newIndex > oldIndex ? newIndex - 1 : newIndex;
-                                scenes[selectedSceneIndex].insert(newIndex, item);
+                                scenes[selectedSceneIndex]
+                                    .insert(newIndex, item);
                                 // make the selected item to be the dragged item
                                 selectedShotIndex = newIndex;
                               });
@@ -372,23 +382,55 @@ class SceneSchedulePageState extends State<SceneSchedulePage>
                             },
                           ),
                         ),
+                        ListTile(
+                            tileColor: Colors.purple[50],
+                            title: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.purple[100],
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              padding: const EdgeInsets.all(8),
+                              child: Text(
+                                '${scenes[selectedSceneIndex].info.name}场',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            subtitle: Text(
+                              scenes[selectedSceneIndex].info.note.append,
+                              style: const TextStyle(
+                                color: Colors.grey,
+                              ),
+                            ),
+                            trailing: Text(
+                              '场景：${scenes[selectedSceneIndex].info.note.type}',
+                              style: const TextStyle(
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                            onTap: () => showNoteEditor(
+                                context, scenes, selectedSceneIndex)),
                       ],
                     ),
                   ),
                 ],
               ),
-              ElevatedButton.icon(
-                onPressed: () {
-                  var util = ScheduleUtils(
-                    scenes: scenes,
-                    currentScnIndex: selectedSceneIndex,
-                    currentShtIndex: selectedShotIndex
-                    );
-                  util.addNewAtLast();
-                  setState(() {});
-                },
-                icon: const Icon(Icons.add_business_outlined),
-                label: const Text("镜头+"),
+              Positioned(
+                bottom: 90,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    var util = ScheduleUtils(
+                        scenes: scenes,
+                        currentScnIndex: selectedSceneIndex,
+                        currentShtIndex: selectedShotIndex);
+                    setState(() {
+                      util.addNewShotAtLast();
+                    });
+                  },
+                  icon: const Icon(Icons.add_business_outlined),
+                  label: const Text("镜头+"),
+                ),
               )
             ],
           );
@@ -432,8 +474,7 @@ class SceneSchedulePageState extends State<SceneSchedulePage>
                     scenes: scenes,
                     scnIndex: currentScn,
                     shotIndex: currentSht,
-                  )
-                );
+                  ));
       },
     );
     _saveBox();
