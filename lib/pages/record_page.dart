@@ -659,7 +659,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
             scenes: totalScenes,
             scnIndex: sceneCol.selectedIndex,
             shotIndex: shotCol.selectedIndex,
-            isRecordPage: true);
+            isJustOneButton: true);
       },
     ).then((value) {
       var shotList = totalScenes[sceneCol.selectedIndex]

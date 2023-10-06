@@ -7,7 +7,7 @@ class NoteEditor extends StatefulWidget {
   final List<SceneSchedule> scenes;
   final int scnIndex;
   final int? shotIndex;
-  final bool? isRecordPage;
+  final bool? isJustOneButton;
 
   const NoteEditor({
     super.key,
@@ -15,7 +15,7 @@ class NoteEditor extends StatefulWidget {
     required this.scenes,
     required this.scnIndex,
     this.shotIndex,
-    this.isRecordPage,
+    this.isJustOneButton,
   });
 
   @override
@@ -134,7 +134,7 @@ class _NoteEditorState extends State<NoteEditor> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        (widget.isRecordPage == null || widget.isRecordPage == false)
+        (widget.isJustOneButton == null || widget.isJustOneButton == false)
             ? ElevatedButton(
                 onPressed: () {
                   util.addItem(newInfo, false);
@@ -155,7 +155,7 @@ class _NoteEditorState extends State<NoteEditor> {
           },
           child: const Text('保存'),
         ),
-        (widget.isRecordPage == null || widget.isRecordPage == false)
+        (widget.isJustOneButton == null || widget.isJustOneButton == false)
             ? ElevatedButton(
                 onPressed: () {
                   util.addItem(newInfo, true);
@@ -375,8 +375,10 @@ class ScheduleUtils {
   }
 
   void addItem(ScheduleItem inputInfo, bool after) {
+    var newObjects = inputInfo.note.objects;
+    var newNote = "从${newObjects.join('，')}的【正面】拍【近景】";
     var newShot = ScheduleItem(
-        '1', '', Note(objects: inputInfo.note.objects, type: '近景', append: ''));
+        '1', '', Note(objects: newObjects, type: '近景', append: newNote));
     var newInfo = ScheduleItem(inputInfo.key, inputInfo.fix, inputInfo.note);
     var plusIndex = after ? 1 : 0;
 
