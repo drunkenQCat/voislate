@@ -139,7 +139,8 @@ class SceneSchedulePageState extends State<SceneSchedulePage>
                   }
                   return false;
                 } else if (direction == DismissDirection.startToEnd) {
-                  showNoteEditor(context, scenes, index);
+                  showNoteEditor(
+                      context: context, scenes: scenes, currentScn: index);
                   return false;
                 }
                 return null;
@@ -154,7 +155,8 @@ class SceneSchedulePageState extends State<SceneSchedulePage>
               ),
               child: GestureDetector(
                 onDoubleTap: () {
-                  showNoteEditor(context, scenes, index);
+                  showNoteEditor(
+                      context: context, scenes: scenes, currentScn: index);
                 },
                 child: ListTileTheme(
                   contentPadding: const EdgeInsets.all(5),
@@ -214,7 +216,11 @@ class SceneSchedulePageState extends State<SceneSchedulePage>
                   }
                   return false;
                 } else if (direction == DismissDirection.startToEnd) {
-                  showNoteEditor(context, scenes, selectedSceneIndex, index);
+                  await showNoteEditor(
+                      context: context,
+                      scenes: scenes,
+                      currentScn: index,
+                      currentSht: index);
                   return false;
                 }
                 return null;
@@ -229,7 +235,11 @@ class SceneSchedulePageState extends State<SceneSchedulePage>
               ),
               child: GestureDetector(
                 onDoubleTap: () {
-                  showNoteEditor(context, scenes, selectedSceneIndex, index);
+                  showNoteEditor(
+                      context: context,
+                      scenes: scenes,
+                      currentScn: selectedSceneIndex,
+                      currentSht: index);
                 },
                 child: ListTileTheme(
                   tileColor: Colors.white,
@@ -328,13 +338,31 @@ class SceneSchedulePageState extends State<SceneSchedulePage>
                         ListTile(
                           title: const Icon(Icons.add),
                           subtitle: const Text("场次+"),
-                          onTap: () {
+                          onTap: () async {
                             var util = ScheduleUtils(
                                 scenes: scenes,
                                 currentScnIndex: selectedSceneIndex);
                             setState(() {
                               util.addNewSceneAtLast();
                             });
+                            // 修改添加后的东西。
+                            await showNoteEditor(
+                                context: context,
+                                scenes: scenes,
+                                currentScn: scenes.length - 1,
+                                isOneBtn: true);
+                            var createdScene = scenes[scenes.length - 1];
+                            var newObjects = createdScene.info.note.objects;
+                            var newNote = "从${newObjects.join('，')}的【正面】拍【近景】";
+                            createdScene.data = [
+                              ScheduleItem(
+                                  '1',
+                                  '',
+                                  Note(
+                                      objects: newObjects,
+                                      type: '近景',
+                                      append: newNote))
+                            ];
                           },
                         )
                       ],
@@ -410,7 +438,9 @@ class SceneSchedulePageState extends State<SceneSchedulePage>
                               ),
                             ),
                             onTap: () => showNoteEditor(
-                                context, scenes, selectedSceneIndex)),
+                                context: context,
+                                scenes: scenes,
+                                currentScn: selectedSceneIndex)),
                       ],
                     ),
                   ),
@@ -454,9 +484,12 @@ class SceneSchedulePageState extends State<SceneSchedulePage>
     await Hive.openBox('scenes_box');
   }
 
-  void showNoteEditor(
-      BuildContext context, List<SceneSchedule> scenes, int currentScn,
-      [int? currentSht]) async {
+  Future<void> showNoteEditor(
+      {required BuildContext context,
+      required List<SceneSchedule> scenes,
+      required int currentScn,
+      int? currentSht,
+      bool? isOneBtn}) async {
     await showModalBottomSheet(
       context: context,
       builder: (BuildContext context) {
@@ -468,6 +501,7 @@ class SceneSchedulePageState extends State<SceneSchedulePage>
                     context: context,
                     scenes: scenes,
                     scnIndex: currentScn,
+                    isJustOneButton: isOneBtn,
                   )
                 : NoteEditor(
                     context: context,
