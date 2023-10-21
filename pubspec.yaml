@@ -48,7 +48,11 @@ dependencies:
   hive_flutter: ^1.1.0
   hive_generator: ^2.0.0
   ifly_speech_recognition:
+    # 要build的时候注释掉这条，用github的源
     path: ../ifly_speech_recognition
+    # git:
+    #   url: https://github.com/drunkenQCat/ifly_speech_recognition.git
+    #   ref: dev
   permission_handler: ^10.2.0
   provider: ^6.0.5
   record: ^4.4.4
