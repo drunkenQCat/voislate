@@ -10,6 +10,7 @@ import 'package:provider/provider.dart';
 import 'package:voislate/models/slate_log_item.dart';
 import 'package:voislate/models/slate_schedule.dart';
 import 'package:voislate/models/tk_pending.dart';
+import 'package:voislate/models/take_type.dart';
 import 'package:voislate/providers/slate_log_notifier.dart';
 import 'package:voislate/widgets/scene_schedule_page/note_editor.dart';
 
@@ -25,36 +26,12 @@ import '../widgets/record_page/shot_ok_dial.dart';
 import '../widgets/record_page/slate_picker.dart';
 import '../widgets/record_page/take_ok_dial.dart';
 
-/* 
-TODO:
-1x 轮盘绑定拍摄计划
-2x 调整UI布局，删除一些输入框
-3x 删除场镜相关悬浮按钮（本来就是用来验证功能的）
-4x 调整轮盘高度
-5x 考虑特殊录音（补录对白、补录环境音）
-6x 跑条按钮
-7x 想办法让文件名可以长按修改
-~~8. "准备录音"不要那么高~~
-9x "本场内容"注意schedule的数据结构
-10. (备选方案)可以考虑加入急行军模式
-11x *记得修改按键布局保证交互操作可以正常使用.某种意义上说，就是要足够的大
-12x 增加振动交互
-13x *修一下减了之后再加的问题
-14x 把加减号改成方形的
-15x *把currentScn改成prevScene
-16x 保存配置的功能
-17x *****场景次与文件名的逻辑
-18. 思考音量键/录音信号绑定情况下跑条的设置
-19. 修复Prefix相关问题
-*/
 class SlateRecord extends StatefulWidget {
   const SlateRecord({super.key});
 
   @override
   State<SlateRecord> createState() => _SlateRecordState();
 }
-
-enum TakeType { normal, fake, end, wild }
 
 class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
   // Some variables don't need to be in the state
@@ -148,32 +125,6 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
       shotNoteController.addListener(
           () => slateNotifier.setNote(note: shotNoteController.text));
 
-      /// The IconButtons on bottom area to pending last take
-      var takeOkDial = TakeOkDial(
-        context: context,
-        pending: tkPending,
-      );
-      var shotOkDial = ShotOkDial(
-        context: context,
-        pending: tkPending,
-      );
-      void resetOkEnum() {
-        setState(() {
-          tkPending.tk = TkStatus.notChecked;
-          tkPending.sht = ShtStatus.notChecked;
-        });
-        slateNotifier.setOkStatus(doReset: true);
-      }
-
-      String getCurrentTakeKeyWord(TakeType type) {
-        if (type == TakeType.end) return 'OK';
-        if (type == TakeType.normal) return takeCol.selected;
-        if (type == TakeType.fake) return 'F';
-        if (type == TakeType.wild) return 'W';
-        return 'F';
-      }
-
-      /// The desc/note editor area
       List<String> getPrevTakeInfo() {
         if (pickerHistory.isEmpty) return [];
         var prevTake = pickerHistory.getAt(pickerHistory.length - 1);
@@ -184,98 +135,108 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
       String getPrevScn() => getPrevTakeInfo()[0];
       String getPrevSht() => getPrevTakeInfo()[1];
       String getPrevTk() => getPrevTakeInfo()[2];
+      // objs are appended to take note.
       List<String> getPrevObjs() =>
           getPrevTakeInfo().length > 3 ? getPrevTakeInfo().sublist(3) : [];
 
-      var prevTakeEditor = PrevTakeEditor(
-        num: num,
-        descEditingController: descController,
-      );
-      var prevShotNote = PrevShotNote(
-        currentScn: pickerHistory.isNotEmpty ? getPrevScn() : '0',
-        currentSht: pickerHistory.isNotEmpty ? getPrevSht() : '0',
-        currentTk: pickerHistory.isNotEmpty ? getPrevTk() : '0',
-        controller: shotNoteController,
-      );
-
-      void addNewLog([TakeType currentTkType = TakeType.normal]) {
-        var prevTakeInfo = getPrevTakeInfo();
-        String prevScn = prevTakeInfo.isNotEmpty ? getPrevScn() : '0';
-        String prevSht = prevTakeInfo.isNotEmpty ? getPrevSht() : '0';
-        String prevTkSign = prevTakeInfo.isNotEmpty ? getPrevTk() : '0';
-        if (prevTkSign == 'OK') return;
-        var isFake = prevTkSign == 'F';
-        var isWild = prevTkSign == 'W';
-        // obj list is the rest part of prevTake
-        String trackLogs = getPrevObjs().map((obj) => "<$obj/>").join();
-        // check if the shot is changed or if current take is the end take
-        if (shotCol.selected != prevSht || currentTkType == TakeType.end) {
-          // if shotCol changed, the status of current take
-          // automatically turn to best
-          setState(() {
-            tkPending
-              ..tk = TkStatus.ok
-              ..sht = ShtStatus.nice;
-          });
-        }
-        var newLogItem = SlateLogItem(
-          scn: prevScn,
-          sht: prevSht,
-          tk: isFake
-              ? 999
-              : isWild
-                  ? 0
-                  : int.parse(prevTkSign),
-          filenamePrefix: num.prefix,
-          filenameLinker: num.intervalSymbol,
-          filenameNum: num.prevFileNum(),
-          tkNote: !isFake
-              ? (descController.text.isEmpty
-                  ? 'S$prevScn Sh$prevSht Tk$prevTkSign'
-                  : descController.text)
-              : 'Fake Take',
-          shtNote: "${shotNoteController.text}$trackLogs",
-          scnNote: totalScenes[sceneCol.selectedIndex].info.note.append,
-          currentOkTk: !isFake ? tkPending.tk : TkStatus.bad,
-          currentOkSht: !isFake ? tkPending.sht : ShtStatus.notChecked,
-        );
-
-        if (isWild) {
-          newLogItem.tkNote = "wild track ${newLogItem.tkNote}";
-        }
-        logNotifier.add(num.prevFileName(), newLogItem);
-      }
-
-      void setDescNewText(TakeType currentTkType) {
-        currentTkType == TakeType.fake
-            ? descController.text = "跑条"
-            : currentTkType == TakeType.end
-                ? descController.text = "收工了,这一镜结束了"
-                : descController.clear();
-      }
-
       void addItem([TakeType currentTkType = TakeType.normal]) {
-        if (num.prevFileName().isNotEmpty) {
-          addNewLog(currentTkType);
+        // create new log
+        void addNewLog() {
+          var prevTakeInfo = getPrevTakeInfo();
+          String prevScn = prevTakeInfo.isNotEmpty ? getPrevScn() : '0';
+          String prevSht = prevTakeInfo.isNotEmpty ? getPrevSht() : '0';
+          String prevTkSign = prevTakeInfo.isNotEmpty ? getPrevTk() : '0';
+          if (prevTkSign == 'OK') return;
+          var isFake = prevTkSign == 'F';
+          var isWild = prevTkSign == 'W';
+          // obj list is the rest part of prevTake
+          String trackLogs = getPrevObjs().map((obj) => "<$obj/>").join();
+          // check if the shot is changed or if current take is the end take
+          if (shotCol.selected != prevSht || currentTkType == TakeType.end) {
+            // if shotCol changed, the status of current take
+            // automatically turn to best
+            setState(() {
+              tkPending
+                ..tk = TkStatus.ok
+                ..sht = ShtStatus.nice;
+            });
+          }
+          var newLogItem = SlateLogItem(
+            scn: prevScn,
+            sht: prevSht,
+            tk: isFake
+                ? 999
+                : isWild
+                    ? 0
+                    : int.parse(prevTkSign),
+            filenamePrefix: num.prefix,
+            filenameLinker: num.intervalSymbol,
+            filenameNum: num.prevFileNum(),
+            tkNote: !isFake
+                ? (descController.text.isEmpty
+                    ? 'S$prevScn Sh$prevSht Tk$prevTkSign'
+                    : descController.text)
+                : 'Fake Take',
+            shtNote: "${shotNoteController.text}$trackLogs",
+            scnNote: totalScenes[sceneCol.selectedIndex].info.note.append,
+            currentOkTk: !isFake ? tkPending.tk : TkStatus.bad,
+            currentOkSht: !isFake ? tkPending.sht : ShtStatus.notChecked,
+          );
+
+          if (isWild) {
+            newLogItem.tkNote = "wild track ${newLogItem.tkNote}";
+          }
+          logNotifier.add(num.prevFileName(), newLogItem);
         }
+
+        if (num.prevFileName().isNotEmpty) {
+          addNewLog();
+        }
+
         if (!isLinked && currentTkType != TakeType.end) {
           currentTkType = TakeType.wild;
         }
+
+        String getCurrentTakeKeyWord() {
+          if (currentTkType == TakeType.end) return 'OK';
+          if (currentTkType == TakeType.normal) return takeCol.selected;
+          if (currentTkType == TakeType.fake) return 'F';
+          if (currentTkType == TakeType.wild) return 'W';
+          return 'F';
+        }
+
         List currentTakeInfo = [
           sceneCol.selected,
           shotCol.selected,
-          getCurrentTakeKeyWord(currentTkType)
+          getCurrentTakeKeyWord()
         ];
         var objList = totalScenes[sceneCol.selectedIndex][shotCol.selectedIndex]
             .note
             .objects;
         currentTakeInfo.addAll(objList);
         pickerHistory.add(currentTakeInfo);
+
+        void resetOkEnum() {
+          setState(() {
+            tkPending.tk = TkStatus.notChecked;
+            tkPending.sht = ShtStatus.notChecked;
+          });
+          slateNotifier.setOkStatus(doReset: true);
+        }
+
+        void setDescNewText() {
+          currentTkType == TakeType.fake
+              ? descController.text = "跑条"
+              : currentTkType == TakeType.end
+                  ? descController.text = "收工了,这一镜结束了"
+                  : descController.clear();
+        }
+
         setState(() {
           if (currentTkType != TakeType.end) num.increment();
           resetOkEnum();
           slateNotifier.setIndex(count: num.number);
-          setDescNewText(currentTkType);
+          setDescNewText();
         });
         if (_canVibrate) {
           currentTkType == TakeType.fake
@@ -297,15 +258,15 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
             Icons.add,
           ));
 
-      Future<void> removeLastPickerHistory() =>
-          pickerHistory.deleteAt(pickerHistory.length - 1);
-      void drawBackNotes() {
-        descController.text = logNotifier.logToday.last.tkNote;
-        var lastShtNote = logNotifier.logToday.last.shtNote.split('<').first;
-        shotNoteController.text = lastShtNote;
-      }
-
       void drawBackItem() {
+        Future<void> removeLastPickerHistory() =>
+            pickerHistory.deleteAt(pickerHistory.length - 1);
+        void drawBackNotes() {
+          descController.text = logNotifier.logToday.last.tkNote;
+          var lastShtNote = logNotifier.logToday.last.shtNote.split('<').first;
+          shotNoteController.text = lastShtNote;
+        }
+
         if (getPrevTk() == "OK") {
           setState(() => drawBackNotes());
           removeLastPickerHistory();
@@ -344,7 +305,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
         child: const Icon(Icons.remove),
       );
 
-      /// The function of volumekey
+      /// initialize the controller of volumekey
       scrl3 = ScrollValueController<SlateColumnThree>(
         context: context,
         textCon: descController,
@@ -548,6 +509,17 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
           ),
         ),
       ];
+
+      var prevTakeEditor = PrevTakeEditor(
+        num: num,
+        descEditingController: descController,
+      );
+      var prevShotNote = PrevShotNote(
+        currentScn: pickerHistory.isNotEmpty ? getPrevScn() : '0',
+        currentSht: pickerHistory.isNotEmpty ? getPrevSht() : '0',
+        currentTk: pickerHistory.isNotEmpty ? getPrevTk() : '0',
+        controller: shotNoteController,
+      );
       var inputArea = [
         AbsorbPointer(
           absorbing: _isAbsorbing,
@@ -574,13 +546,20 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
           ),
         ),
       ];
+
       var bottomControlButtons = [
         DisplayNotesButton(
           notes: exportQuickNotes(),
           num: num,
         ),
-        takeOkDial,
-        shotOkDial,
+        TakeOkDial(
+          context: context,
+          pending: tkPending,
+        ),
+        ShotOkDial(
+          context: context,
+          pending: tkPending,
+        ),
         AnimatedToggleSwitch.dual(
           dif: 5,
           current: _isAbsorbing,
