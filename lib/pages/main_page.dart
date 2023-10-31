@@ -58,6 +58,7 @@ class _MyHomePageState extends State<MyHomePage>
     return Scaffold(
       appBar: AppBar(
         title: const Text('VoiSlate'),
+        toolbarHeight: 50,
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
