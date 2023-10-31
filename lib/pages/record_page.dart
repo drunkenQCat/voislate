@@ -25,6 +25,8 @@ import '../widgets/record_page/recorder_joystick.dart';
 import '../widgets/record_page/shot_ok_dial.dart';
 import '../widgets/record_page/slate_picker.dart';
 import '../widgets/record_page/take_ok_dial.dart';
+import '../widgets/record_page/current_file_monitor.dart';
+import '../widgets/record_page/current_take_monitor.dart';
 
 class SlateRecord extends StatefulWidget {
   const SlateRecord({super.key});
@@ -48,7 +50,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
   final sceneCol = SlateColumnOne();
   final shotCol = SlateColumnTwo();
   final takeCol = SlateColumnThree();
-  final num = RecordFileNum();
+  final fileNum = RecordFileNum();
   // controller for volume key
   late ScrollValueController<SlateColumnThree> scrl3;
   bool _isAbsorbing = false;
@@ -102,10 +104,10 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
       sceneCol.init(initS);
       shotCol.init(initSh);
       takeCol.init(initTk);
-      num.setValue(initCount);
-      num.intervalSymbol = initRecordLinker;
-      num.recorderType = initPrefixType;
-      num.customPrefix = initCustomPrefix;
+      fileNum.setValue(initCount);
+      fileNum.intervalSymbol = initRecordLinker;
+      fileNum.recorderType = initPrefixType;
+      fileNum.customPrefix = initCustomPrefix;
     });
   }
 
@@ -126,15 +128,15 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
           () => slateNotifier.setNote(note: shotNoteController.text));
 
       List<String> getPrevTakeInfo() {
-        if (pickerHistory.isEmpty) return [];
+        if (pickerHistory.isEmpty) return ['0', '0', '0'];
         var prevTake = pickerHistory.getAt(pickerHistory.length - 1);
         List<String> prevTakeList = prevTake.cast<String>();
         return prevTakeList;
       }
 
-      String getPrevScn() => getPrevTakeInfo()[0];
-      String getPrevSht() => getPrevTakeInfo()[1];
-      String getPrevTk() => getPrevTakeInfo()[2];
+      String getCurrentScn() => getPrevTakeInfo()[0];
+      String getCurrentSht() => getPrevTakeInfo()[1];
+      String getCurrentTk() => getPrevTakeInfo()[2];
       // objs are appended to take note.
       List<String> getPrevObjs() =>
           getPrevTakeInfo().length > 3 ? getPrevTakeInfo().sublist(3) : [];
@@ -142,10 +144,9 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
       void addItem([TakeType currentTkType = TakeType.normal]) {
         // create new log
         void addNewLog() {
-          var prevTakeInfo = getPrevTakeInfo();
-          String prevScn = prevTakeInfo.isNotEmpty ? getPrevScn() : '0';
-          String prevSht = prevTakeInfo.isNotEmpty ? getPrevSht() : '0';
-          String prevTkSign = prevTakeInfo.isNotEmpty ? getPrevTk() : '0';
+          String prevScn = getCurrentScn();
+          String prevSht = getCurrentSht();
+          String prevTkSign = getCurrentTk();
           if (prevTkSign == 'OK') return;
           var isFake = prevTkSign == 'F';
           var isWild = prevTkSign == 'W';
@@ -169,9 +170,9 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
                 : isWild
                     ? 0
                     : int.parse(prevTkSign),
-            filenamePrefix: num.prefix,
-            filenameLinker: num.intervalSymbol,
-            filenameNum: num.prevFileNum(),
+            filenamePrefix: fileNum.prefix,
+            filenameLinker: fileNum.intervalSymbol,
+            filenameNum: fileNum.prevFileNum(),
             tkNote: !isFake
                 ? (descController.text.isEmpty
                     ? 'S$prevScn Sh$prevSht Tk$prevTkSign'
@@ -186,10 +187,10 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
           if (isWild) {
             newLogItem.tkNote = "wild track ${newLogItem.tkNote}";
           }
-          logNotifier.add(num.prevFileName(), newLogItem);
+          logNotifier.add(fileNum.prevFileName(), newLogItem);
         }
 
-        if (num.prevFileName().isNotEmpty) {
+        if (fileNum.prevFileName().isNotEmpty) {
           addNewLog();
         }
 
@@ -233,9 +234,9 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
         }
 
         setState(() {
-          if (currentTkType != TakeType.end) num.increment();
+          if (currentTkType != TakeType.end) fileNum.increment();
           resetOkEnum();
-          slateNotifier.setIndex(count: num.number);
+          slateNotifier.setIndex(count: fileNum.number);
           setDescNewText();
         });
         if (_canVibrate) {
@@ -267,16 +268,15 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
           shotNoteController.text = lastShtNote;
         }
 
-        if (getPrevTk() == "OK") {
-          setState(() => drawBackNotes());
+        if (getCurrentTk() == "OK") {
           removeLastPickerHistory();
           return;
         }
         try {
           setState(() {
-            num.decrement();
+            fileNum.decrement();
           });
-          slateNotifier.setIndex(count: num.number);
+          slateNotifier.setIndex(count: fileNum.number);
           setState(() => drawBackNotes());
           removeLastPickerHistory();
           logNotifier.removeLast();
@@ -293,7 +293,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
           Fluttertoast.showToast(msg: "长按撤回上一条场记");
         },
         onLongPress: () {
-          if (getPrevTk() != "OK") {
+          if (getCurrentTk() != "OK") {
             takeCol.scrollToPrev(isLinked);
           }
           drawBackItem();
@@ -304,6 +304,21 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
         ),
         child: const Icon(Icons.remove),
       );
+
+      Widget buildCurrentTkNoticeCard() {
+        return Card(
+            color: const Color(0xFFD1C4E9),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                CurrentTakeMonitorDart(
+                    currentScn: getCurrentScn(),
+                    currentSht: getCurrentSht(),
+                    currentTk: getCurrentTk()),
+                CurrentFileMonitor(fileNum: fileNum)
+              ],
+            ));
+      }
 
       /// initialize the controller of volumekey
       scrl3 = ScrollValueController<SlateColumnThree>(
@@ -317,7 +332,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
       ElevatedButton shotEndBtn = ElevatedButton(
         onPressed: () {
           List<String> prevTake = getPrevTakeInfo();
-          if (num.prevFileName().isEmpty ||
+          if (fileNum.prevFileName().isEmpty ||
               prevTake.isEmpty ||
               prevTake[2] == 'OK' ||
               prevTake[2] == 'F') return;
@@ -371,67 +386,65 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
         return notes;
       }
 
-      var nextPicker = Column(
-        children: [
-          Text((shotChanged) ? "长按修改当前镜" : ""),
-          SlatePicker(
-            titles: titles,
-            stateOne: sceneCol,
-            stateTwo: shotCol,
-            stateThree: takeCol,
-            width: screenWidth - 2 * horizonPadding,
-            height: screenHeight * 0.15,
-            itemHeight: screenHeight * 0.13 - 48,
-            resultChanged: ({v1, v2, v3}) {
-              if (v3.toString() == "2") {
-                shotNoteController.text = totalScenes[sceneCol.selectedIndex]
-                        [shotCol.selectedIndex]
-                    .note
-                    .append;
-              }
-              pickerNumSync();
-              debugPrint('v1: , v2: , v3: ');
-            },
-          ),
-        ],
-      );
-      var nextTakeScrolls = Stack(
-        alignment: Alignment.centerLeft,
-        children: [
-          GestureDetector(
-            onTap: () {},
-            onLongPress: () {
-              editCurrentShot(context);
-            },
-            child: Card(
-                color: isLinked ? Colors.white : Colors.grey,
-                elevation: isLinked ? 3 : 0,
-                child: nextPicker),
-          ),
-          Padding(
-            padding: EdgeInsets.only(left: screenWidth / 20),
-            child: const Column(
-              children: [
-                Icon(
-                  Icons.fast_forward_outlined,
-                  color: Colors.blue,
-                ),
-                Text('下'),
-                Text('一'),
-                Text('条'),
-              ],
+      Widget buildNextPicker() {
+        return Column(
+          children: [
+            Text((shotChanged) ? "长按修改当前镜" : ""),
+            SlatePicker(
+              titles: titles,
+              stateOne: sceneCol,
+              stateTwo: shotCol,
+              stateThree: takeCol,
+              width: screenWidth - 2 * horizonPadding,
+              height: screenHeight * 0.15,
+              itemHeight: screenHeight * 0.13 - 48,
+              resultChanged: ({v1, v2, v3}) {
+                if (v3.toString() == "2") {
+                  shotNoteController.text = totalScenes[sceneCol.selectedIndex]
+                          [shotCol.selectedIndex]
+                      .note
+                      .append;
+                }
+                pickerNumSync();
+                debugPrint('v1: , v2: , v3: ');
+              },
             ),
-          )
-        ],
-      );
-      // var nextTakeTrailer = ListTile(
-      //   visualDensity: VisualDensity(vertical: -4),
-      //   leading: Icon(
-      //     Icons.fast_forward_outlined,
-      //     color: Colors.blue,
-      //   ),
-      //   title: Text('下一条:'),
-      // );
+          ],
+        );
+      }
+
+      Widget buildNextTakeScrolls() {
+        return Stack(
+          alignment: Alignment.centerLeft,
+          children: [
+            GestureDetector(
+              onTap: () {},
+              onLongPress: () {
+                editCurrentShot(context);
+              },
+              child: Card(
+                  color: isLinked ? Colors.white : Colors.grey,
+                  elevation: isLinked ? 3 : 0,
+                  child: buildNextPicker()),
+            ),
+            Padding(
+              padding: EdgeInsets.only(left: screenWidth / 20),
+              child: const Column(
+                children: [
+                  Icon(
+                    Icons.fast_forward_outlined,
+                    color: Colors.blue,
+                  ),
+                  Text('下'),
+                  Text('一'),
+                  Text('条'),
+                ],
+              ),
+            )
+          ],
+        );
+      }
+
       var scrollCounterLinkButton = Transform.rotate(
         angle: 1.5708,
         child: ElevatedButton(
@@ -458,31 +471,33 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
           child: Icon(isLinked ? Icons.link : Icons.link_off),
         ),
       );
-      Widget nextTakeMonitor = Stack(
-        alignment: AlignmentDirectional.centerStart,
-        children: [
-          Card(
-            color: Colors.grey.shade100,
-            child: Column(
-              children: [
-                nextTakeScrolls,
-                // add an input box to have a note about the number
-                const SizedBox(
-                  height: 10,
-                ),
-                FileCounter(
-                  init: _counterInit,
-                  num: num,
-                ),
-              ],
+      Widget buildNextTakeMonitor() {
+        return Stack(
+          alignment: AlignmentDirectional.centerStart,
+          children: [
+            Card(
+              color: Colors.grey.shade100,
+              child: Column(
+                children: [
+                  buildNextTakeScrolls(),
+                  // add an input box to have a note about the number
+                  const SizedBox(
+                    height: 10,
+                  ),
+                  FileCounter(
+                    init: _counterInit,
+                    num: fileNum,
+                  ),
+                ],
+              ),
             ),
-          ),
-          Padding(
-            padding: EdgeInsets.only(top: screenHeight * 0.1),
-            child: scrollCounterLinkButton,
-          ),
-        ],
-      );
+            Padding(
+              padding: EdgeInsets.only(top: screenHeight * 0.1),
+              child: scrollCounterLinkButton,
+            ),
+          ],
+        );
+      }
 
       var addAndSkipButtons = [
         Row(
@@ -511,13 +526,13 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
       ];
 
       var prevTakeEditor = PrevTakeEditor(
-        num: num,
+        num: fileNum,
         descEditingController: descController,
       );
       var prevShotNote = PrevShotNote(
-        currentScn: pickerHistory.isNotEmpty ? getPrevScn() : '0',
-        currentSht: pickerHistory.isNotEmpty ? getPrevSht() : '0',
-        currentTk: pickerHistory.isNotEmpty ? getPrevTk() : '0',
+        currentScn: getCurrentScn(),
+        currentSht: getCurrentSht(),
+        currentTk: getCurrentTk(),
         controller: shotNoteController,
       );
       var inputArea = [
@@ -550,7 +565,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
       var bottomControlButtons = [
         DisplayNotesButton(
           notes: exportQuickNotes(),
-          num: num,
+          num: fileNum,
         ),
         TakeOkDial(
           context: context,
@@ -583,13 +598,22 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
               child: SizedBox(
                 // because of the Title of scaffold,
                 // the width of the card is 80% of the screen height
-                height: screenHeight * 0.85,
+                height: screenHeight * 1.5,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: <Widget>[
-                    AbsorbPointer(
-                            absorbing: _isAbsorbing, child: nextTakeMonitor)
-                        .greyscale(_isAbsorbing),
+                    buildCurrentTkNoticeCard(),
+                    ExpansionTile(
+                      title: const Text("下一条"),
+                      leading: const Icon(Icons.skip_next_sharp),
+                      onExpansionChanged: (isExpanded) => {},
+                      children: [
+                        AbsorbPointer(
+                                absorbing: _isAbsorbing,
+                                child: buildNextTakeMonitor())
+                            .greyscale(_isAbsorbing),
+                      ],
+                    ),
                     const Divider(),
                     Stack(
                       children: addAndSkipButtons,
