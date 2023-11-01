@@ -8,15 +8,22 @@ class CurrentFileMonitor extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Column(
-        children: [
-          const Icon(
-            Icons.radio_button_checked,
-            size: 19,
-            color: Colors.red,
-          ),
-          Text("正在录制:T${fileNum.prevFileNum().toString().padLeft(3, '0')}"),
-        ],
+      child: Card(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.radio_button_checked,
+              size: 19,
+              color: Colors.red,
+            ),
+            const SizedBox(width: 13),
+            Text(
+              "${fileNum.prefix}${fileNum.intervalSymbol}${fileNum.prevFileNum().toString().padLeft(3, '0')}",
+              style: const TextStyle(fontSize: 20),
+            ),
+          ],
+        ),
       ),
     );
   }

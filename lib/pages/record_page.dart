@@ -65,6 +65,9 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
   bool shotChanged = false;
 
   StreamSubscription<HardwareButton>? subscription;
+  late SlateStatusNotifier initValueProvider;
+  
+  bool isNextTileExpanded = false;
 
   @override
   void initState() {
@@ -75,7 +78,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
     var box = Hive.box('scenes_box');
     totalScenes = box.values.toList().cast();
 
-    var initValueProvider =
+    initValueProvider =
         Provider.of<SlateStatusNotifier>(context, listen: false);
     var sceneList = totalScenes.map((e) => e.info.name.toString()).toList();
     var shotList = totalScenes[initValueProvider.selectedSceneIndex]
@@ -93,6 +96,10 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
     String initNote = initValueProvider.currentNote;
     descController = TextEditingController(text: initDesc);
     shotNoteController = TextEditingController(text: initNote);
+    initPickerAndFileNumWidget();
+  }
+
+  void initPickerAndFileNumWidget() {
     WidgetsBinding.instance.endOfFrame.then((_) {
       var initS = initValueProvider.selectedSceneIndex;
       var initSh = initValueProvider.selectedShotIndex;
@@ -127,33 +134,34 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
       shotNoteController.addListener(
           () => slateNotifier.setNote(note: shotNoteController.text));
 
-      List<String> getPrevTakeInfo() {
+      List<String> getCurrentTakeInfo() {
         if (pickerHistory.isEmpty) return ['0', '0', '0'];
         var prevTake = pickerHistory.getAt(pickerHistory.length - 1);
         List<String> prevTakeList = prevTake.cast<String>();
         return prevTakeList;
       }
 
-      String getCurrentScn() => getPrevTakeInfo()[0];
-      String getCurrentSht() => getPrevTakeInfo()[1];
-      String getCurrentTk() => getPrevTakeInfo()[2];
+      String getCurrentScn() => getCurrentTakeInfo()[0];
+      String getCurrentSht() => getCurrentTakeInfo()[1];
+      String getCurrentTk() => getCurrentTakeInfo()[2];
       // objs are appended to take note.
-      List<String> getPrevObjs() =>
-          getPrevTakeInfo().length > 3 ? getPrevTakeInfo().sublist(3) : [];
+      List<String> getPrevObjs() => getCurrentTakeInfo().length > 3
+          ? getCurrentTakeInfo().sublist(3)
+          : [];
 
       void addItem([TakeType currentTkType = TakeType.normal]) {
-        // create new log
+        // The predefined functions
         void addNewLog() {
-          String prevScn = getCurrentScn();
-          String prevSht = getCurrentSht();
-          String prevTkSign = getCurrentTk();
-          if (prevTkSign == 'OK') return;
-          var isFake = prevTkSign == 'F';
-          var isWild = prevTkSign == 'W';
+          String currentScn = getCurrentScn();
+          String currentSht = getCurrentSht();
+          String currentTkSign = getCurrentTk();
+          if (currentTkSign == 'OK') return;
+          var isFake = currentTkSign == 'F';
+          var isWild = currentTkSign == 'W';
           // obj list is the rest part of prevTake
           String trackLogs = getPrevObjs().map((obj) => "<$obj/>").join();
           // check if the shot is changed or if current take is the end take
-          if (shotCol.selected != prevSht || currentTkType == TakeType.end) {
+          if (shotCol.selected != currentSht || currentTkType == TakeType.end) {
             // if shotCol changed, the status of current take
             // automatically turn to best
             setState(() {
@@ -163,19 +171,19 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
             });
           }
           var newLogItem = SlateLogItem(
-            scn: prevScn,
-            sht: prevSht,
+            scn: currentScn,
+            sht: currentSht,
             tk: isFake
                 ? 999
                 : isWild
                     ? 0
-                    : int.parse(prevTkSign),
+                    : int.parse(currentTkSign),
             filenamePrefix: fileNum.prefix,
             filenameLinker: fileNum.intervalSymbol,
             filenameNum: fileNum.prevFileNum(),
             tkNote: !isFake
                 ? (descController.text.isEmpty
-                    ? 'S$prevScn Sh$prevSht Tk$prevTkSign'
+                    ? 'S$currentScn Sh$currentSht Tk$currentTkSign'
                     : descController.text)
                 : 'Fake Take',
             shtNote: "${shotNoteController.text}$trackLogs",
@@ -183,19 +191,10 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
             currentOkTk: !isFake ? tkPending.tk : TkStatus.bad,
             currentOkSht: !isFake ? tkPending.sht : ShtStatus.notChecked,
           );
-
           if (isWild) {
             newLogItem.tkNote = "wild track ${newLogItem.tkNote}";
           }
           logNotifier.add(fileNum.prevFileName(), newLogItem);
-        }
-
-        if (fileNum.prevFileName().isNotEmpty) {
-          addNewLog();
-        }
-
-        if (!isLinked && currentTkType != TakeType.end) {
-          currentTkType = TakeType.wild;
         }
 
         String getCurrentTakeKeyWord() {
@@ -205,17 +204,6 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
           if (currentTkType == TakeType.wild) return 'W';
           return 'F';
         }
-
-        List currentTakeInfo = [
-          sceneCol.selected,
-          shotCol.selected,
-          getCurrentTakeKeyWord()
-        ];
-        var objList = totalScenes[sceneCol.selectedIndex][shotCol.selectedIndex]
-            .note
-            .objects;
-        currentTakeInfo.addAll(objList);
-        pickerHistory.add(currentTakeInfo);
 
         void resetOkEnum() {
           setState(() {
@@ -227,16 +215,36 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
 
         void setDescNewText() {
           currentTkType == TakeType.fake
-              ? descController.text = "跑条"
+              ? descController.text = "这条跑了"
               : currentTkType == TakeType.end
                   ? descController.text = "收工了,这一镜结束了"
                   : descController.clear();
         }
 
+        // Start to add items
+        if (fileNum.prevFileName().isNotEmpty) {
+          addNewLog();
+        }
+        if (!isLinked && currentTkType != TakeType.end) {
+          currentTkType = TakeType.wild;
+        }
+        List currentTakeInfo = [
+          sceneCol.selected,
+          shotCol.selected,
+          getCurrentTakeKeyWord()
+        ];
+        var objList = totalScenes[sceneCol.selectedIndex][shotCol.selectedIndex]
+            .note
+            .objects;
+        currentTakeInfo.addAll(objList);
+        pickerHistory.add(currentTakeInfo);
+
         setState(() {
           if (currentTkType != TakeType.end) fileNum.increment();
           resetOkEnum();
-          slateNotifier.setIndex(count: fileNum.number);
+          slateNotifier.setIndex(
+            count: fileNum.number,
+          );
           setDescNewText();
         });
         if (_canVibrate) {
@@ -250,11 +258,16 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
           onPressed: () {
             addItem();
             takeCol.scrollToNext(isLinked);
+            slateNotifier.setIndex(
+              scene: sceneCol.selectedIndex,
+              shot: shotCol.selectedIndex,
+              take: takeCol.selectedIndex,
+            );
           },
           style: ElevatedButton.styleFrom(
               minimumSize: const Size(56, 58),
               foregroundColor: Colors.white,
-              backgroundColor: Colors.purple.shade900),
+              backgroundColor: const Color(0xFF63326E)),
           child: const Icon(
             Icons.add,
           ));
@@ -307,16 +320,21 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
 
       Widget buildCurrentTkNoticeCard() {
         return Card(
-            color: const Color(0xFFD1C4E9),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                CurrentTakeMonitorDart(
-                    currentScn: getCurrentScn(),
-                    currentSht: getCurrentSht(),
-                    currentTk: getCurrentTk()),
-                CurrentFileMonitor(fileNum: fileNum)
-              ],
+            elevation: 4,
+            color: const Color(0xFFF2F5DE),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  CurrentTakeMonitor(
+                      currentScn: getCurrentScn(),
+                      currentSht: getCurrentSht(),
+                      currentTk: getCurrentTk()),
+                  const SizedBox(height: 10),
+                  CurrentFileMonitor(fileNum: fileNum)
+                ],
+              ),
             ));
       }
 
@@ -327,11 +345,12 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
         inc: () => addItem(),
         dec: () => drawBackItem(),
         col: takeCol,
+        slateNotifier: initValueProvider
       );
 
       ElevatedButton shotEndBtn = ElevatedButton(
         onPressed: () {
-          List<String> prevTake = getPrevTakeInfo();
+          List<String> prevTake = getCurrentTakeInfo();
           if (fileNum.prevFileName().isEmpty ||
               prevTake.isEmpty ||
               prevTake[2] == 'OK' ||
@@ -513,13 +532,16 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
           child: Container(
             decoration: const BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.grey,
+              color: Color(0xFF291711),
             ),
             child: IconButton(
               onPressed: () {
                 addItem(TakeType.fake);
               },
-              icon: const Icon(Icons.redo),
+              icon: const Icon(
+                Icons.move_down,
+                color: Colors.red,
+              ),
             ),
           ),
         ),
@@ -583,6 +605,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
           onChanged: (value) {
             setState(() => _isAbsorbing = value);
           },
+          borderColor: _isAbsorbing ? Colors.red : Colors.grey[300],
           colorBuilder: (bool isLocked) =>
               !isLocked ? Colors.green : Colors.red,
           iconBuilder: (bool isLocked) =>
@@ -598,22 +621,39 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
               child: SizedBox(
                 // because of the Title of scaffold,
                 // the width of the card is 80% of the screen height
-                height: screenHeight * 1.5,
+                height: isNextTileExpanded ? screenHeight * 1.2: screenHeight,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: <Widget>[
-                    buildCurrentTkNoticeCard(),
-                    ExpansionTile(
-                      title: const Text("下一条"),
-                      leading: const Icon(Icons.skip_next_sharp),
-                      onExpansionChanged: (isExpanded) => {},
-                      children: [
-                        AbsorbPointer(
-                                absorbing: _isAbsorbing,
-                                child: buildNextTakeMonitor())
-                            .greyscale(_isAbsorbing),
-                      ],
+                    const SizedBox(
+                      height: 20,
                     ),
+                    buildCurrentTkNoticeCard(),
+                    const SizedBox(
+                      height: 20,
+                    ),
+                    AbsorbPointer(
+                      absorbing: _isAbsorbing,
+                      child: ExpansionTile(
+                        title: buildNextTakeIndicator(),
+                        leading: const Icon(
+                          Icons.skip_next_sharp,
+                          color: Colors.blue,
+                        ),
+                        onExpansionChanged: (isExpanded) {
+                          if (isExpanded) initPickerAndFileNumWidget();
+                          setState(() {
+                            isNextTileExpanded = isExpanded;
+                          });
+                        },
+                        children: [
+                          AbsorbPointer(
+                                  absorbing: _isAbsorbing,
+                                  child: buildNextTakeMonitor())
+                              .greyscale(_isAbsorbing),
+                        ],
+                      ),
+                    ).greyscale(_isAbsorbing),
                     const Divider(),
                     Stack(
                       children: addAndSkipButtons,
@@ -626,16 +666,15 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
                           absorbing: _isAbsorbing,
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              col3DecBtn,
-                              // Complish Button
-                              shotEndBtn
-                            ],
+                            children: [col3DecBtn, shotEndBtn],
                           ),
                         ).greyscale(_isAbsorbing),
                         Stack(
                           alignment: AlignmentDirectional.topCenter,
                           children: inputArea,
+                        ),
+                        const SizedBox(
+                          height: 20,
                         ),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -651,6 +690,29 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
         ),
       );
     });
+  }
+
+  Widget buildNextTakeIndicator() {
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            isLinked?const Icon(Icons.camera):const Card(child: Text("补录")),
+            const Text("NEXT"),
+            const Icon(Icons.audio_file),
+          ],
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Text(
+                "${sceneCol.selected}场${shotCol.selected}镜${takeCol.selected}次"),
+            Text(fileNum.fullName())
+          ],
+        ),
+      ],
+    );
   }
 
   void editCurrentShot(BuildContext context) {
@@ -680,10 +742,6 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
     stopListening();
-    var linkTest = Hive.box('scn_sht_tk').get('oktk') as TkStatus;
-    debugPrint(linkTest.toString());
-    var linkTest2 = Hive.box('scn_sht_tk').get('oksht') as ShtStatus;
-    debugPrint(linkTest2.toString());
   }
 
   void startListening() {
@@ -710,9 +768,6 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
           : debugPrint('This device cannot vibrate');
     });
   }
-
-  // @override
-  // bool get wantKeepAlive => true;
 }
 
 extension GreyScale on Widget {
@@ -720,7 +775,7 @@ extension GreyScale on Widget {
     return Container(
         foregroundDecoration: BoxDecoration(
           color: isUnabled
-              ? const Color.fromARGB(146, 255, 255, 255)
+              ? const Color.fromARGB(180, 255, 255, 255)
               : const Color.fromARGB(0, 255, 255, 255),
           backgroundBlendMode: BlendMode.saturation,
         ),
