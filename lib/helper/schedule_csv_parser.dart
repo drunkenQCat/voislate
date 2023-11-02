@@ -47,13 +47,3 @@ List<ScheduleItem> parseCSVData(String filePath) {
 
   return scheduleItems;
 }
-
-// void main() {
-//   String filePath = 'path/to/csv/file.csv';
-//   List<ScheduleItem> scheduleItems = parseCSVData(filePath);
-//
-//   // Do something with the parsed data
-//   for (var item in scheduleItems) {
-//     print('Key: ${item.key}, Fix: ${item.fix}, Objects: ${item.note.objects}, Type: ${item.note.type}, Append: ${item.note.append}');
-//   }
-// }
