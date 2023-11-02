@@ -35,6 +35,7 @@ dependencies:
   cupertino_icons: ^1.0.2
   dart_json_mapper: ^2.2.9
   double_back_to_close_app: ^2.1.0
+  file_picker: ^6.0.0
   flex_color_scheme: ^7.2.0
   flex_seed_scheme: ^1.4.0
   flutter:
