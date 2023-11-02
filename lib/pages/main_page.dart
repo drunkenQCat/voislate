@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flex_color_scheme/flex_color_scheme.dart';
@@ -10,6 +11,7 @@ import 'package:voislate/providers/slate_log_notifier.dart';
 import 'package:voislate/pages/scene_schedule_page.dart';
 import 'package:voislate/pages/record_page.dart';
 import 'package:voislate/pages/settings_configue_page.dart';
+import 'package:voislate/pages/scene_schedule_page_test.dart';
 import 'package:voislate/providers/slate_status_notifier.dart';
 
 class VoiSlate extends StatelessWidget {
@@ -51,6 +53,7 @@ class _MyHomePageState extends State<MyHomePage>
   void initState() {
     super.initState();
     _tabController = TabController(vsync: this, length: 3, initialIndex: 1);
+    // _tabController = TabController(vsync: this, length: 4, initialIndex: 1);
   }
 
   @override
@@ -91,10 +94,11 @@ class _MyHomePageState extends State<MyHomePage>
             icon: Icon(Icons.format_list_bulleted_outlined),
             label: '场记',
           ),
-          // if (kDebugMode) BottomNavigationBarItem(
-          //   icon: Icon(Icons.mic_outlined),
-          //   label: '识别测试',
-          // ),
+          if (kDebugMode)
+            BottomNavigationBarItem(
+              icon: Icon(Icons.mic_outlined),
+              label: '识别测试',
+            ),
         ],
       ),
       body: DoubleBackToCloseApp(
@@ -107,7 +111,7 @@ class _MyHomePageState extends State<MyHomePage>
             SlateRecord(),
             SlateLogTabs(),
             // const SlateLogList()
-            // if (kDebugMode) const VoiceRecg(),
+            if (kDebugMode) SceneSchedulePageTest(),
           ],
         ),
       ),
