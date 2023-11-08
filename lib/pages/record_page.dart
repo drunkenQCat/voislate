@@ -66,8 +66,8 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
 
   StreamSubscription<HardwareButton>? subscription;
   late SlateStatusNotifier initValueProvider;
-  
-  bool isNextTileExpanded = false;
+
+  bool isNextTileNotExpanded = false;
 
   @override
   void initState() {
@@ -148,6 +148,34 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
       List<String> getPrevObjs() => getCurrentTakeInfo().length > 3
           ? getCurrentTakeInfo().sublist(3)
           : [];
+
+      void pickerNumSync() {
+        setState(() {
+          var shotList = totalScenes[sceneCol.selectedIndex]
+              .data
+              .map((e) => e.name.toString())
+              .toList();
+          // if the scene is changed manually
+          if (sceneCol.selectedIndex != slateNotifier.selectedSceneIndex) {
+            shotCol.init(0, shotList);
+            takeCol.init();
+            shotChanged = true;
+          }
+          // if the shot is changed manually
+          if (shotCol.selectedIndex != slateNotifier.selectedShotIndex) {
+            takeCol.init();
+            shotChanged = true;
+          }
+          if (shotCol.selectedIndex == slateNotifier.selectedShotIndex) {
+            shotChanged = false;
+          }
+          slateNotifier.setIndex(
+            scene: sceneCol.selectedIndex,
+            shot: shotCol.selectedIndex,
+            take: takeCol.selectedIndex,
+          );
+        });
+      }
 
       void addItem([TakeType currentTkType = TakeType.normal]) {
         // The predefined functions
@@ -327,10 +355,12 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  CurrentTakeMonitor(
-                      currentScn: getCurrentScn(),
-                      currentSht: getCurrentSht(),
-                      currentTk: getCurrentTk()),
+                  !isNextTileNotExpanded
+                      ? CurrentTakeMonitor(
+                          currentScn: getCurrentScn(),
+                          currentSht: getCurrentSht(),
+                          currentTk: getCurrentTk())
+                      : const SizedBox(),
                   const SizedBox(height: 10),
                   CurrentFileMonitor(fileNum: fileNum)
                 ],
@@ -340,13 +370,12 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
 
       /// initialize the controller of volumekey
       scrl3 = ScrollValueController<SlateColumnThree>(
-        context: context,
-        textCon: descController,
-        inc: () => addItem(),
-        dec: () => drawBackItem(),
-        col: takeCol,
-        slateNotifier: initValueProvider
-      );
+          context: context,
+          textCon: descController,
+          inc: () => addItem(),
+          dec: () => drawBackItem(),
+          col: takeCol,
+          slateNotifier: initValueProvider);
 
       ElevatedButton shotEndBtn = ElevatedButton(
         onPressed: () {
@@ -367,34 +396,6 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
         // child: const Image(image: AssetImage('lib/assets/bookmark.png')),
         child: const Icon(Icons.save),
       );
-
-      void pickerNumSync() {
-        setState(() {
-          var shotList = totalScenes[sceneCol.selectedIndex]
-              .data
-              .map((e) => e.name.toString())
-              .toList();
-          // if the scene is changed manually
-          if (sceneCol.selectedIndex != slateNotifier.selectedSceneIndex) {
-            shotCol.init(0, shotList);
-            takeCol.init();
-            shotChanged = true;
-          }
-          // if the shot is changed manually
-          if (shotCol.selectedIndex != slateNotifier.selectedShotIndex) {
-            takeCol.init();
-            shotChanged = true;
-          }
-          if (shotCol.selectedIndex == slateNotifier.selectedShotIndex) {
-            shotChanged = false;
-          }
-          slateNotifier.setIndex(
-            scene: sceneCol.selectedIndex,
-            shot: shotCol.selectedIndex,
-            take: takeCol.selectedIndex,
-          );
-        });
-      }
 
       List<MapEntry<String, String>> exportQuickNotes() {
         var logs = logNotifier.logToday;
@@ -418,7 +419,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
               height: screenHeight * 0.15,
               itemHeight: screenHeight * 0.13 - 48,
               resultChanged: ({v1, v2, v3}) {
-                if (v3.toString() == "2") {
+                if (takeCol.selected == "2") {
                   shotNoteController.text = totalScenes[sceneCol.selectedIndex]
                           [shotCol.selectedIndex]
                       .note
@@ -427,6 +428,66 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
                 pickerNumSync();
                 debugPrint('v1: , v2: , v3: ');
               },
+            ),
+          ],
+        );
+      }
+
+      var fileCounter = FileCounter(
+        init: _counterInit,
+        num: fileNum,
+      );
+      Widget buildNextTakeIndicator() {
+        Widget buildIndicator() {
+          if (isLinked) {
+            return AbsorbPointer(
+              absorbing: true,
+              child: SizedBox(
+                  width: 120,
+                  child:
+                      FittedBox(fit: BoxFit.contain, child: buildNextPicker())),
+            );
+          }
+          return AbsorbPointer(
+            absorbing: true,
+            child: SizedBox(
+                width: 150,
+                child: FittedBox(
+                  fit: BoxFit.contain,
+                  child: fileCounter,
+                )),
+          );
+        }
+
+        return Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.play_arrow,
+                      color: Colors.blue,
+                    ),
+                    isLinked
+                        ? const Text(
+                            "NEXT",
+                            style: TextStyle(color: Colors.blue),
+                          )
+                        : const Card(child: Text("补录")),
+                    const Icon(
+                      Icons.skip_next_sharp,
+                      color: Colors.blue,
+                    ),
+                  ],
+                ),
+                !isNextTileNotExpanded
+                    ? buildIndicator()
+                    : Text(
+                        "${sceneCol.selected}场${shotCol.selected}镜${takeCol.selected}次"),
+                // Text(fileNum.fullName())
+              ],
             ),
           ],
         );
@@ -503,10 +564,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
                   const SizedBox(
                     height: 10,
                   ),
-                  FileCounter(
-                    init: _counterInit,
-                    num: fileNum,
-                  ),
+                  fileCounter,
                 ],
               ),
             ),
@@ -621,7 +679,8 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
               child: SizedBox(
                 // because of the Title of scaffold,
                 // the width of the card is 80% of the screen height
-                height: isNextTileExpanded ? screenHeight * 1.2: screenHeight,
+                height:
+                    isNextTileNotExpanded ? screenHeight * 1.2 : screenHeight,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: <Widget>[
@@ -636,14 +695,10 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
                       absorbing: _isAbsorbing,
                       child: ExpansionTile(
                         title: buildNextTakeIndicator(),
-                        leading: const Icon(
-                          Icons.skip_next_sharp,
-                          color: Colors.blue,
-                        ),
                         onExpansionChanged: (isExpanded) {
-                          if (isExpanded) initPickerAndFileNumWidget();
+                          initPickerAndFileNumWidget();
                           setState(() {
-                            isNextTileExpanded = isExpanded;
+                            isNextTileNotExpanded = isExpanded;
                           });
                         },
                         children: [
@@ -690,29 +745,6 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
         ),
       );
     });
-  }
-
-  Widget buildNextTakeIndicator() {
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            isLinked?const Icon(Icons.camera):const Card(child: Text("补录")),
-            const Text("NEXT"),
-            const Icon(Icons.audio_file),
-          ],
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            Text(
-                "${sceneCol.selected}场${shotCol.selected}镜${takeCol.selected}次"),
-            Text(fileNum.fullName())
-          ],
-        ),
-      ],
-    );
   }
 
   void editCurrentShot(BuildContext context) {
