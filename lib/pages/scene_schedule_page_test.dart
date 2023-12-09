@@ -1,9 +1,16 @@
+import 'dart:io';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:dart_json_mapper/dart_json_mapper.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:voislate/helper/schedule_csv_parser.dart';
+import 'package:voislate/models/slate_log_item.dart';
 import 'package:voislate/providers/slate_status_notifier.dart';
+import 'package:voislate/providers/slate_log_notifier.dart';
 
 import '../models/slate_schedule.dart';
 import '../../widgets/scene_schedule_page/note_editor.dart';
@@ -436,6 +443,7 @@ class SceneSchedulePageTestState extends State<SceneSchedulePageTest>
                 bottom: 90,
                 child: ElevatedButton.icon(
                   onPressed: () async {
+                    // backupSlateLogs();
                     FilePickerResult? result =
                         await FilePicker.platform.pickFiles();
 

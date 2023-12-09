@@ -52,8 +52,11 @@ class _MyHomePageState extends State<MyHomePage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(vsync: this, length: 3, initialIndex: 1);
-    // _tabController = TabController(vsync: this, length: 4, initialIndex: 1);
+    if (kDebugMode) {
+      _tabController = TabController(vsync: this, length: 4, initialIndex: 1);
+    } else {
+      _tabController = TabController(vsync: this, length: 3, initialIndex: 1);
+    }
   }
 
   @override

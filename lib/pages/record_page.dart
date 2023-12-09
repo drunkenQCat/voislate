@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:animated_toggle_switch/animated_toggle_switch.dart';
@@ -7,6 +8,8 @@ import 'package:flutter_android_volume_keydown/flutter_android_volume_keydown.da
 import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
+import 'package:dart_json_mapper/dart_json_mapper.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:voislate/models/slate_log_item.dart';
 import 'package:voislate/models/slate_schedule.dart';
 import 'package:voislate/models/tk_pending.dart';
@@ -38,6 +41,7 @@ class SlateRecord extends StatefulWidget {
 class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
   // Some variables don't need to be in the state
 
+  late Timer _backupTimer;
   late List<SceneSchedule> totalScenes;
   // the indicator of wildtrack
   late bool isLinked;
@@ -97,6 +101,8 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
     descController = TextEditingController(text: initDesc);
     shotNoteController = TextEditingController(text: initNote);
     initPickerAndFileNumWidget();
+    _backupTimer = Timer.periodic(
+        const Duration(minutes: 3), (Timer timer) => backupSlateLogs());
   }
 
   void initPickerAndFileNumWidget() {
@@ -439,6 +445,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
       );
       Widget buildNextTakeIndicator() {
         Widget buildIndicator() {
+          // in normal condition, display the Picker
           if (isLinked) {
             return AbsorbPointer(
               absorbing: true,
@@ -448,6 +455,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
                       FittedBox(fit: BoxFit.contain, child: buildNextPicker())),
             );
           }
+          // else, In Append Recording, display file counter
           return AbsorbPointer(
             absorbing: true,
             child: SizedBox(
@@ -696,9 +704,11 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
                       child: ExpansionTile(
                         title: buildNextTakeIndicator(),
                         onExpansionChanged: (isExpanded) {
-                          initPickerAndFileNumWidget();
-                          setState(() {
-                            isNextTileNotExpanded = isExpanded;
+                          Future.delayed(const Duration(milliseconds: 230), () {
+                            setState(() {
+                              isNextTileNotExpanded = isExpanded;
+                              initPickerAndFileNumWidget();
+                            });
                           });
                         },
                         children: [
@@ -772,6 +782,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _backupTimer.cancel();
     super.dispose();
     stopListening();
   }
@@ -799,6 +810,50 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
           ? debugPrint('This device can vibrate')
           : debugPrint('This device cannot vibrate');
     });
+  }
+
+  Future<bool> backupSlateLogs() async {
+    Directory directory;
+    try {
+      directory = await getExternalStorageDirectory() ??
+          Directory('/storage/emulated/0/Android');
+      String newPath = "";
+      List<String> paths = directory.path.split("/");
+      for (var folder in paths) {
+        if (folder != "Android") {
+          newPath += "/$folder";
+        } else {
+          break;
+        }
+      }
+      newPath = "$newPath/Documents/VoiSlate Logs";
+      directory = Directory(newPath);
+      final nowTime = DateTime.now();
+      // final dateAbbr = "${nowTime.month}-${nowTime.day}-${nowTime.hour}-00";
+      final dateAbbr = "${RecordFileNum.today}-${nowTime.hour}clock";
+
+      File saveFile = File("${directory.path}/slate_backup$dateAbbr.json");
+      if (!await directory.exists()) {
+        await directory.create(recursive: true);
+      }
+      if (await directory.exists()) {
+        final json = serializeSlate();
+        saveFile.writeAsString(json);
+        print(directory.path);
+        return true;
+      }
+      return false;
+    } catch (e) {
+      print(e);
+      return false;
+    }
+  }
+
+  String serializeSlate() {
+    final slate = SlateLogNotifier();
+    List<SlateLogItem> logItemList = slate.boxToday.values.toList();
+    final json = JsonMapper.serialize(logItemList);
+    return json;
   }
 }
 
