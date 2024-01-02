@@ -49,6 +49,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
   // about the logs
   late TextEditingController shotNoteController;
   late TextEditingController descController;
+  late String prevTakeHint;
   // about the slate picker
   var titles = ['Scene', 'Shot', 'Take'];
   final sceneCol = SlateColumnOne();
@@ -99,6 +100,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
     String initDesc = initValueProvider.currentDesc;
     String initNote = initValueProvider.currentNote;
     descController = TextEditingController(text: initDesc);
+    prevTakeHint = '${fileNum.prevFileName()}\n 录音标注...';
     shotNoteController = TextEditingController(text: initNote);
     initPickerAndFileNumWidget();
     _backupTimer = Timer.periodic(
@@ -248,11 +250,16 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
         }
 
         void setDescNewText() {
-          currentTkType == TakeType.fake
-              ? descController.text = "这条跑了"
-              : currentTkType == TakeType.end
-                  ? descController.text = "收工了,这一镜结束了"
-                  : descController.clear();
+          if (currentTkType == TakeType.fake) {
+            prevTakeHint = '这条跑了';
+            descController.clear();
+          } else if (currentTkType == TakeType.end) {
+            prevTakeHint = '收工了，这一镜结束了';
+            descController.clear();
+          } else {
+            prevTakeHint = '${fileNum.prevFileName()}\n 录音标注...';
+            descController.clear();
+          }
         }
 
         // Start to add items
@@ -316,7 +323,9 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
         }
 
         if (getCurrentTk() == "OK") {
+          setState(() => drawBackNotes());
           removeLastPickerHistory();
+          Fluttertoast.showToast(msg: "原来还没收工呢……");
           return;
         }
         try {
@@ -616,6 +625,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
       var prevTakeEditor = PrevTakeEditor(
         num: fileNum,
         descEditingController: descController,
+        hintText: prevTakeHint,
       );
       var prevShotNote = PrevShotNote(
         currentScn: getCurrentScn(),

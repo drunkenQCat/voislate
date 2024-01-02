@@ -3,14 +3,16 @@ import 'package:voislate/models/recorder_file_num.dart';
 
 class PrevTakeEditor extends StatelessWidget {
   /// This is the Description Editor for the previous record file.
-  const PrevTakeEditor({
-    Key? key,
-    required this.num,
-    required this.descEditingController,
-  }) : super(key: key);
+  PrevTakeEditor(
+      {Key? key,
+      required this.num,
+      required this.descEditingController,
+      required this.hintText})
+      : super(key: key);
 
   final TextEditingController descEditingController;
   final RecordFileNum num;
+  String hintText;
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +26,7 @@ class PrevTakeEditor extends StatelessWidget {
         decoration: InputDecoration(
           // contentPadding: EdgeInsets.symmetric(vertical: 20),
           border: const OutlineInputBorder(),
-          hintText: '${num.prevFileName()}\n 录音标注...',
+          hintText: hintText,
         ),
       ),
     );
