@@ -2,6 +2,8 @@ import 'package:dart_json_mapper/dart_json_mapper.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:voislate/helper/mic_objects_extractor.dart';
+import 'package:voislate/widgets/scene_schedule_page/tag_chips.dart';
 import '../../models/slate_log_item.dart';
 
 class LogEditor extends StatefulWidget {
@@ -41,6 +43,7 @@ class _LogEditorState extends State<LogEditor> {
   late TextStyle? textStyle;
   late TextStyle fixedWordsStyle;
   late TextStyle selectableWordsStyle;
+  late List<String> trackList;
   @override
   void initState() {
     super.initState();
@@ -54,7 +57,9 @@ class _LogEditorState extends State<LogEditor> {
     _filenameLinker = _logs[_index].filenameLinker;
     _filenameNum = _logs[_index].filenameNum;
     _tkNoteController = TextEditingController(text: _logs[_index].tkNote);
-    _shtNoteController = TextEditingController(text: _logs[_index].shtNote);
+    var extractedShtNote = MicObjectsExtractor().extract(_logs[_index]);
+    _shtNoteController = TextEditingController(text: extractedShtNote.item1);
+    trackList = extractedShtNote.item2;
     _scnNoteController = TextEditingController(text: _logs[_index].scnNote);
     _okTk = _logs[_index].okTk;
     _okSht = _logs[_index].okSht;
@@ -111,6 +116,7 @@ class _LogEditorState extends State<LogEditor> {
                   labelText: '镜头标注',
                 ),
               ),
+              TagChips(context: context, tagList: trackList),
               TextField(
                 controller: _scnNoteController,
                 decoration: const InputDecoration(
@@ -200,37 +206,40 @@ class _LogEditorState extends State<LogEditor> {
             });
           },
           items: ShtStatus.values.map((status) {
+            var noPending = const Row(
+              children: [
+                Icon(
+                  Icons.videocam,
+                  color: Colors.grey,
+                ),
+                Text('无')
+              ],
+            );
+            var goodPending = const Row(
+              children: [
+                Icon(
+                  Icons.movie_filter,
+                  color: Colors.blue,
+                ),
+                Text('保')
+              ],
+            );
+            var nicePending = const Row(
+              children: [
+                Icon(
+                  Icons.thumb_up_alt_outlined,
+                  color: Colors.green,
+                ),
+                Text('过')
+              ],
+            );
             return DropdownMenuItem<ShtStatus>(
               value: status,
               child: status == ShtStatus.notChecked
-                  ? const Row(
-                      children: [
-                        Icon(
-                          Icons.videocam,
-                          color: Colors.grey,
-                        ),
-                        Text('无')
-                      ],
-                    )
+                  ? noPending
                   : status == ShtStatus.ok
-                      ? const Row(
-                          children: [
-                            Icon(
-                              Icons.movie_filter,
-                              color: Colors.blue,
-                            ),
-                            Text('保')
-                          ],
-                        )
-                      : const Row(
-                          children: [
-                            Icon(
-                              Icons.thumb_up_alt_outlined,
-                              color: Colors.green,
-                            ),
-                            Text('过')
-                          ],
-                        ),
+                      ? goodPending
+                      : nicePending,
             );
           }).toList(),
         ),
@@ -257,37 +266,40 @@ class _LogEditorState extends State<LogEditor> {
             });
           },
           items: TkStatus.values.map((status) {
+            var noPending = const Row(
+              children: [
+                Icon(
+                  Icons.headphones,
+                  color: Colors.grey,
+                ),
+                Text('无')
+              ],
+            );
+            var nicePending = const Row(
+              children: [
+                Icon(
+                  Icons.gpp_good,
+                  color: Colors.green,
+                ),
+                Text('过')
+              ],
+            );
+            var badPending = const Row(
+              children: [
+                Icon(
+                  Icons.hearing_disabled,
+                  color: Colors.red,
+                ),
+                Text('弃')
+              ],
+            );
             return DropdownMenuItem<TkStatus>(
               value: status,
               child: status == TkStatus.notChecked
-                  ? const Row(
-                      children: [
-                        Icon(
-                          Icons.headphones,
-                          color: Colors.grey,
-                        ),
-                        Text('无')
-                      ],
-                    )
+                  ? noPending
                   : status == TkStatus.ok
-                      ? const Row(
-                          children: [
-                            Icon(
-                              Icons.gpp_good,
-                              color: Colors.green,
-                            ),
-                            Text('过')
-                          ],
-                        )
-                      : const Row(
-                          children: [
-                            Icon(
-                              Icons.hearing_disabled,
-                              color: Colors.red,
-                            ),
-                            Text('弃')
-                          ],
-                        ),
+                      ? nicePending
+                      : badPending,
             );
           }).toList(),
         ),
@@ -337,7 +349,8 @@ class _LogEditorState extends State<LogEditor> {
     _logs[_index].tk = _tkNum;
     _logs[_index].filenameNum = _filenameNum;
     _logs[_index].tkNote = _tkNoteController.text;
-    _logs[_index].shtNote = _shtNoteController.text;
+    var trackListText = trackList.map((obj) => "<$obj/>").join();
+    _logs[_index].shtNote = _shtNoteController.text + trackListText;
     _logs[_index].scnNote = _scnNoteController.text;
     _logs[_index].okTk = _okTk;
     _logs[_index].okSht = _okSht;
@@ -352,14 +365,14 @@ class _LogEditorState extends State<LogEditor> {
   }
 }
 
-class SlateLogList extends StatefulWidget {
-  const SlateLogList({Key? key}) : super(key: key);
+class TestSlateLogList extends StatefulWidget {
+  const TestSlateLogList({Key? key}) : super(key: key);
 
   @override
-  State<SlateLogList> createState() => _SlateLogListState();
+  State<TestSlateLogList> createState() => _TestSlateLogListState();
 }
 
-class _SlateLogListState extends State<SlateLogList> {
+class _TestSlateLogListState extends State<TestSlateLogList> {
   final String boxName = 'test';
 
   @override

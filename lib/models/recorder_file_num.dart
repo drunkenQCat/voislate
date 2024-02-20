@@ -4,29 +4,29 @@ class RecordFileNum {
   String customPrefix = "custom";
   String recorderType = "default";
   String get prefix {
-    if (recorderType == "custom") 
-      {
-        return customPrefix;
-      }
+    if (recorderType == "custom") {
+      return customPrefix;
+    }
     if (recorderType == "sound devices") return soundDevicesToday;
+    // TODO: Date Changing
     return today;
   }
 
   String intervalSymbol;
-  final _valueController = StreamController<int>();
-  Stream<int> get value => _valueController.stream;
+  final valueController = StreamController<int>.broadcast();
+  Stream<int> get value => valueController.stream.asBroadcastStream();
 
   int _number = 1;
   int get number => _number;
 
   void setValue(int newValue) {
     _number = newValue;
-    _valueController.sink.add(_number);
+    valueController.sink.add(_number);
   }
 
   int increment() {
     _number++;
-    _valueController.sink.add(_number);
+    valueController.sink.add(_number);
     return _number;
   }
 
@@ -35,12 +35,12 @@ class RecordFileNum {
     if (_number - 1 < 1) return _number;
 
     _number--;
-    _valueController.sink.add(_number);
+    valueController.sink.add(_number);
     return _number;
   }
 
   void dispose() {
-    _valueController.close();
+    valueController.close();
   }
 
   String fullName() {
@@ -70,6 +70,7 @@ class RecordFileNum {
     var day = now.day.toString().padLeft(2, '0');
     return '$year$month$day';
   }
+
   static String get soundDevicesToday {
     var now = DateTime.now();
     var year = now.year.toString().substring(2);

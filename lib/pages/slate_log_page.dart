@@ -12,14 +12,6 @@ import '../providers/slate_log_notifier.dart';
 import '../providers/slate_status_notifier.dart';
 import '../widgets/slate_log_page/log_editor.dart';
 
-/* 
-TODO：
-1x 与record页的数据绑定，最好能自动滚动到selected
-2x 日期的TabView
-3x 解决不能自动刷新的bug
-4. 优化界面
-5. 多选修改的功能
-*/
 // ignore: must_be_immutable
 class SlateLog extends StatefulWidget {
   var controller = ScrollController(
@@ -107,11 +99,13 @@ class SlateLogState extends State<SlateLog> {
               onPressed: () {
                 var json = JsonMapper.serialize(logList);
                 final tempDir = Directory.systemTemp.createTempSync();
-                final timeStamp = DateTime.now()
-                    .millisecondsSinceEpoch
-                    .toString(); // get current time stamp
+                final String projectName = Hive.box("settings").get("project");
+                final timeStamp = DateTime.timestamp()
+                    .toLocal()
+                    .toString()
+                    .split('.')[0]; // get current time stamp
                 final slateLogDestiny = File(
-                    '${tempDir.path}/slateLog_$timeStamp.json'); // create file with time stamp suffix
+                    '${tempDir.path}/${projectName}_$timeStamp.json'); // create file with time stamp suffix
                 slateLogDestiny.writeAsStringSync(json);
                 // Share.share(json);
                 Share.shareXFiles([XFile(slateLogDestiny.path)]);

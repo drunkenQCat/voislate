@@ -1,5 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flex_color_scheme/flex_color_scheme.dart';
+import 'package:double_back_to_close_app/double_back_to_close_app.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 
 import 'package:voislate/pages/slate_log_tabs.dart';
@@ -8,6 +11,7 @@ import 'package:voislate/providers/slate_log_notifier.dart';
 import 'package:voislate/pages/scene_schedule_page.dart';
 import 'package:voislate/pages/record_page.dart';
 import 'package:voislate/pages/settings_configue_page.dart';
+import 'package:voislate/pages/scene_schedule_page_test.dart';
 import 'package:voislate/providers/slate_status_notifier.dart';
 
 class VoiSlate extends StatelessWidget {
@@ -22,8 +26,8 @@ class VoiSlate extends StatelessWidget {
       ],
       child: MaterialApp(
         title: 'Voislate',
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        theme: FlexThemeData.light(
+          scheme: FlexScheme.bahamaBlue,
           useMaterial3: true,
         ),
         home: const MyHomePage(title: 'Voislate Home Page'),
@@ -48,7 +52,11 @@ class _MyHomePageState extends State<MyHomePage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(vsync: this, length: 3, initialIndex: 1);
+    if (kDebugMode) {
+      _tabController = TabController(vsync: this, length: 4, initialIndex: 1);
+    } else {
+      _tabController = TabController(vsync: this, length: 3, initialIndex: 1);
+    }
   }
 
   @override
@@ -56,14 +64,14 @@ class _MyHomePageState extends State<MyHomePage>
     return Scaffold(
       appBar: AppBar(
         title: const Text('VoiSlate'),
+        toolbarHeight: 40,
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                    builder: (context) => const SettingsConfiguePage()),
+                MaterialPageRoute(builder: (context) => SettingsConfiguePage()),
               );
             },
           ),
@@ -89,22 +97,26 @@ class _MyHomePageState extends State<MyHomePage>
             icon: Icon(Icons.format_list_bulleted_outlined),
             label: '场记',
           ),
-          // if (kDebugMode) BottomNavigationBarItem(
-          //   icon: Icon(Icons.mic_outlined),
-          //   label: '识别测试',
-          // ),
+          if (kDebugMode)
+            BottomNavigationBarItem(
+              icon: Icon(Icons.mic_outlined),
+              label: '识别测试',
+            ),
         ],
       ),
-      body: TabBarView(
-        controller: _tabController,
-        physics: const NeverScrollableScrollPhysics(),
-        children: const [
-          SceneSchedulePage(),
-          SlateRecord(),
-          SlateLogTabs(),
-          // const SlateLogList()
-          // if (kDebugMode) const VoiceRecg(),
-        ],
+      body: DoubleBackToCloseApp(
+        snackBar: const SnackBar(content: Text("再按一次退出")),
+        child: TabBarView(
+          controller: _tabController,
+          physics: const NeverScrollableScrollPhysics(),
+          children: const [
+            SceneSchedulePage(),
+            SlateRecord(),
+            SlateLogTabs(),
+            // const SlateLogList()
+            if (kDebugMode) SceneSchedulePageTest(),
+          ],
+        ),
       ),
     );
   }

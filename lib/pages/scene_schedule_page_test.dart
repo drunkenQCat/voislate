@@ -8,14 +8,14 @@ import 'package:voislate/providers/slate_status_notifier.dart';
 import '../models/slate_schedule.dart';
 import '../../widgets/scene_schedule_page/note_editor.dart';
 
-class SceneSchedulePage extends StatefulWidget {
-  const SceneSchedulePage({super.key});
+class SceneSchedulePageTest extends StatefulWidget {
+  const SceneSchedulePageTest({super.key});
 
   @override
-  SceneSchedulePageState createState() => SceneSchedulePageState();
+  SceneSchedulePageTestState createState() => SceneSchedulePageTestState();
 }
 
-class SceneSchedulePageState extends State<SceneSchedulePage>
+class SceneSchedulePageTestState extends State<SceneSchedulePageTest>
     with AutomaticKeepAliveClientMixin {
   List<SceneSchedule> scenes = [];
   int selectedSceneIndex = 0;
@@ -434,24 +434,6 @@ class SceneSchedulePageState extends State<SceneSchedulePage>
               ),
               Positioned(
                 bottom: 90,
-                right: -16,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    var util = ScheduleUtils(
-                        scenes: scenes,
-                        currentScnIndex: selectedSceneIndex,
-                        currentShtIndex: selectedShotIndex);
-                    setState(() {
-                      util.addNewShotAtLast();
-                    });
-                  },
-                  icon: const Icon(Icons.add_business_outlined),
-                  label: const Text("镜头+"),
-                ),
-              ),
-              Positioned(
-                bottom: -16,
-                right: -16,
                 child: ElevatedButton.icon(
                   onPressed: () async {
                     // backupSlateLogs();
@@ -469,8 +451,8 @@ class SceneSchedulePageState extends State<SceneSchedulePage>
                       print("No file selected");
                     }
                   },
-                  icon: const Icon(Icons.read_more_outlined),
-                  label: const Text("导入"),
+                  icon: const Icon(Icons.add_business_outlined),
+                  label: const Text("读取场记"),
                 ),
               )
             ],

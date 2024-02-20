@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:fluttertoast/fluttertoast.dart';
+import 'package:voislate/widgets/scene_schedule_page/tag_chips.dart';
 import '../../models/slate_schedule.dart';
 
 class NoteEditor extends StatefulWidget {
@@ -8,7 +7,7 @@ class NoteEditor extends StatefulWidget {
   final List<SceneSchedule> scenes;
   final int scnIndex;
   final int? shotIndex;
-  final bool? isRecordPage;
+  final bool? isJustOneButton;
 
   const NoteEditor({
     super.key,
@@ -16,7 +15,7 @@ class NoteEditor extends StatefulWidget {
     required this.scenes,
     required this.scnIndex,
     this.shotIndex,
-    this.isRecordPage,
+    this.isJustOneButton,
   });
 
   @override
@@ -68,12 +67,6 @@ class _NoteEditorState extends State<NoteEditor> {
     typeText = isScene ? '场地:' : '镜头类型:';
     appendText = isScene ? '概要' : '内容';
     scnIndex = widget.scnIndex;
-  }
-
-  void updateObjects(List<String> newObjects) {
-    setState(() {
-      editedObjects = newObjects;
-    });
   }
 
   @override
@@ -141,7 +134,7 @@ class _NoteEditorState extends State<NoteEditor> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        (widget.isRecordPage == null || widget.isRecordPage == false)
+        (widget.isJustOneButton == null || widget.isJustOneButton == false)
             ? ElevatedButton(
                 onPressed: () {
                   util.addItem(newInfo, false);
@@ -157,12 +150,38 @@ class _NoteEditorState extends State<NoteEditor> {
             : const SizedBox(),
         ElevatedButton(
           onPressed: () {
-            util.saveChanges(newInfo);
-            Navigator.of(context).pop();
+            try {
+              if (!isScene) {
+                util._dupDetectForModifyingShot(newInfo);
+              } else {
+                util._dupDetectForModifyingScn(newInfo);
+              }
+              util.saveChanges(newInfo);
+              Navigator.of(context).pop();
+            } on DuplicateItemException catch (e) {
+              showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    // 返回一个 Alert 对话框
+                    return AlertDialog(
+                      title: Text('${isScene ? '场' : '镜'}号重复'),
+                      content: Text('$e,请选择另外不重复的序号'),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            // 点击按钮后关闭对话框
+                            Navigator.of(context).pop();
+                          },
+                          child: const Text('明白'),
+                        ),
+                      ],
+                    );
+                  });
+            }
           },
           child: const Text('保存'),
         ),
-        (widget.isRecordPage == null || widget.isRecordPage == false)
+        (widget.isJustOneButton == null || widget.isJustOneButton == false)
             ? ElevatedButton(
                 onPressed: () {
                   util.addItem(newInfo, true);
@@ -261,125 +280,9 @@ class _NoteEditorState extends State<NoteEditor> {
           '录音轨道:',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: tagChips(context)
-                .map((chip) => Transform.scale(scale: 1, child: chip))
-                .toList(),
-          ),
-        ),
+        TagChips(tagList: editedObjects, context: context)
       ],
     );
-  }
-
-  List<Chip> tagChips(BuildContext context) {
-    var chipList = List<Chip>.empty(growable: true);
-    String object = '';
-    String newObject = '';
-
-    AlertDialog editOrAddTagDialog(String dialogType, Function onConfirm) {
-      var cancelButton = TextButton(
-        child: const Text('Cancel'),
-        onPressed: () {
-          Navigator.of(context).pop();
-        },
-      );
-
-      var confirmButton = TextButton(
-        child: Text(dialogType),
-        onPressed: () {
-          onConfirm();
-          Navigator.of(context).pop();
-        },
-      );
-
-      var tagEditField = TextField(
-          controller: TextEditingController(text: object),
-          onChanged: (value) {
-            newObject = value;
-          },
-        );
-
-      var editingDialog = AlertDialog(
-        title: Text('$dialogType Object'),
-        content: tagEditField,
-        actions: [cancelButton, confirmButton],
-      );
-
-      return editingDialog;
-    }
-
-    for (int index = 0; index < editedObjects.length; index++) {
-      object = editedObjects[index];
-
-      void copyTag(String object) {
-        Clipboard.setData(ClipboardData(text: object));
-        Fluttertoast.showToast(
-          msg: "话筒信息已复制",
-          toastLength: Toast.LENGTH_SHORT,
-          timeInSecForIosWeb: 1,
-          backgroundColor: Colors.black,
-          textColor: Colors.white,
-          fontSize: 16.0,
-        );
-      }
-
-      void editTagText() {
-        editedObjects[index] = newObject;
-        updateObjects(editedObjects);
-      }
-
-      var editDialog = editOrAddTagDialog('Edit', editTagText);
-      showEditDialog()=>showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          newObject = '';
-          return editDialog;
-        },
-      );
-
-      chipList.add(Chip(
-        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        label: TextButton(
-            onLongPress: () {
-              copyTag(object);
-            },
-            onPressed: showEditDialog,
-            child: Text(
-              object,
-              style: const TextStyle(
-                fontSize: 14,
-              ),
-            )),
-        onDeleted: () {
-          updateObjects(editedObjects..remove(object));
-        },
-      ));
-    }
-
-    void addNewTag() {
-      updateObjects(editedObjects..add(newObject));
-    }
-
-    object = '';
-    var addTagDialog = editOrAddTagDialog('Add', addNewTag);
-    chipList.add(Chip(
-        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        label: TextButton(
-          onPressed: () => showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                newObject = '';
-                return addTagDialog;
-              },
-            ),
-          child: const Icon(
-            Icons.add,
-            size: 30,
-          ),
-        )));
-    return chipList;
   }
 
   Row keyFixPicker(StateSetter setState) {
@@ -422,9 +325,6 @@ class _NoteEditorState extends State<NoteEditor> {
       ],
     );
   }
-
-
-
 }
 
 class ScheduleUtils {
@@ -441,23 +341,37 @@ class ScheduleUtils {
     isScene = currentShtIndex == null;
   }
 
-  void _dupSceneDetect(SceneSchedule newScene) {
+  void _dupDetectForModifyingScn(ScheduleItem newScene) {
     var detectorList = scenes.map((scene) => scene.info.name).toList();
-    for (var name in detectorList) {
-      if (newScene.info.name == name) {
-        throw DuplicateItemException('本场号已存在');
-      }
-    }
+    detectorList.add(newScene.name);
+    final dupCount = detectorList.where((name) => newScene.name == name).length;
+    if (dupCount > 1) throw DuplicateItemException('本镜号已存在');
   }
 
-  void _dupShotDetect(ScheduleItem newShot) {
-    var detectorList =
+  void _dupDetectForNewScn(SceneSchedule newSceneInfo) {
+    var detectorList = scenes.map((scene) => scene.info.name).toList();
+    detectorList.removeAt(currentScnIndex);
+    detectorList.add(newSceneInfo.info.name);
+    final dupCount =
+        detectorList.where((name) => newSceneInfo.info.name == name).length;
+    if (dupCount > 1) throw DuplicateItemException('本镜号已存在');
+  }
+
+  void _dupDetectForNewShot(ScheduleItem newShot) {
+    final detectorList =
         scenes[currentScnIndex].data.map((shot) => shot.name).toList();
-    for (var name in detectorList) {
-      if (newShot.name == name) {
-        throw DuplicateItemException('本镜号已存在');
-      }
-    }
+    detectorList.add(newShot.name);
+    final dupCount = detectorList.where((name) => newShot.name == name).length;
+    if (dupCount > 1) throw DuplicateItemException('本镜号已存在');
+  }
+
+  void _dupDetectForModifyingShot(ScheduleItem newShot) {
+    final detectorList =
+        scenes[currentScnIndex].data.map((shot) => shot.name).toList();
+    detectorList.removeAt(currentShtIndex ?? detectorList.length - 1);
+    detectorList.add(newShot.name);
+    final dupCount = detectorList.where((name) => newShot.name == name).length;
+    if (dupCount > 1) throw DuplicateItemException('本镜号已存在');
   }
 
   String _findFix(List<String> alphas, bool after) {
@@ -501,15 +415,17 @@ class ScheduleUtils {
   }
 
   void addItem(ScheduleItem inputInfo, bool after) {
+    var newObjects = inputInfo.note.objects;
+    var newNote = "从${newObjects.join('，')}的【正面】拍【近景】";
     var newShot = ScheduleItem(
-        '1', '', Note(objects: inputInfo.note.objects, type: '近景', append: ''));
+        '1', '', Note(objects: newObjects, type: '近景', append: newNote));
     var newInfo = ScheduleItem(inputInfo.key, inputInfo.fix, inputInfo.note);
     var plusIndex = after ? 1 : 0;
 
     if (isScene) {
       var newScene = SceneSchedule([newShot], newInfo);
       try {
-        _dupSceneDetect(newScene);
+        _dupDetectForNewScn(newScene);
       } on DuplicateItemException {
         List<int> keys =
             scenes.map((scene) => int.tryParse(scene.info.key) ?? 0).toList();
@@ -526,7 +442,7 @@ class ScheduleUtils {
           : scenes.insert(currentScnIndex + plusIndex, newScene);
     } else {
       try {
-        _dupShotDetect(newInfo);
+        _dupDetectForNewShot(newInfo);
       } on Exception catch (e) {
         debugPrint(e.toString());
         List<int> keys = scenes[currentScnIndex]
@@ -548,7 +464,7 @@ class ScheduleUtils {
     }
   }
 
-  void addNewAtLast() {
+  void addNewShotAtLast() {
     var currentShot = scenes[currentScnIndex].data.last;
     var newInfo =
         ScheduleItem(currentShot.key, currentShot.fix, currentShot.note);
@@ -564,5 +480,23 @@ class ScheduleUtils {
         .toList();
     newInfo.fix = _findFix(fixs, true);
     scenes[currentScnIndex].add(newInfo);
+  }
+
+  void addNewSceneAtLast() {
+    var currentScene = scenes[currentScnIndex];
+    var newInfo = ScheduleItem(
+        currentScene.info.key, currentScene.info.fix, currentScene.info.note);
+    List<int> keys =
+        scenes.map((scn) => int.tryParse(scn.info.key) ?? 0).toList();
+    newInfo.key = _findKey(keys, currentScnIndex, true);
+    List<String> fixes = scenes
+        .where((scn) => scn.info.key == newInfo.key)
+        .map((scn) => scn.info.fix)
+        .toList();
+    newInfo.fix = _findFix(fixes, true);
+    var newShot = ScheduleItem(
+        '1', '', Note(objects: newInfo.note.objects, type: '近景', append: ''));
+    var newScn = SceneSchedule([newShot], newInfo);
+    scenes.add(newScn);
   }
 }

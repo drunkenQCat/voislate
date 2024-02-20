@@ -3,44 +3,50 @@ import 'package:voislate/models/recorder_file_num.dart';
 
 class PrevTakeEditor extends StatelessWidget {
   /// This is the Description Editor for the previous record file.
-  const PrevTakeEditor({
-    Key? key,
-    required this.num,
-    required this.descEditingController,
-  }) : super(key: key);
+  PrevTakeEditor(
+      {Key? key,
+      required this.num,
+      required this.descEditingController,
+      required this.hintText})
+      : super(key: key);
 
   final TextEditingController descEditingController;
   final RecordFileNum num;
+  String hintText;
 
   @override
   Widget build(BuildContext context) {
+    var prevTakeInputField = SizedBox(
+      // width: screenWidth * 0.3,
+      child: TextField(
+        // bind the input to the note variable
+        maxLines: 3,
+        controller: descEditingController,
+        onChanged: (text) {},
+        decoration: InputDecoration(
+          // contentPadding: EdgeInsets.symmetric(vertical: 20),
+          border: const OutlineInputBorder(),
+          hintText: hintText,
+        ),
+      ),
+    );
+    var prevTakeTitle = Row(
+      mainAxisAlignment: MainAxisAlignment.start,
+      children: [
+        const Icon(
+          Icons.radio_button_checked,
+          size: 19,
+          color: Colors.red,
+        ),
+        Text('正在录制:T${num.prevFileNum().toString().padLeft(3, '0')}'),
+      ],
+    );
     return Flexible(
       child: ListTileTheme(
         minLeadingWidth: 5,
         child: ListTile(
-          title: const Row(
-            children: [
-              Icon(
-                Icons.radio_button_checked,
-                color: Colors.red,
-              ),
-              Text('正在录制'),
-            ],
-          ),
-          subtitle: SizedBox(
-            // width: screenWidth * 0.3,
-            child: TextField(
-              // bind the input to the note variable
-              maxLines: 3,
-              controller: descEditingController,
-              onChanged: (text) {},
-              decoration: InputDecoration(
-                // contentPadding: EdgeInsets.symmetric(vertical: 20),
-                border: const OutlineInputBorder(),
-                hintText: '${num.prevFileName()}\n 录音标注...',
-              ),
-            ),
-          ),
+          title: prevTakeTitle,
+          subtitle: prevTakeInputField,
         ),
       ),
     );
@@ -63,20 +69,32 @@ class PrevShotNote extends StatelessWidget {
 
   @override
   build(BuildContext context) {
+    var takeLogTitle = Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        Text(
+          "S$currentScn Sh$currentSht Tk",
+        ),
+        Text(
+          currentTk,
+          style: TextStyle(
+            backgroundColor: currentTk == 'OK'
+                ? const Color.fromARGB(139, 167, 199, 130)
+                : Colors.white,
+          ),
+        ),
+        const Icon(
+          Icons.movie_creation_outlined,
+          size: 19,
+          color: Colors.green,
+        ),
+      ],
+    );
     return Flexible(
       child: ListTileTheme(
         minLeadingWidth: 5,
         child: ListTile(
-          title: Row(
-            children: [
-              const Icon(
-                Icons.movie_creation_outlined,
-                color: Colors.green,
-              ),
-              Text(
-                  'S$currentScn Sh$currentSht Tk$currentTk'),
-            ],
-          ),
+          title: takeLogTitle,
           subtitle: SizedBox(
             // width: screenWidth * 0.3,
             child: TextField(

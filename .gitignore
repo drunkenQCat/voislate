@@ -46,3 +46,5 @@ app.*.map.json
 .VSCodeCounter 
 lib/data/my_ifly_key.dart
 pubspec.lock
+after-commit.sh
+SyncToy*.dat
