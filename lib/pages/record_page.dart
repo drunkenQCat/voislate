@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:animated_toggle_switch/animated_toggle_switch.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:flutter_android_volume_keydown/flutter_android_volume_keydown.dart';
-import 'package:flutter_vibrate/flutter_vibrate.dart';
+import 'package:vibration/vibration.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:dart_json_mapper/dart_json_mapper.dart';
@@ -290,8 +290,8 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
         });
         if (_canVibrate) {
           currentTkType == TakeType.fake
-              ? Vibrate.feedback(FeedbackType.error)
-              : Vibrate.feedback(FeedbackType.heavy);
+              ? Vibration.vibrate(amplitude: 128, duration: 300)
+              : Vibration.vibrate(amplitude: 240, duration: 1500);
         }
       }
 
@@ -340,7 +340,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
         } catch (e) {}
         // remove the last note
         if (_canVibrate) {
-          Vibrate.feedback(FeedbackType.warning);
+          Vibration.vibrate(amplitude: 240, duration: 1800);
         }
       }
 
@@ -674,16 +674,16 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
           pending: tkPending,
         ),
         AnimatedToggleSwitch.dual(
-          dif: 5,
+          spacing: 5,
           current: _isAbsorbing,
           first: false,
           second: true,
           onChanged: (value) {
             setState(() => _isAbsorbing = value);
           },
-          borderColor: _isAbsorbing ? Colors.red : Colors.grey[300],
-          colorBuilder: (bool isLocked) =>
-              !isLocked ? Colors.green : Colors.red,
+          //borderColor: _isAbsorbing ? Colors.red : Colors.grey[300],
+          //colorBuilder: (bool isLocked) =>
+          //    !isLocked ? Colors.green : Colors.red,
           iconBuilder: (bool isLocked) =>
               Icon(!isLocked ? Icons.lock_open : Icons.lock),
           textBuilder: (bool isLocked) => Text(!isLocked ? '触控' : '锁定'),
@@ -813,7 +813,11 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
 
   Future<void> _initVibrate() async {
     // init the vibration
-    bool canVibrate = await Vibrate.canVibrate;
+    bool hasVibrator = await Vibration.hasVibrator() ?? false;
+    bool hasAmpCon = await Vibration.hasAmplitudeControl() ?? false;
+    bool hasCostom = await Vibration.hasCustomVibrationsSupport() ?? false;
+    bool canVibrate = hasVibrator && hasAmpCon && hasCostom;
+
     setState(() {
       _canVibrate = canVibrate;
       _canVibrate
