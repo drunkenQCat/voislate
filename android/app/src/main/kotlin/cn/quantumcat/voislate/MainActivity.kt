@@ -1,4 +1,4 @@
-package com.example.voislate
+package cn.quantumcat.voislate
 
 import io.flutter.embedding.android.FlutterActivity
 
@@ -6,4 +6,3 @@ import dev.darttools.flutter_android_volume_keydown.FlutterAndroidVolumeKeydownA
 
 class MainActivity: FlutterAndroidVolumeKeydownActivity() {
 }
-
