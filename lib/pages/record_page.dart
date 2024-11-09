@@ -290,8 +290,8 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
         });
         if (_canVibrate) {
           currentTkType == TakeType.fake
-              ? Vibration.vibrate(amplitude: 128, duration: 300)
-              : Vibration.vibrate(amplitude: 240, duration: 1500);
+              ? Vibration.vibrate(amplitude: 240, duration: 900)
+              : Vibration.vibrate(amplitude: 128, duration: 150);
         }
       }
 
@@ -340,7 +340,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
         } catch (e) {}
         // remove the last note
         if (_canVibrate) {
-          Vibration.vibrate(amplitude: 240, duration: 1800);
+          Vibration.vibrate(amplitude: 240, duration: 900);
         }
       }
 
@@ -550,7 +550,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
               isLinked = !isLinked;
               slateNotifier.setLink(isLinked);
               Fluttertoast.showToast(
-                msg: isLinked ? '已取消补录模式' : '进入补录模式，Take号与文件号解绑',
+                msg: isLinked ? '已取消补录模式' : '进入补录模式，Take 号与文件号解绑',
                 toastLength: Toast.LENGTH_SHORT,
                 timeInSecForIosWeb: 1,
                 backgroundColor: Colors.black,
