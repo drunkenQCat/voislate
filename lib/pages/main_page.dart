@@ -59,6 +59,21 @@ class _MyHomePageState extends State<MyHomePage>
     }
   }
 
+  List<Widget> getCurrentTabs() {
+    final basicTabs = [
+      SceneSchedulePage(),
+      SlateRecord(),
+      SlateLogTabs(),
+    ];
+    if (kDebugMode) {
+      final List<Widget> debugTabs = List.from(basicTabs);
+      debugTabs.add(SceneSchedulePageTest());
+      return debugTabs;
+    } else {
+      return basicTabs;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -109,13 +124,7 @@ class _MyHomePageState extends State<MyHomePage>
         child: TabBarView(
           controller: _tabController,
           physics: const NeverScrollableScrollPhysics(),
-          children: const [
-            SceneSchedulePage(),
-            SlateRecord(),
-            SlateLogTabs(),
-            // const SlateLogList()
-            if (kDebugMode) SceneSchedulePageTest(),
-          ],
+          children: getCurrentTabs(),
         ),
       ),
     );

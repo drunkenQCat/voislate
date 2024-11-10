@@ -207,7 +207,7 @@ class RecorderJoystickState extends MountedState<RecorderJoystick> {
       return;
     }
     EasyLoading.show(status: '正在录音');
-    final r = await _recognitionService.startRecord(AudioSource.microphone);
+    final r = await _recognitionService.startRecord(AudioSource.defaultSource);
     logger.d('开启录音: $r');
   }
 

@@ -53,6 +53,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
   late TextEditingController shotNoteController;
   late TextEditingController descController;
   late String prevTakeHint;
+  late SlateLogNotifier slateNotifierGlobal;
   // about the slate picker
   var titles = ['Scene', 'Shot', 'Take'];
   final sceneCol = SlateColumnOne();
@@ -144,6 +145,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
           .addListener(() => slateNotifier.setNote(desc: descController.text));
       shotNoteController.addListener(
           () => slateNotifier.setNote(note: shotNoteController.text));
+      slateNotifierGlobal = logNotifier;
 
       List<String> getCurrentTakeInfo() {
         if (pickerHistory.isEmpty) return ['0', '0', '0'];
@@ -867,7 +869,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
   }
 
   String serializeSlate() {
-    final slate = SlateLogNotifier();
+    final slate = slateNotifierGlobal;
     List<SlateLogItem> logItemList = slate.boxToday.values.toList();
     final json = JsonMapper.serialize(logItemList);
     return json;
