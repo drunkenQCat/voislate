@@ -3,16 +3,15 @@ import 'package:voislate/models/recorder_file_num.dart';
 
 class PrevTakeEditor extends StatelessWidget {
   /// This is the Description Editor for the previous record file.
-  PrevTakeEditor(
-      {Key? key,
+  const PrevTakeEditor(
+      {super.key,
       required this.num,
       required this.descEditingController,
-      required this.hintText})
-      : super(key: key);
+      required this.hintText});
 
   final TextEditingController descEditingController;
   final RecordFileNum num;
-  String hintText;
+  final String hintText;
 
   @override
   Widget build(BuildContext context) {
@@ -55,12 +54,12 @@ class PrevTakeEditor extends StatelessWidget {
 
 class PrevShotNote extends StatelessWidget {
   const PrevShotNote({
-    Key? key,
+    super.key,
     required this.currentScn,
     required this.currentSht,
     required this.currentTk,
     required this.controller,
-  }) : super(key: key);
+  });
 
   final String currentScn;
   final String currentSht;

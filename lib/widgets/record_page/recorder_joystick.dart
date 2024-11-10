@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:logger/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:voislate/data/my_ifly_key.dart';
 import 'package:ifly_speech_recognition/ifly_speech_recognition.dart';
@@ -7,6 +8,8 @@ import 'package:ifly_speech_recognition/ifly_speech_recognition.dart';
 import 'package:flutter_sound_platform_interface/flutter_sound_recorder_platform_interface.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+
+var logger = Logger();
 
 // ignore: must_be_immutable
 class RecorderJoystick extends StatefulWidget {
@@ -72,7 +75,7 @@ class RecorderJoystick extends StatefulWidget {
   var isVisible = false;
 
   RecorderJoystick({
-    Key? key,
+    super.key,
     this.height = 70,
     this.width = 300,
     this.backgroundColor = Colors.white,
@@ -97,8 +100,7 @@ class RecorderJoystick extends StatefulWidget {
     this.stickToEnd = false,
   })  : assert(height >= 25 && width >= 120),
         slideLength = width - height,
-        initValue = (width - height) / 2,
-        super(key: key);
+        initValue = (width - height) / 2;
 
   @override
   State<StatefulWidget> createState() {
@@ -206,13 +208,13 @@ class RecorderJoystickState extends MountedState<RecorderJoystick> {
     }
     EasyLoading.show(status: '正在录音');
     final r = await _recognitionService.startRecord(AudioSource.microphone);
-    debugPrint('开启录音: $r');
+    logger.d('开启录音: $r');
   }
 
   /// 结束录音
   void _stopRecord() async {
     final r = await _recognitionService.stopRecord();
-    debugPrint('关闭录音: $r');
+    logger.d('关闭录音: $r');
     // 识别语音
     EasyLoading.show(status: 'loading...');
     _recognitionService.speechRecognition();

@@ -366,7 +366,7 @@ class _LogEditorState extends State<LogEditor> {
 }
 
 class TestSlateLogList extends StatefulWidget {
-  const TestSlateLogList({Key? key}) : super(key: key);
+  const TestSlateLogList({super.key});
 
   @override
   State<TestSlateLogList> createState() => _TestSlateLogListState();

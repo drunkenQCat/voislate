@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:logger/logger.dart';
 
 import 'package:flutter/material.dart';
 import 'package:animated_toggle_switch/animated_toggle_switch.dart';
@@ -30,6 +31,8 @@ import '../widgets/record_page/slate_picker.dart';
 import '../widgets/record_page/take_ok_dial.dart';
 import '../widgets/record_page/current_file_monitor.dart';
 import '../widgets/record_page/current_take_monitor.dart';
+
+var logger = Logger();
 
 class SlateRecord extends StatefulWidget {
   const SlateRecord({super.key});
@@ -441,7 +444,7 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
                       .append;
                 }
                 pickerNumSync();
-                debugPrint('v1: , v2: , v3: ');
+                logger.i('v1: , v2: , v3: ');
               },
             ),
           ],
@@ -821,8 +824,8 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
     setState(() {
       _canVibrate = canVibrate;
       _canVibrate
-          ? debugPrint('This device can vibrate')
-          : debugPrint('This device cannot vibrate');
+          ? logger.d('This device can vibrate')
+          : logger.w('This device cannot vibrate');
     });
   }
 
@@ -853,12 +856,12 @@ class _SlateRecordState extends State<SlateRecord> with WidgetsBindingObserver {
       if (await directory.exists()) {
         final json = serializeSlate();
         saveFile.writeAsString(json);
-        print(directory.path);
+        logger.i(directory.path);
         return true;
       }
       return false;
     } catch (e) {
-      print(e);
+      logger.e(e);
       return false;
     }
   }

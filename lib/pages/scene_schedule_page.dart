@@ -1,3 +1,4 @@
+import 'package:logger/logger.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -7,6 +8,8 @@ import 'package:voislate/providers/slate_status_notifier.dart';
 
 import '../models/slate_schedule.dart';
 import '../../widgets/scene_schedule_page/note_editor.dart';
+
+var logger = Logger();
 
 class SceneSchedulePage extends StatefulWidget {
   const SceneSchedulePage({super.key});
@@ -466,7 +469,7 @@ class SceneSchedulePageState extends State<SceneSchedulePage>
                       await _saveBox(
                           newSchedule: newScnList.cast<SceneSchedule>());
                     } else {
-                      print("No file selected");
+                      logger.w("No file selected");
                     }
                   },
                   icon: const Icon(Icons.read_more_outlined),

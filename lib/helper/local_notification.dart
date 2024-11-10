@@ -1,5 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:logger/logger.dart';
+
+var logger = Logger();
 
 class DateChecker extends StatefulWidget {
   const DateChecker({super.key});
@@ -18,7 +21,7 @@ class DateCheckerState extends State<DateChecker> {
     Timer.periodic(const Duration(minutes: 1), (timer) {
       if (_lastDate.day != DateTime.now().day) {
         // Do something here
-        debugPrint('The date has changed!');
+        logger.w('The date has changed!');
       }
       _lastDate = DateTime.now();
     });

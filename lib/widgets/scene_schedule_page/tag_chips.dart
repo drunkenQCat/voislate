@@ -8,10 +8,10 @@ class TagChips extends StatefulWidget {
   final BuildContext context;
   List<String> tagList;
   TagChips({
-    Key? key,
+    super.key,
     required this.context,
     required this.tagList,
-  }) : super(key: key);
+  });
 
   @override
   State<TagChips> createState() => _TagChipsState();

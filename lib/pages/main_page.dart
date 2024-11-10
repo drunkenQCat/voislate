@@ -39,7 +39,7 @@ class VoiSlate extends StatelessWidget {
 
 class MyHomePage extends StatefulWidget {
   final String title;
-  const MyHomePage({Key? key, this.title = "VoiSlate"}) : super(key: key);
+  const MyHomePage({super.key, this.title = "VoiSlate"});
 
   @override
   // ignore: library_private_types_in_public_api

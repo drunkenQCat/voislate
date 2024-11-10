@@ -66,6 +66,7 @@ dependencies:
   share_plus: ^10.1.2
   shared_preferences: ^2.1.1
   tuple: ^2.0.2
+  logger: ^2.4.0
 
 dev_dependencies:
   flutter_lints: ^5.0.0

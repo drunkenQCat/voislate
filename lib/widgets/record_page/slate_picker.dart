@@ -42,7 +42,7 @@ class SlatePicker extends StatefulWidget {
   final bool isLoop;
 
   SlatePicker({
-    Key? key,
+    super.key,
     required this.stateOne,
     required this.stateTwo,
     required this.stateThree,
@@ -56,7 +56,7 @@ class SlatePicker extends StatefulWidget {
     this.itemHeight = 40,
     this.itemBackgroundColor = const Color(0xFFD1C4E9),
     this.isLoop = false,
-  }) : super(key: key) {
+  }) {
     // 初始化 stateOne、stateTwo 和 stateThree
     assert(titles.length >= 3);
     ones = stateOne.numList ?? ['1', '2'];
@@ -91,7 +91,7 @@ class _SlatePickerState extends State<SlatePicker> {
         _buildPicker(
           widget.ones,
           widget.titles[0],
-          (value) => _resultChanged(v1: value, v2:0, v3: 0 ),
+          (value) => _resultChanged(v1: value, v2: 0, v3: 0),
           widget.stateOne.controller,
         ),
         VerticalSeparator(widget: widget, padding: padding),

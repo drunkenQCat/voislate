@@ -13,7 +13,6 @@ class ScheduleItem {
     name = _key + _fix;
   }
 
-
   @HiveField(1)
   String _fix;
   String get fix => _fix;
@@ -124,9 +123,9 @@ class DataList extends HiveObject with ChangeNotifier {
 
   void update(int oldIndex, ScheduleItem newItem) {
     // detect if the new item is duplicate to any other item
-    var _ = List<ScheduleItem>.from(_data);
-    _.removeAt(oldIndex);
-    for (var item in _) {
+    var copiedData = List<ScheduleItem>.from(_data);
+    copiedData.removeAt(oldIndex);
+    for (var item in copiedData) {
       if (newItem.name == item.name) {
         throw DuplicateItemException('Duplicate items in the list');
       }

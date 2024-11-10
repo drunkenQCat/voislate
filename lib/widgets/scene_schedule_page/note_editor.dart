@@ -1,6 +1,9 @@
+import 'package:logger/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:voislate/widgets/scene_schedule_page/tag_chips.dart';
 import '../../models/slate_schedule.dart';
+
+var logger = Logger();
 
 class NoteEditor extends StatefulWidget {
   final BuildContext context;
@@ -444,7 +447,7 @@ class ScheduleUtils {
       try {
         _dupDetectForNewShot(newInfo);
       } on Exception catch (e) {
-        debugPrint(e.toString());
+        logger.e(e.toString());
         List<int> keys = scenes[currentScnIndex]
             .data
             .map((shot) => int.tryParse(shot.key) ?? 0)

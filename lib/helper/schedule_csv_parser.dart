@@ -83,8 +83,9 @@ SeperatedTable divideScns(List<List<String>> csvData) {
 
     var scnBasicInfo = getScnNumAndLocation(row);
     var shtBasicInfo = getShtNumAndType(row);
-    if (scnBasicInfo == null && shtBasicInfo == null)
+    if (scnBasicInfo == null && shtBasicInfo == null) {
       continue; // 跳过scn 和 sht 都为null的行
+    }
     if (scnBasicInfo == null && shtBasicInfo != null && result.isNotEmpty) {
       var lastScn = result.last;
       lastScn.add(row);
